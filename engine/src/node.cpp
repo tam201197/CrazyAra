@@ -510,7 +510,7 @@ void Node::apply_virtual_loss_to_child(ChildIdx childIdx, uint_fast32_t virtualL
     // make it look like if one has lost X games from this node forward where X is the virtual loss value
     // temporarily reduce the attraction of this node by applying a virtual loss /
     // the effect of virtual loss will be undone if the playout is over
-    d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] - virtualLoss) / double(d->childNumberVisits[childIdx] + virtualLoss);
+    d->qValuesWithVirtualLoss[childIdx] = (double(d->qValuesWithVirtualLoss[childIdx]) * d->childNumberVisits[childIdx] - virtualLoss) / double(d->childNumberVisits[childIdx] + virtualLoss);
     // virtual increase the number of visits
     d->childNumberVisits[childIdx] += virtualLoss;
     d->visitSum += virtualLoss;
@@ -558,6 +558,7 @@ void Node::reserve_full_memory()
     const size_t numberChildNodes = get_number_child_nodes();
     d->childNumberVisits.reserve(numberChildNodes);
     d->qValues.reserve(numberChildNodes);
+    d->qValuesWithVirtualLoss.reserve(numberChildNodes);
     d->childNodes.reserve(numberChildNodes);
     d->virtualLossCounter.reserve(numberChildNodes);
     d->nodeTypes.reserve(numberChildNodes);
@@ -656,7 +657,7 @@ void backup_collision(float virtualLoss, const Trajectory& trajectory) {
 void Node::revert_virtual_loss(ChildIdx childIdx, float virtualLoss)
 {
     lock();
-    d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] + virtualLoss) / (d->childNumberVisits[childIdx] - virtualLoss);
+    d->qValuesWithVirtualLoss[childIdx] = (double(d->qValuesWithVirtualLoss[childIdx]) * d->childNumberVisits[childIdx] + virtualLoss) / (d->childNumberVisits[childIdx] - virtualLoss);
     d->childNumberVisits[childIdx] -= virtualLoss;
     d->visitSum -= virtualLoss;
     // decrement virtual loss counter
@@ -1128,7 +1129,7 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings)
     // find the move according to the q- and u-values for each move
     // calculate the current u values
     // it's not worth to save the u values as a node attribute because u is updated every time n_sum changes
-    return argmax(d->qValues + get_current_u_values(searchSettings));
+    return argmax(d->qValuesWithVirtualLoss + get_current_u_values(searchSettings));
 }
 
 NodeSplit Node::select_child_nodes(const SearchSettings* searchSettings, uint_fast16_t budget)
