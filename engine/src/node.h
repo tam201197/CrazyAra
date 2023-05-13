@@ -227,9 +227,10 @@ public:
             else {
                 // revert virtual loss and update the Q-value
                 assert(d->childNumberVisits[childIdx] != 0);
-                //d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] + searchSettings->virtualLoss + value) / d->childNumberVisits[childIdx];
-                d->qValues[childIdx] = (double(d->qValues[childIdx]) * (d->childNumberVisits[childIdx] - searchSettings->virtualLoss) + value) / d->childNumberVisits[childIdx];
-                d->qValuesWithVirtualLoss[childIdx] = d->qValues[childIdx];
+                d->qValuesWithVirtualLoss[childIdx] = (double(d->qValuesWithVirtualLoss[childIdx]) * d->childNumberVisits[childIdx] + searchSettings->virtualLoss + value) / d->childNumberVisits[childIdx];
+                d->qValues[childIdx] = (double(d->qValuesWithVirtualLoss[childIdx]) * (d->childNumberVisits[childIdx] - (d->virtualLossCounter[childIdx] * searchSettings->virtualLoss)) + searchSettings->virtualLoss * d->virtualLossCounter[childIdx]) / (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx]);
+                /*d->qValues[childIdx] = (double(d->qValues[childIdx]) * (d->childNumberVisits[childIdx] - searchSettings->virtualLoss) + value) / d->childNumberVisits[childIdx];
+                d->qValuesWithVirtualLoss[childIdx] = d->qValues[childIdx];*/
                 d->qValue_max = max(d->qValue_max, d->qValues[childIdx]);
                 assert(!isnan(d->qValues[childIdx]));
             }
