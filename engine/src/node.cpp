@@ -537,6 +537,7 @@ float Node::get_max_qValue() const
 void Node::set_q_value(ChildIdx childIdx, float value)
 {
     d->qValues[childIdx] = value;
+    d->qValuesWithVirtualLoss[childIdx] = value;
 }
 
 ChildIdx Node::get_best_q_idx() const
