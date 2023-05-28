@@ -67,7 +67,7 @@ void OptionsUCI::init(OptionsMap& o)
 {
     o["Allow_Early_Stopping"] << Option(true);
     o["Backup_Operator"] << Option("mean_op", { "mean_op", "max_op" });
-    o["Centi_Minimax_Weight"]  << Option(100 , 0, 100);
+    o["Max_At_Visits"]  << Option(100 , 0, 500);
     o["Switching_Max_Operator_At_Node"] << Option(800, 0, 99999999);
 #ifdef USE_RL
     o["Batch_Size"] << Option(8, 1, 8192);
@@ -166,7 +166,7 @@ void OptionsUCI::init(OptionsMap& o)
 #ifdef SUPPORT960
     o["UCI_Chess960"] << Option(false);
 #endif
-    o["Search_Type"] << Option("mcgs", { "mcgs", "mcts" });
+    o["Search_Type"] << Option("mcts", { "mcgs", "mcts" });
     o["Search_Player_Mode"] << Option("two_player", { "two_player", "single_player" });
 #ifdef USE_RL
     o["Simulations"] << Option(3200, 0, 99999999);

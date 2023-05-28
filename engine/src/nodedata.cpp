@@ -48,8 +48,11 @@ void NodeData::reserve_initial_space()
     // u: exploration metric for each child node
     // (the q and u values are stacked into 1 list in order to speed-up the argmax() operation
     qValues.reserve(initSize);
+<<<<<<< HEAD
     qValuesWithVirtualLoss.reserve(initSize);
 
+=======
+>>>>>>> max_operator
     childNodes.reserve(initSize);
     virtualLossCounter.reserve(initSize);
     nodeTypes.reserve(initSize);
