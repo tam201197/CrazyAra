@@ -204,9 +204,9 @@ public:
         }
         else {
             //float oldQValue = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] + searchSettings->virtualLoss) / (d->childNumberVisits[childIdx] - searchSettings->virtualLoss);
-            if(isMaxOperator) {
+            if (isMaxOperator) {
                 float maxValue = value;
-                if (d->childNodes[childIdx] != nullptr ) {
+                if (d->childNodes[childIdx] != nullptr) {
                     maxValue = -scoreChildQValueMax(get_child_node(childIdx), searchSettings);
                 }
                 if (maxValue == 2.0) {
@@ -224,9 +224,49 @@ public:
                 d->qValues[childIdx] = (double(d->qValues[childIdx]) * (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx]) + value) / (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx] + 1);
                 assert(!isnan(d->qValues[childIdx]));
             }
+        }
+        if (searchSettings->virtualLoss != 1) {
+            d->childNumberVisits[childIdx] -= size_t(searchSettings->virtualLoss) - 1;
+            d->visitSum -= size_t(searchSettings->virtualLoss) - 1;
+        }
+        if (freeBackup) {
+            ++d->freeVisits;
+        }
+        if (solveForTerminal) {
+            solve_for_terminal(childIdx, searchSettings);
+        }
+        unlock();
+    }
+
+    template<bool freeBackup>
+    void revert_virtual_loss_with_implicit_minimax(ChildIdx childIdx, float value, const SearchSettings * searchSettings, bool solveForTerminal)
+    {
+        lock();
+        // decrement virtual loss counter
+        update_virtual_loss_counter<false>(childIdx, searchSettings->virtualLoss);
+        valueSum += value;
+        ++realVisitsSum;
+        //float newQValue = 0;
+        if (d->childNumberVisits[childIdx] == searchSettings->virtualLoss) {
+                // set new Q-value based on return
+                // (the initialization of the Q-value was by Q_INIT which we don't want to recover.)
+            d->qValues[childIdx] = value;
+        }
+        else {
+            float minimaxWeight = static_cast<float>(d->childNumberVisits[childIdx]) / static_cast<float>(100);
+            info_string("minimax weight: ", minimaxWeight);
+            minimaxWeight = minimaxWeight > 1.0 ? 1.0 : minimaxWeight;
+            float maxValue = value;
+            if (d->childNodes[childIdx]->d != nullptr) {
+                maxValue = -max(d->childNodes[childIdx]->d->qValues);
+                d->qValues[childIdx] = (1 - minimaxWeight) * d->childNodes[childIdx]->valueSum / d->childNumberVisits[childIdx] + minimaxWeight * maxValue;
+                info_string("qValue", d->qValues[childIdx]);
+            }
+            else {
+                d->qValues[childIdx] = value;
+            }
             
         }
-
         
         if (searchSettings->virtualLoss != 1) {
             d->childNumberVisits[childIdx] -= size_t(searchSettings->virtualLoss) - 1;
@@ -830,7 +870,7 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
             break;
         case MODE_SINGLE_PLAYER:;
         }
-        switch (searchSettings->backupOperator) {
+        /*switch (searchSettings->backupOperator) {
         case BACKUP_MEAN:
             freeBackup ? it->node->revert_virtual_loss_and_update<true>(it->childIdx, value, searchSettings, solveForTerminal, false) :
                 it->node->revert_virtual_loss_and_update<false>(it->childIdx, value, searchSettings, solveForTerminal, false);
@@ -851,7 +891,32 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
                 }
             }
             break;
+        }*/
+        switch (searchSettings->backupOperator) {
+        case BACKUP_MEAN:
+            freeBackup ? it->node->revert_virtual_loss_and_update<true>(it->childIdx, value, searchSettings, solveForTerminal, false) :
+                it->node->revert_virtual_loss_and_update<false>(it->childIdx, value, searchSettings, solveForTerminal, false);
+            break;
+        case BACKUP_MAX:
+            /*if (it->node->get_child_node(it->childIdx) == nullptr || it->node->get_child_node(it->childIdx) == NULL) {
+                freeBackup ? it->node->revert_virtual_loss_and_update<true>(it->childIdx, value, searchSettings, solveForTerminal, false) :
+                    it->node->revert_virtual_loss_and_update<false>(it->childIdx, value, searchSettings, solveForTerminal, false);
+            }
+            else {
+                if (it->node->get_child_node(it->childIdx)->get_real_visits() >= searchSettings->switchingMaxOperatorAtNode) {
+                    freeBackup ? it->node->revert_virtual_loss_and_update<true>(it->childIdx, value, searchSettings, solveForTerminal, true) :
+                        it->node->revert_virtual_loss_and_update<false>(it->childIdx, value, searchSettings, solveForTerminal, true);
+                }
+                else {
+                    freeBackup ? it->node->revert_virtual_loss_and_update<true>(it->childIdx, value, searchSettings, solveForTerminal, false) :
+                        it->node->revert_virtual_loss_and_update<false>(it->childIdx, value, searchSettings, solveForTerminal, false);
+                }
+            }*/
+            freeBackup ? it->node->revert_virtual_loss_with_implicit_minimax<true>(it->childIdx, value, searchSettings, solveForTerminal) :
+                it->node->revert_virtual_loss_with_implicit_minimax<false>(it->childIdx, value, searchSettings, solveForTerminal);
+            break;
         }
+        
         
         if (it->node->is_transposition()) {
             targetQValue = it->node->get_value();
