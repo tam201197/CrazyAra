@@ -254,13 +254,41 @@ public:
         }
         else {
             float minimaxWeight = static_cast<float>(d->childNumberVisits[childIdx]) / static_cast<float>(100);
-            info_string("minimax weight: ", minimaxWeight);
+            if (d->childNumberVisits[childIdx] < 100) {
+                minimaxWeight = 0.0;
+            }
+            else if (d->childNumberVisits[childIdx] < 200) {
+                minimaxWeight = 0.1;
+            }
+            else if (d->childNumberVisits[childIdx] < 200) {
+                minimaxWeight = 0.1;
+            }
+            else if (d->childNumberVisits[childIdx] < 300) {
+                minimaxWeight = 0.2;
+            }
+            else if (d->childNumberVisits[childIdx] < 400) {
+                minimaxWeight = 0.3;
+            }
+            else if (d->childNumberVisits[childIdx] < 500) {
+                minimaxWeight = 0.4;
+            }
+            else if (d->childNumberVisits[childIdx] < 600) {
+                minimaxWeight = 0.5;
+            }
+            else if (d->childNumberVisits[childIdx] < 700) {
+                minimaxWeight = 0.6;
+            }
+            else if (d->childNumberVisits[childIdx] < 800) {
+                minimaxWeight = 0.7;
+            }
+            else {
+                minimaxWeight = 1.0;
+            }
             minimaxWeight = minimaxWeight > 1.0 ? 1.0 : minimaxWeight;
             float maxValue = value;
             if (d->childNodes[childIdx]->d != nullptr) {
                 maxValue = -max(d->childNodes[childIdx]->d->qValues);
                 d->qValues[childIdx] = (1 - minimaxWeight) * d->childNodes[childIdx]->valueSum / d->childNumberVisits[childIdx] + minimaxWeight * maxValue;
-                info_string("qValue", d->qValues[childIdx]);
             }
             else {
                 d->qValues[childIdx] = value;
