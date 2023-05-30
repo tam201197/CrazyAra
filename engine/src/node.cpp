@@ -505,7 +505,9 @@ bool Node::has_nn_results() const
 }
 
 void Node::apply_virtual_loss_to_child(ChildIdx childIdx, uint_fast32_t virtualLoss)
-{
+{   
+    if (d->virtualLossCounter[childIdx] == 0)
+        d->childNumberVirtualVisits[childIdx] = d->childNumberVisits[childIdx];
     // update the stats of the parent node
     // make it look like if one has lost X games from this node forward where X is the virtual loss value
     // temporarily reduce the attraction of this node by applying a virtual loss /
@@ -513,6 +515,7 @@ void Node::apply_virtual_loss_to_child(ChildIdx childIdx, uint_fast32_t virtualL
     d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] - virtualLoss) / double(d->childNumberVisits[childIdx] + virtualLoss);
     // virtual increase the number of visits
     d->childNumberVisits[childIdx] += virtualLoss;
+    d->childNumberVirtualVisits[childIdx] += virtualLoss;
     d->visitSum += virtualLoss;
     // increment virtual loss counter
     update_virtual_loss_counter<true>(childIdx, virtualLoss);
@@ -520,8 +523,11 @@ void Node::apply_virtual_loss_to_child(ChildIdx childIdx, uint_fast32_t virtualL
 
 void Node::apply_virtual_loss_to_child_without_changing_qvalue(ChildIdx childIdx, uint_fast32_t virtualLoss)
 {
+    if (d->virtualLossCounter[childIdx] == 0)
+        d->childNumberVirtualVisits[childIdx] = d->childNumberVisits[childIdx];
     // virtual increase the number of visits
     d->childNumberVisits[childIdx] += virtualLoss;
+    d->childNumberVirtualVisits[childIdx] += virtualLoss;
     d->visitSum += virtualLoss;
     // increment virtual loss counter
     update_virtual_loss_counter<true>(childIdx, virtualLoss);
@@ -566,6 +572,7 @@ void Node::reserve_full_memory()
 {
     const size_t numberChildNodes = get_number_child_nodes();
     d->childNumberVisits.reserve(numberChildNodes);
+    d->childNumberVirtualVisits.reserve(numberChildNodes);
     d->qValues.reserve(numberChildNodes);
     d->childNodes.reserve(numberChildNodes);
     d->virtualLossCounter.reserve(numberChildNodes);
@@ -667,6 +674,7 @@ void Node::revert_virtual_loss(ChildIdx childIdx, float virtualLoss)
     lock();
     //d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] + virtualLoss) / (d->childNumberVisits[childIdx] - virtualLoss);
     d->childNumberVisits[childIdx] -= virtualLoss;
+    d->childNumberVirtualVisits[childIdx] -= virtualLoss;
     d->visitSum -= virtualLoss;
     // decrement virtual loss counter
     update_virtual_loss_counter<false>(childIdx, virtualLoss);
@@ -683,10 +691,7 @@ float Node::scoreChildQValueMax(const Node* node, const SearchSettings* searchSe
         }
     }
     if (maxQValue == -2.0) {
-        try {
-            maxQValue = node->d->qValues[argmax(node->d->childNumberVisits)];
-        }
-        catch(...){}
+        maxQValue = node->d->qValues[argmax(node->d->childNumberVisits)];
     }
     return maxQValue;
 }
@@ -1176,8 +1181,7 @@ NodeSplit Node::select_child_nodes(const SearchSettings* searchSettings, uint_fa
         nodeSplit.only_first(d->checkmateIdx, budget);
         return nodeSplit;
     }
-    //DynamicVector<float> q_u_sum = d->qValues + get_current_u_values(searchSettings);
-    DynamicVector<float> q_u_sum = (d->qValues * (d->childNumberVisits - searchSettings->virtualLoss * d->virtualLossCounter) - searchSettings->virtualLoss * d->virtualLossCounter) / d->childNumberVisits + get_current_u_values(searchSettings);
+    DynamicVector<float> q_u_sum = d->qValues + get_current_u_values(searchSettings);
     float firstMax;
     float secondMax;
     assert(q_u_sum.size() > 1);

@@ -196,6 +196,7 @@ public:
         update_virtual_loss_counter<false>(childIdx, searchSettings->virtualLoss);
         valueSum += value;
         ++realVisitsSum;
+        d->childNumberVirtualVisits -= searchSettings->virtualLoss;
         //float newQValue = 0;
         if (d->childNumberVisits[childIdx] == searchSettings->virtualLoss) {
             // set new Q-value based on return
@@ -209,10 +210,7 @@ public:
                 if (d->childNodes[childIdx] != nullptr ) {
                     maxValue = -scoreChildQValueMax(get_child_node(childIdx), searchSettings);
                 }
-                if (maxValue == 2.0) {
-                    maxValue = (double(d->qValues[childIdx]) * (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx]) + value) / (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx] + 1);
-                }
-                d->qValues[childIdx] = 0.6 * value + 0.4 * maxValue;
+                d->qValues[childIdx] = maxValue;
                 //d->qValues[childIdx] = (double(d->qValues[childIdx]) * (d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx] * searchSettings->virtualLoss) - (d->virtualLossCounter[childIdx] * searchSettings->virtualLoss)) / double(d->childNumberVisits[childIdx]);
                 assert(!isnan(d->qValues[childIdx]));
             }
@@ -221,7 +219,8 @@ public:
                 // revert virtual loss and update the Q-value
                 assert(d->childNumberVisits[childIdx] != 0);
                 //d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] + searchSettings->virtualLoss + value) / d->childNumberVisits[childIdx];
-                d->qValues[childIdx] = (double(d->qValues[childIdx]) * (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx]) + value) / (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx] + 1);
+                // origin d->qValues[childIdx] = (double(d->qValues[childIdx]) * (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx]) + value) / (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx] + 1);
+                d->qValues[childIdx] = (double(d->qValues[childIdx]) * (d->childNumberVirtualVisits[childIdx]) + value) / (d->childNumberVirtualVisits[childIdx] + 1);
                 assert(!isnan(d->qValues[childIdx]));
             }
             
