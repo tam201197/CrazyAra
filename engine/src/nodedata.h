@@ -29,6 +29,7 @@
 #define NODEDATA_H
 
 #include <iostream>
+#include <set>
 #include <mutex>
 #include <unordered_map>
 #include <blaze/Math.h>
@@ -88,10 +89,12 @@ class Node;
 struct NodeData
 {
     DynamicVector<uint32_t> childNumberVisits;
+    DynamicVector<uint32_t> childNumberVirtualVisits;
     DynamicVector<float> qValues;
     vector<shared_ptr<Node>> childNodes;
     DynamicVector<uint8_t> virtualLossCounter;
     DynamicVector<NodeType> nodeTypes;
+    float qValue_max;
 
     uint32_t freeVisits;
     uint32_t visitSum;

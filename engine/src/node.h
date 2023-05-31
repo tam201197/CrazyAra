@@ -39,6 +39,8 @@
 #include "nodedata.h"
 
 
+
+
 using blaze::HybridVector;
 using blaze::DynamicVector;
 using namespace std;
@@ -52,7 +54,7 @@ struct NodeAndIdx {
         node(node), childIdx(childIdx) {}
 };
 using Trajectory = vector<NodeAndIdx>;
-using HashMap = unordered_map<Key, weak_ptr<Node>> ;
+using HashMap = unordered_map<Key, weak_ptr<Node>>;
 // wrapper for unordered_map with a mutex for thread safe access
 struct MapWithMutex {
     mutex mtx;
@@ -119,8 +121,8 @@ public:
      * @param State Corresponding state object
      * @param searchSettings Pointer to the searchSettings
      */
-    Node(StateObj *state,
-         const SearchSettings* searchSettings);
+    Node(StateObj* state,
+        const SearchSettings* searchSettings);
 
     /**
      * @brief ~Node Destructor which frees memory and the board position
@@ -187,27 +189,51 @@ public:
      * @param searchSettings Pointer to the search settings struct
      */
     template<bool freeBackup>
-    void revert_virtual_loss_and_update(ChildIdx childIdx, float value, const SearchSettings* searchSettings, bool solveForTerminal)
+    void revert_virtual_loss_and_update(ChildIdx childIdx, float value, const SearchSettings* searchSettings, bool solveForTerminal, bool isMaxOperator)
     {
         lock();
         // decrement virtual loss counter
         update_virtual_loss_counter<false>(childIdx, searchSettings->virtualLoss);
-
         valueSum += value;
         ++realVisitsSum;
-
-        if (d->childNumberVisits[childIdx] == searchSettings->virtualLoss) {
+        d->childNumberVirtualVisits[childIdx] -= searchSettings->virtualLoss;
+        if (d->childNumberVisits[childIdx] == searchSettings->virtualLoss || d->childNumberVirtualVisits[childIdx] == 0) {
             // set new Q-value based on return
             // (the initialization of the Q-value was by Q_INIT which we don't want to recover.)
             d->qValues[childIdx] = value;
         }
         else {
-            // revert virtual loss and update the Q-value
             assert(d->childNumberVisits[childIdx] != 0);
-            d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] + searchSettings->virtualLoss + value) / d->childNumberVisits[childIdx];
+            assert(d->childNumberVirtualVisits[childIdx] != 0);
+            if(isMaxOperator) {
+                float maxValue = value;
+                /*float maxValue = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] + searchSettings->virtualLoss + value) / d->childNumberVisits[childIdx];
+                maxValue = compute_original_q_value(maxValue, d->childNumberVisits[childIdx], d->virtualLossCounter[childIdx], searchSettings->virtualLoss);*/
+                if (d->childNodes[childIdx] != nullptr) {
+                    float qMax = -score_child_qValue_max(get_child_node(childIdx), searchSettings);
+                    if (qMax > 1.0 || qMax < -1.0) {
+                        maxValue = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] + searchSettings->virtualLoss + value) / d->childNumberVisits[childIdx];
+                    }
+                    else {
+                        maxValue = re_apply_virtual_loss(qMax, childIdx, searchSettings->virtualLoss);
+                    }
+                    
+                }
+                //d->qValues[childIdx] = (double(maxValue) * (d->childNumberVisits[childIdx] - searchSettings->virtualLoss - d->virtualLossCounter[childIdx] * searchSettings->virtualLoss) - (d->virtualLossCounter[childIdx] * searchSettings->virtualLoss)) / double(d->childNumberVisits[childIdx] - searchSettings->virtualLoss);
+                //d->qValues[childIdx] = (double(d->qValues[childIdx]) * (d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx] * searchSettings->virtualLoss) - (d->virtualLossCounter[childIdx] * searchSettings->virtualLoss)) / double(d->childNumberVisits[childIdx]);
+                d->qValues[childIdx] = maxValue;
+            }
+            else {
+
+                // revert virtual loss and update the Q-value
+                d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] + searchSettings->virtualLoss + value) / d->childNumberVisits[childIdx];
+                //d->qValues[childIdx] = (double(d->qValues[childIdx]) * (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx]) + value) / (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx] + 1);
+                
+            }
             assert(!isnan(d->qValues[childIdx]));
         }
 
+        
         if (searchSettings->virtualLoss != 1) {
             d->childNumberVisits[childIdx] -= size_t(searchSettings->virtualLoss) - 1;
             d->visitSum -= size_t(searchSettings->virtualLoss) - 1;
@@ -218,14 +244,24 @@ public:
         if (solveForTerminal) {
             solve_for_terminal(childIdx, searchSettings);
         }
+        if (d->virtualLossCounter[childIdx] < 1) {
+            d->childNumberVirtualVisits[childIdx] = d->childNumberVisits[childIdx];
+        }
         unlock();
     }
+
 
     /**
      * @brief revert_virtual_loss Reverts the virtual loss for a target node
      * @param childIdx Index to the child node to update
      */
     void revert_virtual_loss(ChildIdx childIdx, float virtualLoss);
+
+    float score_child_qValue_max(Node* node, const SearchSettings* searchSettings);
+
+    float re_apply_virtual_loss(float value, ChildIdx childIdx, uint_fast32_t virtualLoss);
+
+    float compute_original_q_value(float qValue, uint32_t numberVisits, uint8_t virtualLossCounter, uint_fast32_t virtualLoss);
 
     bool is_playout_node() const;
 
@@ -320,7 +356,7 @@ public:
 
     DynamicVector<float>& get_policy_prob_small();
 
-    void set_probabilities_for_moves(const float *data, bool mirrorPolicy);
+    void set_probabilities_for_moves(const float* data, bool mirrorPolicy);
 
     void apply_softmax_to_policy();
 
@@ -380,7 +416,7 @@ public:
      * @param bestMoveIdx Index for the best move
      * @param searchSettings Pointer to the search settings struct
      */
-     void get_mcts_policy(DynamicVector<double>& mctsPolicy, ChildIdx& bestMoveIdx, const SearchSettings* searchSettings) const;
+    void get_mcts_policy(DynamicVector<double>& mctsPolicy, ChildIdx& bestMoveIdx, const SearchSettings* searchSettings) const;
 
     /**
      * @brief get_principal_variation Traverses the tree using the get_mcts_policy() function until a leaf or terminal node is found.
@@ -388,7 +424,7 @@ public:
      * @param pv Vector in which moves will be pushed.
      * @param searchSettings Pointer to the search settings struct.
      */
-     void get_principal_variation(vector<Action>& pv, const SearchSettings* searchSettings);
+    void get_principal_variation(vector<Action>& pv, const SearchSettings* searchSettings);
 
     /**
      * @brief is_root_node Checks if the current node is the root node
@@ -425,6 +461,13 @@ public:
      * @return Q-values
      */
     DynamicVector<float> get_q_values() const;
+
+
+    /**
+     * @brief get_q_values Returns the max of Q-values for all child nodes
+     * @return qValue_max
+     */
+    float get_max_qValue() const;
 
     /**
      * @brief set_q_value Sets a Q-value for a given child index
@@ -702,17 +745,17 @@ private:
      */
     void prune_losses_in_mcts_policy(DynamicVector<double>& mctsPolicy, const SearchSettings* searchSettings) const;
 
-//    /**
-//     * @brief mark_enhaned_moves Fills the isCheck and isCapture vector according to the legal moves
-//     * @param pos Current board positions
-//     */
-//    void mark_enhanced_moves(const Board* pos, const SearchSettings* searchSettings);
+    //    /**
+    //     * @brief mark_enhaned_moves Fills the isCheck and isCapture vector according to the legal moves
+    //     * @param pos Current board positions
+    //     */
+    //    void mark_enhanced_moves(const Board* pos, const SearchSettings* searchSettings);
 
-    /**
-     * @brief disable_move Disables a given move for futher visits by setting the corresponding Q-value to -INT_MAX
-     * and the move probability to 0.
-     * @param childIdxForParent Index for the move which will be disabled
-     */
+        /**
+         * @brief disable_move Disables a given move for futher visits by setting the corresponding Q-value to -INT_MAX
+         * and the move probability to 0.
+         * @param childIdxForParent Index for the move which will be disabled
+         */
     void disable_action(size_t childIdxForParent);
 };
 
@@ -724,9 +767,9 @@ private:
  * @param searchSettings Pointer to the search settings struct
  * @return Index for best move and child node
  */
- size_t get_best_action_index(const Node* curNode, bool fast, const SearchSettings* searchSettings);
+size_t get_best_action_index(const Node* curNode, bool fast, const SearchSettings* searchSettings);
 
-typedef float (* vFunctionValue)(Node* node);
+typedef float (*vFunctionValue)(Node* node);
 DynamicVector<float> retrieve_dynamic_vector(const vector<Node*>& childNodes, vFunctionValue func);
 
 /**
@@ -784,7 +827,7 @@ float get_transposition_q_value(uint_fast32_t transposVisits, double transposQVa
 template <bool freeBackup>
 void backup_value(float value, const SearchSettings* searchSettings, const Trajectory& trajectory, bool solveForTerminal) {
     double targetQValue = 0;
-    for (auto it = trajectory.rbegin(); it != trajectory.rend(); ++it) {
+    for (auto it = trajectory.rbegin(); it != trajectory.rend(); ++it) { 
         if (targetQValue != 0) {
             const uint_fast32_t transposVisits = it->node->get_real_visits(it->childIdx);
             if (transposVisits != 0) {
@@ -793,14 +836,34 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
             }
         }
         switch (searchSettings->searchPlayerMode) {
-            case MODE_TWO_PLAYER:
-                value = -value;
+        case MODE_TWO_PLAYER:
+            value = -value;
             break;
-        case MODE_SINGLE_PLAYER: ;
+        case MODE_SINGLE_PLAYER:;
         }
-        freeBackup ? it->node->revert_virtual_loss_and_update<true>(it->childIdx, value, searchSettings, solveForTerminal) :
-                   it->node->revert_virtual_loss_and_update<false>(it->childIdx, value, searchSettings, solveForTerminal);
-
+        switch (searchSettings->backupOperator) {
+        case BACKUP_MEAN:
+            freeBackup ? it->node->revert_virtual_loss_and_update<true>(it->childIdx, value, searchSettings, solveForTerminal, false) :
+                it->node->revert_virtual_loss_and_update<false>(it->childIdx, value, searchSettings, solveForTerminal, false);
+            break;
+        case BACKUP_MAX:
+            if (it->node->get_child_node(it->childIdx) == nullptr) {
+                freeBackup ? it->node->revert_virtual_loss_and_update<true>(it->childIdx, value, searchSettings, solveForTerminal, false) :
+                    it->node->revert_virtual_loss_and_update<false>(it->childIdx, value, searchSettings, solveForTerminal, false);
+            }
+            else {
+                if (it->node->get_child_node(it->childIdx)->get_real_visits() >= searchSettings->switchingMaxOperatorAtNode) {
+                    freeBackup ? it->node->revert_virtual_loss_and_update<true>(it->childIdx, value, searchSettings, solveForTerminal, true) :
+                        it->node->revert_virtual_loss_and_update<false>(it->childIdx, value, searchSettings, solveForTerminal, true);
+                }
+                else {
+                    freeBackup ? it->node->revert_virtual_loss_and_update<true>(it->childIdx, value, searchSettings, solveForTerminal, false) :
+                        it->node->revert_virtual_loss_and_update<false>(it->childIdx, value, searchSettings, solveForTerminal, false);
+                }
+            }
+            break;
+        }
+        
         if (it->node->is_transposition()) {
             targetQValue = it->node->get_value();
         }
@@ -809,6 +872,7 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
         }
     }
 }
+
 
 /**
  * @brief is_transposition_verified Checks if the node and state object are a verified position, i.e. same move counter and node has nn results
