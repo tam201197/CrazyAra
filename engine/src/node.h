@@ -209,7 +209,7 @@ public:
                 float maxValue = value;
                 /*float maxValue = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] + searchSettings->virtualLoss + value) / d->childNumberVisits[childIdx];
                 maxValue = compute_original_q_value(maxValue, d->childNumberVisits[childIdx], d->virtualLossCounter[childIdx], searchSettings->virtualLoss);*/
-                if (d->childNodes[childIdx] != nullptr) {
+                if (d->childNodes[childIdx] != nullptr && d->childNodes[childIdx]->is_playout_node()) {
                     float qMax = -score_child_qValue_max(get_child_node(childIdx), searchSettings);
                     assert(!isnan(qMax));
                     if (qMax > 1.0 || qMax < -1.0) {
@@ -219,6 +219,9 @@ public:
                         maxValue = re_apply_virtual_loss(qMax, childIdx, searchSettings->virtualLoss);
                     }
                     
+                }
+                else {
+                    maxValue = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] + searchSettings->virtualLoss + value) / d->childNumberVisits[childIdx];
                 }
                 //d->qValues[childIdx] = (double(maxValue) * (d->childNumberVisits[childIdx] - searchSettings->virtualLoss - d->virtualLossCounter[childIdx] * searchSettings->virtualLoss) - (d->virtualLossCounter[childIdx] * searchSettings->virtualLoss)) / double(d->childNumberVisits[childIdx] - searchSettings->virtualLoss);
                 //d->qValues[childIdx] = (double(d->qValues[childIdx]) * (d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx] * searchSettings->virtualLoss) - (d->virtualLossCounter[childIdx] * searchSettings->virtualLoss)) / double(d->childNumberVisits[childIdx]);

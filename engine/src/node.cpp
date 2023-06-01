@@ -677,7 +677,7 @@ float Node::score_child_qValue_max(Node* node, const SearchSettings* searchSetti
     node->lock();
     float maxQValue = -2.0;
     for (uint_fast16_t i = 0; i < node->d->qValues.size(); ++i) {
-        if (node->d != nullptr && node->d->childNumberVisits[i] >= searchSettings->maxAtVisit) {
+        if (node->d->childNodes[i]->is_playout_node() && node->d->childNumberVisits[i] >= searchSettings->maxAtVisit) {
             float value = compute_original_q_value(node->d->qValues[i], node->d->childNumberVirtualVisits[i], node->d->virtualLossCounter[i], searchSettings->virtualLoss);
             maxQValue = max(maxQValue, value); 
         }
