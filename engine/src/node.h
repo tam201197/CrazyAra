@@ -856,11 +856,7 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
                     it->node->revert_virtual_loss_and_update<false>(it->childIdx, value, searchSettings, solveForTerminal, false);
             }
             else {
-                uint32_t child_real_visits = 0;
-                it->node->get_child_node(it->childIdx)->lock();
-                child_real_visits = it->node->get_child_node(it->childIdx)->get_real_visits();
-                it->node->get_child_node(it->childIdx)->unlock();
-                if (child_real_visits >= searchSettings->switchingMaxOperatorAtNode) {
+                if (it->node->get_child_number_visits(it->childIdx) >= searchSettings->switchingMaxOperatorAtNode) {
                     freeBackup ? it->node->revert_virtual_loss_and_update<true>(it->childIdx, value, searchSettings, solveForTerminal, true) :
                         it->node->revert_virtual_loss_and_update<false>(it->childIdx, value, searchSettings, solveForTerminal, true);
                 }
