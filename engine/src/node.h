@@ -211,8 +211,6 @@ public:
                 maxValue = compute_original_q_value(maxValue, d->childNumberVisits[childIdx], d->virtualLossCounter[childIdx], searchSettings->virtualLoss);*/
                 if (d->childNodes[childIdx] != nullptr) {
                     float qMax = -score_child_qValue_max(get_child_node(childIdx), searchSettings);
-                    assert(-1.0 <= qMax);
-                    assert(1.0 >= qMax);
                     assert(!isnan(qMax));
                     if (qMax > 1.0 || qMax < -1.0) {
                         maxValue = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] + searchSettings->virtualLoss + value) / d->childNumberVisits[childIdx];
