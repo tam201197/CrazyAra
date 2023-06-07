@@ -671,14 +671,18 @@ float Node::score_child_qValue_max(Node* node, const SearchSettings* searchSetti
         if (node->is_playout_node()) {
             for (uint_fast16_t i = 0; i < node->d->qValues.size(); ++i) {
                 if (node->d->childNumberVisits[i] >= searchSettings->maxAtVisit) {
-                    maxQValue = max(maxQValue, value);
+                    maxQValue = max(maxQValue, node->d->qValues[i]);
                 }
             }
         }
         node->unlock();
+        if (-1.0 <= maxQValue && maxQValue <= 1.0)
+            maxQValue = -maxQValue;
+        else 
+            maxQValue = (double(d->qValues[childIdx]) * (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx]) + value) / (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx] + 1);
     }
     else {
-        maxQValue = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] + searchSettings->virtualLoss + value) / d->childNumberVisits[childIdx];
+        maxQValue = (double(d->qValues[childIdx]) * (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx]) + value) / (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx] + 1);
     }
     return maxQValue;
 }
