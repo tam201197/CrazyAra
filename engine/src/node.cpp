@@ -506,21 +506,12 @@ bool Node::has_nn_results() const
 }
 
 void Node::apply_virtual_loss_to_child(ChildIdx childIdx, uint_fast32_t virtualLoss)
-{
+{   
     // update the stats of the parent node
     // make it look like if one has lost X games from this node forward where X is the virtual loss value
     // temporarily reduce the attraction of this node by applying a virtual loss /
     // the effect of virtual loss will be undone if the playout is over
-    d->qValuesWithVirtualLoss[childIdx] = (double(d->qValuesWithVirtualLoss[childIdx]) * d->childNumberVisits[childIdx] - virtualLoss) / double(d->childNumberVisits[childIdx] + virtualLoss);
-    // virtual increase the number of visits
-    d->childNumberVisits[childIdx] += virtualLoss;
-    d->visitSum += virtualLoss;
-    // increment virtual loss counter
-    update_virtual_loss_counter<true>(childIdx, virtualLoss);
-}
-
-void Node::apply_virtual_loss_to_child_without_changing_qvalue(ChildIdx childIdx, uint_fast32_t virtualLoss)
-{
+    // d->qValuesWithVirtualLoss[childIdx] = (double(d->qValuesWithVirtualLoss[childIdx]) * d->childNumberVisits[childIdx] - virtualLoss) / double(d->childNumberVisits[childIdx] + virtualLoss);
     // virtual increase the number of visits
     d->childNumberVisits[childIdx] += virtualLoss;
     d->visitSum += virtualLoss;
@@ -668,7 +659,7 @@ void backup_collision(float virtualLoss, const Trajectory& trajectory) {
 void Node::revert_virtual_loss(ChildIdx childIdx, float virtualLoss)
 {
     lock();
-    //d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] + virtualLoss) / (d->childNumberVisits[childIdx] - virtualLoss);
+    // d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] + virtualLoss) / (d->childNumberVisits[childIdx] - virtualLoss);
     d->childNumberVisits[childIdx] -= virtualLoss;
     d->visitSum -= virtualLoss;
     // decrement virtual loss counter
@@ -676,22 +667,41 @@ void Node::revert_virtual_loss(ChildIdx childIdx, float virtualLoss)
     unlock();
 }
 
-float Node::scoreChildQValueMax(const Node* node, const SearchSettings* searchSettings) {
+float Node::score_child_qValue_max(Node* node, const SearchSettings* searchSettings, ChildIdx childIdx, float value) {
     float maxQValue = -2.0;
-    for (int i = 0; i < node->d->qValues.size(); ++i) {
-        if (node->d->childNodes[i] != nullptr) {
-            if (node->get_child_number_visits(i) >= searchSettings->maxAtVisit) {
-                maxQValue = max(maxQValue, node->d->qValues[i]);
+    if (d->childNodes[childIdx] != nullptr) {
+        node->lock();
+        if (node->is_playout_node()) {
+            for (uint_fast16_t i = 0; i < node->d->qValues.size(); ++i) {
+                if (node->d->childNumberVisits[i] >= searchSettings->maxAtVisit) {
+                    maxQValue = max(maxQValue, node->d->qValues[i]);
+                }
             }
-        }
+        }        
+        node->unlock();
+        if (-1.0 <= maxQValue && maxQValue <= 1.0)
+            maxQValue = -maxQValue;
+        else 
+            maxQValue = (double(d->qValues[childIdx]) * (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx]) + value) / (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx] + 1);
     }
-    if (maxQValue == -2.0) {
-        try {
-            maxQValue = node->d->qValues[argmax(node->d->childNumberVisits)];
-        }
-        catch(...){}
+    else {
+        maxQValue = (double(d->qValues[childIdx]) * (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx]) + value) / (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx] + 1);
     }
     return maxQValue;
+}
+
+float Node::score_qValue_with_maxWeight(Node* node, const SearchSettings* searchSettings, ChildIdx childIdx, float value, float maxWeight) {
+    float qMax = -2.0;
+    float result = value;
+    if (d->childNodes[childIdx] != nullptr) {
+        node->lock();
+        if (node->is_playout_node()) {
+            qMax = - node->d->qValues[argmax(node->d->qValues)];
+            result = (1 - maxWeight) * node->get_value() + maxWeight * qMax;
+        }
+        node->unlock();
+    }
+    return result;
 }
 
 bool Node::is_playout_node() const
@@ -1180,8 +1190,7 @@ NodeSplit Node::select_child_nodes(const SearchSettings* searchSettings, uint_fa
         nodeSplit.only_first(d->checkmateIdx, budget);
         return nodeSplit;
     }
-    //DynamicVector<float> q_u_sum = d->qValues + get_current_u_values(searchSettings);
-    DynamicVector<float> q_u_sum = (d->qValues * (d->childNumberVisits - searchSettings->virtualLoss * d->virtualLossCounter) - searchSettings->virtualLoss * d->virtualLossCounter) / d->childNumberVisits + get_current_u_values(searchSettings);
+    DynamicVector<float> q_u_sum = d->qValues + get_current_u_values(searchSettings);
     float firstMax;
     float secondMax;
     assert(q_u_sum.size() > 1);
