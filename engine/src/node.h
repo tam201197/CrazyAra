@@ -196,34 +196,30 @@ public:
         update_virtual_loss_counter<false>(childIdx, searchSettings->virtualLoss);
         valueSum += value;
         ++realVisitsSum;
-        //float newQValue = 0;
         if (d->childNumberVisits[childIdx] == searchSettings->virtualLoss) {
             // set new Q-value based on return
             // (the initialization of the Q-value was by Q_INIT which we don't want to recover.)
             d->qValues[childIdx] = value;
         }
         else {
-            //float oldQValue = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] + searchSettings->virtualLoss) / (d->childNumberVisits[childIdx] - searchSettings->virtualLoss);
+            assert(d->childNumberVisits[childIdx] != 0);
             if(isMaxOperator) {
                 d->qValues[childIdx] = score_child_qValue_max(get_child_node(childIdx), searchSettings, childIdx, value);
                 //d->qValues[childIdx] = (double(d->qValues[childIdx]) * (d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx] * searchSettings->virtualLoss) - (d->virtualLossCounter[childIdx] * searchSettings->virtualLoss)) / double(d->childNumberVisits[childIdx]);
-                assert(!isnan(d->qValues[childIdx]));
             }
             else {
 
                 // revert virtual loss and update the Q-value
-                assert(d->childNumberVisits[childIdx] != 0);
                 //d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] + searchSettings->virtualLoss + value) / d->childNumberVisits[childIdx];
                 d->qValues[childIdx] = (double(d->qValues[childIdx]) * (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx]) + value) / (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx] + 1);
-                assert(!isnan(d->qValues[childIdx]));
+                
             }
-            
+            assert(!isnan(d->qValues[childIdx]));
         }
 
         
         if (searchSettings->virtualLoss != 1) {
             d->childNumberVisits[childIdx] -= size_t(searchSettings->virtualLoss) - 1;
-            d->visitSum -= size_t(searchSettings->virtualLoss) - 1;
         }
         if (freeBackup) {
             ++d->freeVisits;
@@ -838,7 +834,6 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
             }
             break;
         }
-        
         if (it->node->is_transposition()) {
             targetQValue = it->node->get_value();
         }
