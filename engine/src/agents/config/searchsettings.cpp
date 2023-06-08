@@ -52,7 +52,8 @@ SearchSettings::SearchSettings() :
     searchPlayerMode(MODE_TWO_PLAYER),
     backupOperator(BACKUP_MEAN),
     maxAtVisit(20),
-    switchingMaxOperatorAtNode(800)
+    switchingMaxOperatorAtNode(800),
+    minimaxWeight(1.0)
 {
 
 }

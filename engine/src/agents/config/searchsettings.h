@@ -85,6 +85,7 @@ struct SearchSettings
     BackupOperatorType backupOperator;
     uint32_t maxAtVisit;
     uint32_t switchingMaxOperatorAtNode;
+    float minimaxWeight;
     SearchSettings();
 
 };
