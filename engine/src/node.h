@@ -244,26 +244,26 @@ public:
         else {
             assert(d->childNumberVisits[childIdx] != 0);
             float minimaxWeight = 0.0;
-            uint32_t n = d->childNumberVisits[childIdx];
+            uint32_t n = d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx] * searchSettings->virtualLoss;
             if (n < 100) {
                 minimaxWeight = 0.0;
             }
-            else if (n < 200) {
+            else if (n >= 100 && n < 200) {
                 minimaxWeight = 0.1;
             }
-            else if (d->childNumberVisits[childIdx] < 300) {
+            else if (n >= 200 && n < 300) {
                 minimaxWeight = 0.2;
             }
-            else if (d->childNumberVisits[childIdx] < 400) {
+            else if (n >= 300 && n < 400) {
                 minimaxWeight = 0.3;
             }
-            else if (d->childNumberVisits[childIdx] < 500) {
+            else if (n >= 400 && n < 500) {
                 minimaxWeight = 0.4;
             }
-            else if (d->childNumberVisits[childIdx] < 600) {
+            else if (n >= 500 && n < 600) {
                 minimaxWeight = 0.5;
             }
-            else{
+            else {
                 minimaxWeight = 0.6;
             }
             d->qValues[childIdx] = score_qValue_with_maxWeight(get_child_node(childIdx), searchSettings, childIdx, value, minimaxWeight);
@@ -291,7 +291,7 @@ public:
 
     float score_child_qValue_max(Node* node, const SearchSettings* searchSettings, ChildIdx childIdx, float value);
 
-    float score_qValue_with_maxWeight(Node* node, const SearchSettings* searchSettings, ChildIdx childIdx, float value, float maxWeight);
+    float score_qValue_with_maxWeight(Node* node, const SearchSettings* searchSettings, ChildIdx childIdx, float value, float minimaxWeight);
 
     bool is_playout_node() const;
 
