@@ -691,12 +691,11 @@ float Node::score_child_qValue_max(Node* node, const SearchSettings* searchSetti
 }
 
 float Node::score_qValue_with_maxWeight(Node* node, const SearchSettings* searchSettings, ChildIdx childIdx, float value, float minimaxWeight) {
-    float qMax = -2.0;
     float result = value;
     if (d->childNodes[childIdx] != nullptr) {
         node->lock();
         if (node->is_playout_node()) {
-            qMax = - node->d->qValues[argmax(node->d->qValues)];
+            float qMax = - max(node->d->qValues);
             float qMean = value;
             if (node->get_real_visits() != 0) {
                 qMean = node->get_value();
