@@ -249,7 +249,7 @@ public:
                 minimaxWeight = 0.0;
             }
             else if (n >= 50 && n < 100) {
-                minimaxWeight = 0.5;
+                minimaxWeight = 0.05;
             }
             else if (n >= 100 && n < 150) {
                 minimaxWeight = 0.1;
