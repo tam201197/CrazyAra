@@ -245,23 +245,68 @@ public:
             assert(d->childNumberVisits[childIdx] != 0);
             float minimaxWeight = 0.0;
             uint32_t n = d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx] * searchSettings->virtualLoss;
-            if (n < 200) {
+            if (n < 50) {
                 minimaxWeight = 0.0;
             }
-            else if (n >= 200 && n < 300) {
+            else if (n >= 50 && n < 100) {
+                minimaxWeight = 0.5;
+            }
+            else if (n >= 100 && n < 150) {
                 minimaxWeight = 0.1;
             }
-            else if (n >= 300 && n < 400) {
+            else if (n >= 150 && n < 200) {
+                minimaxWeight = 0.15;
+            }
+            else if (n >= 200 && n < 250) {
                 minimaxWeight = 0.2;
             }
-            else if (n >= 400 && n < 500) {
+            else if (n >= 250 && n < 300) {
+                minimaxWeight = 0.25;
+            }
+            else if (n >= 300 && n < 350) {
                 minimaxWeight = 0.3;
             }
-            else if (n >= 500 && n < 600) {
+            else if (n >= 350 && n < 400) {
+                minimaxWeight = 0.35;
+            }
+            else if (n >= 400 && n < 450) {
                 minimaxWeight = 0.4;
             }
-            else {
+            else if (n >= 450 && n < 500) {
+                minimaxWeight = 0.45;
+            }
+            else if (n >= 500 && n < 550) {
                 minimaxWeight = 0.5;
+            }
+            else if (n >= 550 && n < 600) {
+                minimaxWeight = 0.55;
+            }
+            else if (n >= 600 && n < 650) {
+                minimaxWeight = 0.6;
+            }
+            else if (n >= 650 && n < 700) {
+                minimaxWeight = 0.65;
+            }
+            else if (n >= 700 && n < 750) {
+                minimaxWeight = 0.7;
+            }
+            else if (n >= 750 && n < 800) {
+                minimaxWeight = 0.75;
+            }
+            else if (n >= 800 && n < 850) {
+                minimaxWeight = 0.8;
+            }
+            else if (n >= 850 && n < 900) {
+                minimaxWeight = 0.85;
+            }
+            else if (n >= 900 && n < 950) {
+                minimaxWeight = 0.9;
+            }
+            else if (n >= 950 && n < 1000) {
+                minimaxWeight = 0.95;
+            }
+            else {
+                minimaxWeight = 1;
             }
             d->qValues[childIdx] = score_qValue_with_maxWeight(get_child_node(childIdx), searchSettings, childIdx, value, minimaxWeight);
             assert(!isnan(d->qValues[childIdx]));
