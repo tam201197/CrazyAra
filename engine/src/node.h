@@ -266,12 +266,12 @@ public:
             else if (n >= 600 && n < 700) {
                 minimaxWeight = 0.6;
             }
-            else if (n >= 700 && n < 800) {
+            /*else if (n >= 700 && n < 800) {
                 minimaxWeight = 0.8;
             }
             else if (n >= 800 && n < 900) {
                 minimaxWeight = 0.9;
-            }
+            }*/
             else {
                 minimaxWeight = 1.0;
             }
