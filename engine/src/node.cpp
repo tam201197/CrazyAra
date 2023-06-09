@@ -294,7 +294,6 @@ void Node::update_solved_terminal(const Node* childNode, ChildIdx childIdx)
     define_end_ply_for_solved_terminal(childNode);
     set_value(targetValue);
     d->qValues[childIdx] = targetValue;
-    d->qValuesWithVirtualLoss[childIdx] = targetValue;
 }
 
 void Node::mcts_policy_based_on_wins(DynamicVector<double> &mctsPolicy, const SearchSettings* searchSettings) const
@@ -537,7 +536,6 @@ float Node::get_max_qValue() const
 void Node::set_q_value(ChildIdx childIdx, float value)
 {
     d->qValues[childIdx] = value;
-    d->qValuesWithVirtualLoss[childIdx] = value;
 }
 
 ChildIdx Node::get_best_q_idx() const
@@ -560,7 +558,6 @@ void Node::reserve_full_memory()
     const size_t numberChildNodes = get_number_child_nodes();
     d->childNumberVisits.reserve(numberChildNodes);
     d->qValues.reserve(numberChildNodes);
-    d->qValuesWithVirtualLoss.reserve(numberChildNodes);
     d->childNodes.reserve(numberChildNodes);
     d->virtualLossCounter.reserve(numberChildNodes);
     d->nodeTypes.reserve(numberChildNodes);
@@ -1039,7 +1036,6 @@ void Node::disable_action(size_t childIdxForParent)
 {
     policyProbSmall[childIdxForParent] = 0;
     d->qValues[childIdxForParent] = -INT_MAX;
-    d->qValuesWithVirtualLoss[childIdxForParent] = -INT_MAX;
 }
 
 void Node::enhance_moves(const SearchSettings* searchSettings)
@@ -1172,12 +1168,10 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings)
     }
 
     assert(sum(d->childNumberVisits) == d->visitSum);
-    //DynamicVector<float> qValuesWithVirtualLoss = (d->qValues * (d->childNumberVisits - searchSettings->virtualLoss * d->virtualLossCounter) - searchSettings->virtualLoss * d->virtualLossCounter) / d->childNumberVisits;
     // find the move according to the q- and u-values for each move
     // calculate the current u values
     // it's not worth to save the u values as a node attribute because u is updated every time n_sum changes
     return argmax(d->qValues + get_current_u_values(searchSettings));
-
 }
 
 NodeSplit Node::select_child_nodes(const SearchSettings* searchSettings, uint_fast16_t budget)

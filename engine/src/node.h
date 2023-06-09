@@ -189,7 +189,45 @@ public:
      * @param searchSettings Pointer to the search settings struct
      */
     template<bool freeBackup>
-    void revert_virtual_loss_and_update(ChildIdx childIdx, float value, const SearchSettings* searchSettings, bool solveForTerminal, bool isMaxOperator)
+    void revert_virtual_loss_and_update(ChildIdx childIdx, float value, const SearchSettings* searchSettings, bool solveForTerminal)
+    {
+        lock();
+        // decrement virtual loss counter
+        update_virtual_loss_counter<false>(childIdx, searchSettings->virtualLoss);
+
+        valueSum += value;
+        ++realVisitsSum;
+
+        if (d->childNumberVisits[childIdx] == searchSettings->virtualLoss) {
+            // set new Q-value based on return
+            // (the initialization of the Q-value was by Q_INIT which we don't want to recover.)
+            d->qValues[childIdx] = value;
+        }
+        else {
+            // revert virtual loss and update the Q-value
+            assert(d->childNumberVisits[childIdx] != 0);
+            d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] + searchSettings->virtualLoss + value) / d->childNumberVisits[childIdx];
+            assert(!isnan(d->qValues[childIdx]));
+        }
+
+        if (searchSettings->virtualLoss != 1) {
+            d->childNumberVisits[childIdx] -= size_t(searchSettings->virtualLoss) - 1;
+            d->visitSum -= size_t(searchSettings->virtualLoss) - 1;
+        }
+        if (freeBackup) {
+            ++d->freeVisits;
+        }
+        if (solveForTerminal) {
+            solve_for_terminal(childIdx, searchSettings);
+        }
+        unlock();
+    }
+
+
+
+
+    template<bool freeBackup>
+    void revert_virtual_loss_and_update_max_operator(ChildIdx childIdx, float value, const SearchSettings* searchSettings, bool solveForTerminal, bool isMaxOperator)
     {
         lock();
         // decrement virtual loss counter
@@ -899,8 +937,8 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
         }*/
         switch (searchSettings->backupOperator) {
         case BACKUP_MEAN:
-            freeBackup ? it->node->revert_virtual_loss_and_update<true>(it->childIdx, value, searchSettings, solveForTerminal, false) :
-                it->node->revert_virtual_loss_and_update<false>(it->childIdx, value, searchSettings, solveForTerminal, false);
+            freeBackup ? it->node->revert_virtual_loss_and_update<true>(it->childIdx, value, searchSettings, solveForTerminal) :
+                it->node->revert_virtual_loss_and_update<false>(it->childIdx, value, searchSettings, solveForTerminal);
             break;
         case BACKUP_MAX:
             freeBackup ? it->node->revert_virtual_loss_with_implicit_minimax<true>(it->childIdx, value, searchSettings, solveForTerminal) :
