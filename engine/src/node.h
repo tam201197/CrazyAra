@@ -257,9 +257,9 @@ public:
             else if (n >= 300 && n < 400) {
                 minimaxWeight = 0.3;
             }
-            //else if (n >= 400 && n < 500) {
-            //    minimaxWeight = 0.4;
-            //}
+            else if (n >= 400 && n < 500) {
+                minimaxWeight = 0.4;
+            }
             //else if (n >= 500 && n < 600) {
             //    minimaxWeight = 0.5;
             //}
@@ -267,7 +267,7 @@ public:
             //    minimaxWeight = 0.6;
             //}
             else {
-                minimaxWeight = 0.4;
+                minimaxWeight = 0.5;
             }
             d->qValues[childIdx] = score_qValue_with_maxWeight(get_child_node(childIdx), searchSettings, childIdx, value, minimaxWeight);
             assert(!isnan(d->qValues[childIdx]));
