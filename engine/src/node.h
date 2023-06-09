@@ -245,10 +245,7 @@ public:
             assert(d->childNumberVisits[childIdx] != 0);
             float minimaxWeight = 0.0;
             uint32_t n = d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx] * searchSettings->virtualLoss;
-            if (n < 100) {
-                minimaxWeight = 0.1;
-            }
-            else if (n >= 100 && n < 200) {
+            if (n < 200) {
                 minimaxWeight = 0.2;
             }
             else if (n >= 200 && n < 300) {
