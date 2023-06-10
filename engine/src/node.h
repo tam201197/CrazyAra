@@ -206,7 +206,13 @@ public:
         else {
             // revert virtual loss and update the Q-value
             assert(d->childNumberVisits[childIdx] != 0);
-            d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] + searchSettings->virtualLoss + value) / d->childNumberVisits[childIdx];
+            if (searchSettings->useVirtualLoss) {
+                d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] + searchSettings->virtualLoss + value) / d->childNumberVisits[childIdx];
+            } 
+            else {
+                d->qValues[childIdx] = (double(d->qValues[childIdx]) * (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx]) + value) / (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx] + 1);
+            }
+            
             assert(!isnan(d->qValues[childIdx]));
         }
 
@@ -222,9 +228,6 @@ public:
         }
         unlock();
     }
-
-
-
 
     template<bool freeBackup>
     void revert_virtual_loss_and_update_max_operator(ChildIdx childIdx, float value, const SearchSettings* searchSettings, bool solveForTerminal, bool isMaxOperator)
@@ -334,7 +337,7 @@ public:
      * @brief revert_virtual_loss Reverts the virtual loss for a target node
      * @param childIdx Index to the child node to update
      */
-    void revert_virtual_loss(ChildIdx childIdx, float virtualLoss);
+    void revert_virtual_loss(ChildIdx childIdx, const SearchSettings* searchSettings);
 
     float score_child_qValue_max(Node* node, const SearchSettings* searchSettings, ChildIdx childIdx, float value);
 
@@ -372,7 +375,7 @@ public:
     double get_value_sum() const;
     uint32_t get_real_visits() const;
 
-    void apply_virtual_loss_to_child(ChildIdx childIdx, uint_fast32_t virtualLoss);
+    void apply_virtual_loss_to_child(ChildIdx childIdx, const SearchSettings* searchSettings);
 
     void increment_no_visit_idx();
     void fully_expand_node();
@@ -888,7 +891,7 @@ bool is_terminal_value(float value);
  * @param virtualLoss Virtual loss value
  * @param trajectory Trajectory on how to get to the given collision
  */
-void backup_collision(float virtualLoss, const Trajectory& trajectory);
+void backup_collision(const SearchSettings* searchSettings, const Trajectory& trajectory);
 
 float get_transposition_q_value(uint_fast32_t transposVisits, double transposQValue, double masterQValue);
 
@@ -918,29 +921,22 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
             break;
         case MODE_SINGLE_PLAYER:;
         }
-        /*switch (searchSettings->backupOperator) {
-        case BACKUP_MEAN:
-            freeBackup ? it->node->revert_virtual_loss_and_update<true>(it->childIdx, value, searchSettings, solveForTerminal, false) :
-                it->node->revert_virtual_loss_and_update<false>(it->childIdx, value, searchSettings, solveForTerminal, false);
-            break;
-        case BACKUP_MAX:
-            uint32_t realChildNumberVisits = it->node->get_child_number_visits(it->childIdx) - it->node->get_virtual_loss_counter(it->childIdx) * searchSettings->virtualLoss;
-            if (realChildNumberVisits >= searchSettings->switchingMaxOperatorAtNode) {
-                freeBackup ? it->node->revert_virtual_loss_and_update<true>(it->childIdx, value, searchSettings, solveForTerminal, true) :
-                    it->node->revert_virtual_loss_and_update<false>(it->childIdx, value, searchSettings, solveForTerminal, true);
-            }
-            else {
-                freeBackup ? it->node->revert_virtual_loss_and_update<true>(it->childIdx, value, searchSettings, solveForTerminal, false) :
-                    it->node->revert_virtual_loss_and_update<false>(it->childIdx, value, searchSettings, solveForTerminal, false);
-            }
-            break;
-        }*/
         switch (searchSettings->backupOperator) {
         case BACKUP_MEAN:
             freeBackup ? it->node->revert_virtual_loss_and_update<true>(it->childIdx, value, searchSettings, solveForTerminal) :
                 it->node->revert_virtual_loss_and_update<false>(it->childIdx, value, searchSettings, solveForTerminal);
             break;
         case BACKUP_MAX:
+            if (it->node->get_child_number_visits(it->childIdx) - it->node->get_virtual_loss_counter(it->childIdx) * searchSettings->virtualLoss >= searchSettings->switchingMaxOperatorAtNode) {
+                freeBackup ? it->node->revert_virtual_loss_and_update_max_operator<true>(it->childIdx, value, searchSettings, solveForTerminal, true) :
+                    it->node->revert_virtual_loss_and_update_max_operator<false>(it->childIdx, value, searchSettings, solveForTerminal, true);
+            }
+            else {
+                freeBackup ? it->node->revert_virtual_loss_and_update_max_operator<true>(it->childIdx, value, searchSettings, solveForTerminal, false) :
+                    it->node->revert_virtual_loss_and_update_max_operator<false>(it->childIdx, value, searchSettings, solveForTerminal, false);
+            }
+            break;
+        case BACKUP_IMPLICIT_MAX:
             freeBackup ? it->node->revert_virtual_loss_with_implicit_minimax<true>(it->childIdx, value, searchSettings, solveForTerminal) :
                 it->node->revert_virtual_loss_with_implicit_minimax<false>(it->childIdx, value, searchSettings, solveForTerminal);
             break;

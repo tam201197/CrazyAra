@@ -744,12 +744,16 @@ void CrazyAra::init_search_settings()
     if (Options["Backup_Operator"] == "mean_op") {
         searchSettings.backupOperator = BACKUP_MEAN;
     }
-    else {
+    else if (Options["Backup_Operator"] == "max_op") {
         searchSettings.backupOperator = BACKUP_MAX;
+    }
+    else if (Options["Backup_Operator"] == "implicit_max_op") {
+        searchSettings.backupOperator = BACKUP_IMPLICIT_MAX;
     }
     searchSettings.maxAtVisit = Options["Max_At_Visits"];
     searchSettings.switchingMaxOperatorAtNode = Options["Switching_Max_Operator_At_Node"];
     searchSettings.minimaxWeight = Options["Centi_Minimax_Weight"] / 100.0f;
+    searchSettings.useVirtualLoss = Options["Virtual_Style"] == "virtual_loss";
     
 }
 

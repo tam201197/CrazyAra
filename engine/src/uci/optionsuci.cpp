@@ -66,7 +66,8 @@ void on_tb_path(const Option& o) {
 void OptionsUCI::init(OptionsMap& o)
 {
     o["Allow_Early_Stopping"] << Option(true);
-    o["Backup_Operator"] << Option("mean_op", { "mean_op", "max_op" });
+    o["Backup_Operator"] << Option("mean_op", { "mean_op", "max_op", "implicit_max_op"});
+    o["Virtual_Style"] << Option("virtual_loss", { "virtual_loss", "virtual_visit" });
     o["Max_At_Visits"]  << Option(20 , 0, 500);
     o["Switching_Max_Operator_At_Node"] << Option(800, 0, 99999999);
     o["Centi_Minimax_Weight"] << Option(100, 0, 100);

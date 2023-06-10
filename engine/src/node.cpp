@@ -504,18 +504,20 @@ bool Node::has_nn_results() const
     return hasNNResults;
 }
 
-void Node::apply_virtual_loss_to_child(ChildIdx childIdx, uint_fast32_t virtualLoss)
+void Node::apply_virtual_loss_to_child(ChildIdx childIdx, const SearchSettings* searchSettings)
 {
     // update the stats of the parent node
     // make it look like if one has lost X games from this node forward where X is the virtual loss value
     // temporarily reduce the attraction of this node by applying a virtual loss /
     // the effect of virtual loss will be undone if the playout is over
-    d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] - virtualLoss) / double(d->childNumberVisits[childIdx] + virtualLoss);
+    if (searchSettings->useVirtualLoss) {
+        d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] - searchSettings->virtualLoss) / double(d->childNumberVisits[childIdx] + searchSettings->virtualLoss);
+    }
     // virtual increase the number of visits
-    d->childNumberVisits[childIdx] += virtualLoss;
-    d->visitSum += virtualLoss;
+    d->childNumberVisits[childIdx] += searchSettings->virtualLoss;
+    d->visitSum += searchSettings->virtualLoss;
     // increment virtual loss counter
-    update_virtual_loss_counter<true>(childIdx, virtualLoss);
+    update_virtual_loss_counter<true>(childIdx, searchSettings->virtualLoss);
 }
 
 float Node::get_q_value(ChildIdx childIdx) const
@@ -647,20 +649,23 @@ uint32_t Node::get_real_visits(ChildIdx childIdx) const
     return d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx];
 }
 
-void backup_collision(float virtualLoss, const Trajectory& trajectory) {
+void backup_collision(const SearchSettings* searchSettings, const Trajectory& trajectory) {
     for (auto it = trajectory.rbegin(); it != trajectory.rend(); ++it) {
-        it->node->revert_virtual_loss(it->childIdx, virtualLoss);
+        it->node->revert_virtual_loss(it->childIdx, searchSettings);
     }
 }
 
-void Node::revert_virtual_loss(ChildIdx childIdx, float virtualLoss)
+void Node::revert_virtual_loss(ChildIdx childIdx, const SearchSettings* searchSettings)
 {
     lock();
-    d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] + virtualLoss) / (d->childNumberVisits[childIdx] - virtualLoss);
-    d->childNumberVisits[childIdx] -= virtualLoss;
-    d->visitSum -= virtualLoss;
+    if (searchSettings->useVirtualLoss) {
+        d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] + searchSettings->virtualLoss) / (d->childNumberVisits[childIdx] - searchSettings->virtualLoss);
+
+    }
+    d->childNumberVisits[childIdx] -= searchSettings->virtualLoss;
+    d->visitSum -= searchSettings->virtualLoss;
     // decrement virtual loss counter
-    update_virtual_loss_counter<false>(childIdx, virtualLoss);
+    update_virtual_loss_counter<false>(childIdx, searchSettings->virtualLoss);
     unlock();
 }
 

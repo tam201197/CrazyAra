@@ -38,7 +38,8 @@ enum SearchPlayerMode {
 
 enum BackupOperatorType {
     BACKUP_MEAN,
-    BACKUP_MAX
+    BACKUP_MAX,
+    BACKUP_IMPLICIT_MAX,
 };
 
 struct SearchSettings
@@ -54,6 +55,7 @@ struct SearchSettings
     // describes how much better the highest Q-Value has to be to replace the candidate move with the highest visit count
     float qVetoDelta;
     uint_fast32_t virtualLoss;
+    bool useVirtualLoss;
     bool verbose;
     uint_fast8_t epsilonChecksCounter;
     //    bool enhanceCaptures;   currently not support
