@@ -289,13 +289,13 @@ public:
             if (n < 200) {
                 minimaxWeight = 0.1;
             }
-            else if (n >= 200 && n < 400) {
+            else if (n >= 200 && n < 500) {
                 minimaxWeight = 0.2;
             }
-            else if (n >= 400 && n < 600) {
+            else if (n >= 500 && n < 800) {
                 minimaxWeight = 0.3;
             }
-            else if (n >= 600 && n < 800) {
+            else if (n >= 800 && n < 1200) {
                minimaxWeight = 0.4;
             }
             /*else if (n >= 500 && n < 600) {
@@ -307,9 +307,9 @@ public:
             else if (n >= 700 && n < 800) {
                 minimaxWeight = 0.9;
             }*/
-            else if (n >= 800 && n < 1000) {
+            /*else if (n >= 800 && n < 1000) {
                 minimaxWeight = 0.5;
-            }
+            }*/
             else {
                 minimaxWeight = 0.6;
             }
