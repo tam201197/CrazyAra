@@ -701,9 +701,17 @@ float Node::score_qValue_with_maxWeight(Node* node, const SearchSettings* search
     if (d->childNodes[childIdx] != nullptr) {
         node->lock();
         if (node->is_playout_node()) {
-            float qMax = 0;
-            if (minimaxWeight > 0) {
-                qMax = -max(node->d->qValues);
+            float qMax = -2.0;
+            for (uint_fast16_t i = 0; i < node->d->qValues.size(); ++i) {
+                if (node->d->childNumberVisits[i] >= 5) {
+                    qMax = max(qMax, node->d->qValues[i]);
+                }
+            }
+            if (qMax == -2.0) {
+                qMax = value;
+            } 
+            else {
+                qMax = -qMax;
             }
             float qMean = value;
             if (node->get_real_visits() != 0) {
