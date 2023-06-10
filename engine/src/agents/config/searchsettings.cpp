@@ -53,7 +53,7 @@ SearchSettings::SearchSettings() :
     backupOperator(BACKUP_MEAN),
     maxAtVisit(20),
     switchingMaxOperatorAtNode(800),
-    minimaxWeight(1.0),
+    minimaxWeight(0.0),
     useVirtualLoss(true)
 {
 

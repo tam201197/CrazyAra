@@ -746,6 +746,7 @@ void CrazyAra::init_search_settings()
     }
     else if (Options["Backup_Operator"] == "max_op") {
         searchSettings.backupOperator = BACKUP_MAX;
+        searchSettings.useVirtualLoss = false;
     }
     else if (Options["Backup_Operator"] == "implicit_max_op") {
         searchSettings.backupOperator = BACKUP_IMPLICIT_MAX;
