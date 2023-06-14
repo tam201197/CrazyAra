@@ -40,6 +40,7 @@ enum BackupOperatorType {
     BACKUP_MEAN,
     BACKUP_MAX,
     BACKUP_IMPLICIT_MAX,
+    BACKUP_POWER_MEAN
 };
 
 struct SearchSettings
@@ -88,6 +89,7 @@ struct SearchSettings
     uint32_t maxAtVisit;
     uint32_t switchingMaxOperatorAtNode;
     float minimaxWeight;
+    float power_mean;
     SearchSettings();
 
 };

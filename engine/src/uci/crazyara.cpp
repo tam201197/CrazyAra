@@ -750,11 +750,17 @@ void CrazyAra::init_search_settings()
     }
     else if (Options["Backup_Operator"] == "implicit_max_op") {
         searchSettings.backupOperator = BACKUP_IMPLICIT_MAX;
+        searchSettings.useVirtualLoss = false;
+    }
+    else if (Options["Backup_Operator"] == "power_mean_op") {
+        searchSettings.backupOperator = BACKUP_POWER_MEAN;
+        searchSettings.useVirtualLoss = false;
     }
     searchSettings.maxAtVisit = Options["Max_At_Visits"];
     searchSettings.switchingMaxOperatorAtNode = Options["Switching_Max_Operator_At_Node"];
     searchSettings.minimaxWeight = Options["Centi_Minimax_Weight"] / 100.0f;
     searchSettings.useVirtualLoss = Options["Virtual_Style"] == "virtual_loss";
+    searchSettings.power_mean = Options["Centi_Power_Mean"] / 10.0f;
     
 }
 

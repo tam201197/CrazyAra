@@ -54,7 +54,8 @@ SearchSettings::SearchSettings() :
     maxAtVisit(20),
     switchingMaxOperatorAtNode(800),
     minimaxWeight(0.0),
-    useVirtualLoss(true)
+    useVirtualLoss(true),
+    power_mean(2.2)
 {
 
 }

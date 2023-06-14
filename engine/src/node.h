@@ -326,6 +326,42 @@ public:
         unlock();
     }
 
+    template<bool freeBackup>
+    void revert_virtual_loss_with_power_UCT(ChildIdx childIdx, float value, const SearchSettings* searchSettings, bool solveForTerminal)
+    {
+        lock();
+        // decrement virtual loss counter
+        update_virtual_loss_counter<false>(childIdx, searchSettings->virtualLoss);
+        valueSum += value;
+        ++realVisitsSum;
+        //float newQValue = 0;
+        if (d->childNumberVisits[childIdx] == searchSettings->virtualLoss) {
+            // set new Q-value based on return
+            // (the initialization of the Q-value was by Q_INIT which we don't want to recover.)
+            d->qValues[childIdx] = value;
+        }
+        else {
+            assert(d->childNumberVisits[childIdx] != 0);
+            float vValue = 0;
+            for (uint_fast16_t i = 0; i < d->qValues.size(); ++i) {
+                vValue += d->childNumberVisits[i] * pow(d->qValues[i], searchSettings->power_mean);
+            }
+            vValue = pow(vValue / realVisitsSum, 1 / searchSettings->power_mean);
+            d->qValues[childIdx] = -(get_child_node(childIdx)->valueSum + realVisitsSum * vValue) / d->childNumberVisits[childIdx];
+            assert(!isnan(d->qValues[childIdx]));
+        }
+        if (searchSettings->virtualLoss != 1) {
+            d->childNumberVisits[childIdx] -= size_t(searchSettings->virtualLoss) - 1;
+        }
+        if (freeBackup) {
+            ++d->freeVisits;
+        }
+        if (solveForTerminal) {
+            solve_for_terminal(childIdx, searchSettings);
+        }
+        unlock();
+    }
+
 
     /**
      * @brief revert_virtual_loss Reverts the virtual loss for a target node
@@ -933,6 +969,10 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
         case BACKUP_IMPLICIT_MAX:
             freeBackup ? it->node->revert_virtual_loss_with_implicit_minimax<true>(it->childIdx, value, searchSettings, solveForTerminal) :
                 it->node->revert_virtual_loss_with_implicit_minimax<false>(it->childIdx, value, searchSettings, solveForTerminal);
+            break;
+        case BACKUP_POWER_MEAN:
+            freeBackup ? it->node->revert_virtual_loss_with_power_UCT<true>(it->childIdx, value, searchSettings, solveForTerminal) :
+                it->node->revert_virtual_loss_with_power_UCT<false>(it->childIdx, value, searchSettings, solveForTerminal);
             break;
         }
         if (it->node->is_transposition()) {
