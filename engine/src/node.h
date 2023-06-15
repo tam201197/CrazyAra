@@ -342,12 +342,23 @@ public:
         }
         else {
             assert(d->childNumberVisits[childIdx] != 0);
-            float vValue = 0;
-            for (uint_fast16_t i = 0; i < d->qValues.size(); ++i) {
-                vValue += d->childNumberVisits[i] * pow(d->qValues[i], searchSettings->power_mean);
+            float vValue = 0;           
+            Node* childNode = get_child_node(childIdx);
+            float childValueSum = 0;
+            childNode->lock();
+            uint32_t childVisitSum = childNode->realVisitsSum;
+            assert(childVisitSum != 0);
+            if (childNode->is_playout_node()) {
+                for (uint_fast16_t i = 0; i < childNode->d->qValues.size(); ++i) {
+                    vValue += (childNode->d->childNumberVisits[i] - searchSettings->virtualLoss * childNode->d->virtualLossCounter[i]) * qValue_exponent(double(childNode->d->qValues[i]), searchSettings->power_mean);
+                }
+                float a = double(vValue) / childVisitSum;
+                float b = 1 / double(searchSettings->power_mean);
+                vValue = - qValue_exponent(a, b);
+                assert(!isnan(vValue));
             }
-            vValue = pow(vValue / realVisitsSum, 1 / searchSettings->power_mean);
-            d->qValues[childIdx] = -(get_child_node(childIdx)->valueSum + realVisitsSum * vValue) / d->childNumberVisits[childIdx];
+            childNode->unlock();
+            d->qValues[childIdx] = (value + childVisitSum * vValue) / (d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx] * searchSettings->virtualLoss);
             assert(!isnan(d->qValues[childIdx]));
         }
         if (searchSettings->virtualLoss != 1) {
@@ -372,6 +383,8 @@ public:
     float score_child_qValue_max(Node* node, const SearchSettings* searchSettings, ChildIdx childIdx, float value);
 
     float score_qValue_with_maxWeight(Node* node, const SearchSettings* searchSettings, ChildIdx childIdx, float value, float minimaxWeight);
+
+    float qValue_exponent(float qValue, float exponent);
 
     bool is_playout_node() const;
 
