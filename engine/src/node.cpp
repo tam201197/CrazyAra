@@ -93,7 +93,8 @@ Node::Node(StateObj* state, const SearchSettings* searchSettings):
     isTerminal(false),
     isTablebase(false),
     hasNNResults(false),
-    sorted(false)
+    sorted(false),
+    vValue(0)
 {
     // specify the number of direct child nodes of this node
     check_for_terminal(state);
@@ -716,7 +717,7 @@ float Node::qValue_exponent(float qValue, float exponent) {
         posQValue = -qValue;
     }
     float result = pow(posQValue, exponent);
-    if (fmod(exponent, 2.0f) != 0.0f && isNeg) {
+    if (isNeg) {
         result = -result;
     }
     return result;
