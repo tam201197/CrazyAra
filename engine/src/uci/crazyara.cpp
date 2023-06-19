@@ -95,9 +95,11 @@ void CrazyAra::uci_loop(int argc, char* argv[])
 
     // this is debug vector which can contain uci commands which will be automatically processed when the executable is launched
     vector<string> commands = {
-        /*"setoption name Backup_Operator value max_op",
+        "setoption name Backup_Operator value power_mean_op",
+        "setoption name Batch_Size value 1",
+        "setoption name Threads value 1",
         "isready",
-        "go nodes 1000"*/
+        "go nodes 1"
     };
 
     do {
@@ -760,7 +762,7 @@ void CrazyAra::init_search_settings()
     searchSettings.switchingMaxOperatorAtNode = Options["Switching_Max_Operator_At_Node"];
     searchSettings.minimaxWeight = Options["Centi_Minimax_Weight"] / 100.0f;
     searchSettings.useVirtualLoss = Options["Virtual_Style"] == "virtual_loss";
-    searchSettings.power_mean = Options["Centi_Power_Mean"] / 10.0f;
+    searchSettings.power_mean = Options["Denti_Power_Mean"] / 10.0f;
     
 }
 

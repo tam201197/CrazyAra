@@ -94,7 +94,8 @@ Node::Node(StateObj* state, const SearchSettings* searchSettings):
     isTablebase(false),
     hasNNResults(false),
     sorted(false),
-    vValue(0)
+    vValue(0),
+    initValue(0)
 {
     // specify the number of direct child nodes of this node
     check_for_terminal(state);
@@ -762,6 +763,7 @@ void Node::set_value(float value)
 {
     ++this->realVisitsSum;
     this->valueSum = value * this->realVisitsSum;
+    this->initValue = this->valueSum;
 }
 
 Node* Node::add_new_node_to_tree(MapWithMutex* mapWithMutex, StateObj* newState, ChildIdx childIdx, const SearchSettings* searchSettings, bool& transposition)
