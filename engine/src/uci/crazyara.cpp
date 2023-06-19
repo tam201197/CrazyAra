@@ -95,11 +95,11 @@ void CrazyAra::uci_loop(int argc, char* argv[])
 
     // this is debug vector which can contain uci commands which will be automatically processed when the executable is launched
     vector<string> commands = {
-        "setoption name Backup_Operator value power_mean_op",
+        /*"setoption name Backup_Operator value power_mean_op",
         "setoption name Batch_Size value 1",
         "setoption name Threads value 1",
         "isready",
-        "go nodes 1"
+        "go nodes 1"*/
     };
 
     do {
