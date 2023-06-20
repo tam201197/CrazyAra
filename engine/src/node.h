@@ -388,28 +388,27 @@ public:
         if (vValue == 0) {
             vValue += qValue_exponent(initValue, searchSettings->power_mean);
         }
+        uint32_t childNumberVisit = d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx] * searchSettings->virtualLoss;
         if (d->childNumberVisits[childIdx] == searchSettings->virtualLoss) {
             // set new Q-value based on return
             // (the initialization of the Q-value was by Q_INIT which we don't want to recover.)
             d->qValues[childIdx] = value;
-            vValue += (d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx] * searchSettings->virtualLoss) * qValue_exponent(value, searchSettings->power_mean);
         }
         else {
             assert(d->childNumberVisits[childIdx] != 0);
-            uint32_t childNumberVisit = d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx] * searchSettings->virtualLoss;
             Node* childNode = get_child_node(childIdx);
             childNode->lock();           
             uint32_t childVisitSum = childNode->get_real_visits();
-            double childvValue = pow(childNode->vValue / childVisitSum, 1 / searchSettings->power_mean) - 1;
+            double childvValue = pow(double(childNode->vValue) / childVisitSum, 1 / double(searchSettings->power_mean)) - 1;
             assert(!isnan(childvValue));
             childNode->unlock();
-            if (childNumberVisit - searchSettings->virtualLoss > 0) {
+            if (childNumberVisit - 1 > 0) {
                 vValue -= (childNumberVisit - searchSettings->virtualLoss) * qValue_exponent(d->qValues[childIdx], searchSettings->power_mean);
             }
             d->qValues[childIdx] = - childvValue;
-            vValue += childNumberVisit * qValue_exponent(d->qValues[childIdx], searchSettings->power_mean);
             assert(!isnan(d->qValues[childIdx]));
         }
+        vValue += childNumberVisit * qValue_exponent(d->qValues[childIdx], searchSettings->power_mean);
         if (searchSettings->virtualLoss != 1) {
             d->childNumberVisits[childIdx] -= size_t(searchSettings->virtualLoss) - 1;
         }
