@@ -408,9 +408,11 @@ public:
             double childvValue = pow(a, b) - 1.0;
             assert(!isnan(childvValue));
             childNode->unlock();
+            assert(-1 <= childvValue && childvValue <= 1);
             if (childNumberVisit - 1 > 0) {
                 vValue -= (childNumberVisit - searchSettings->virtualLoss) * qValue_exponent(d->qValues[childIdx], searchSettings->power_mean);
             }
+            
             d->qValues[childIdx] = - childvValue;
             assert(!isnan(d->qValues[childIdx]));
             vValue += childNumberVisit * qValue_exponent(- childvValue, searchSettings->power_mean);
