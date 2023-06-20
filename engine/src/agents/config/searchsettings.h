@@ -89,7 +89,7 @@ struct SearchSettings
     uint32_t maxAtVisit;
     uint32_t switchingMaxOperatorAtNode;
     float minimaxWeight;
-    double power_mean;
+    float power_mean;
     SearchSettings();
 
 };

@@ -714,17 +714,7 @@ float Node::score_qValue_with_maxWeight(Node* node, const SearchSettings* search
 }
 
 double Node::qValue_exponent(double qValue, double exponent) {
-    bool isNeg = qValue < 0;
-    double posQValue = qValue;
-    if (isNeg) {
-        posQValue = -qValue;
-    }
-    double result = pow(posQValue, exponent);
-    if (isNeg) {
-        result = -result;
-    }
-    assert(qValue == result);
-    return result;
+    return pow(double(1 + qValue), exponent);
 }
 
 bool Node::is_playout_node() const
