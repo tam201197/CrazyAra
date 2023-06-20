@@ -98,7 +98,7 @@ private:
     // singular values
     // valueSum stores the sum of all incoming value evaluations
     double valueSum;
-    long double vValue;
+    double vValue;
     double initValue;
 
     unique_ptr<NodeData> d;
@@ -403,7 +403,9 @@ public:
                 childNode->vValue += qValue_exponent(childNode->initValue, searchSettings->power_mean);
             }
             uint32_t childVisitSum = childNode->get_real_visits();
-            long double childvValue = pow(childNode->vValue / childVisitSum, 1 / double(searchSettings->power_mean)) - 1.0;
+            double a = childNode->vValue / childVisitSum;
+            double b = 1 / double(searchSettings->power_mean);
+            double childvValue = pow(a, b) - 1.0;
             assert(!isnan(childvValue));
             childNode->unlock();
             if (childNumberVisit - 1 > 0) {
@@ -437,7 +439,7 @@ public:
 
     float score_qValue_with_maxWeight(Node* node, const SearchSettings* searchSettings, ChildIdx childIdx, float value, float minimaxWeight);
 
-    long double qValue_exponent(long double qValue, double exponent);
+    double qValue_exponent(double qValue, double exponent);
 
     bool is_playout_node() const;
 
