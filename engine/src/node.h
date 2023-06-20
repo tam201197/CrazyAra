@@ -398,13 +398,10 @@ public:
         else {
             assert(d->childNumberVisits[childIdx] != 0);
             Node* childNode = get_child_node(childIdx);
-            info_string("virtual visits: ", d->childNumberVisits[childIdx]);
             childNode->lock();
             if (childNode->vValue == 0) {
                 childNode->vValue += qValue_exponent(childNode->initValue, searchSettings->power_mean);
             }
-            info_string("child value sum: ", childNode->valueSum);
-            info_string("child vValue: ", childNode->vValue);
             uint32_t childVisitSum = childNode->get_real_visits();
             long double childvValue = pow(childNode->vValue / childVisitSum, 1 / double(searchSettings->power_mean)) - 1.0;
             assert(!isnan(childvValue));
