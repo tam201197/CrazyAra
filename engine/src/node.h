@@ -404,10 +404,10 @@ public:
             }
             uint32_t childVisitSum = childNode->get_real_visits();
             double a = childNode->vValue / childVisitSum;
+            childNode->unlock();
             double b = 1 / double(searchSettings->power_mean);
             double childvValue = pow(a, b) - 1.0;
             assert(!isnan(childvValue));
-            childNode->unlock();
             assert(-1 <= childvValue && childvValue <= 1);
             if (childNumberVisit - 1 > 0) {
                 vValue -= (childNumberVisit - searchSettings->virtualLoss) * qValue_exponent(d->qValues[childIdx], searchSettings->power_mean);
