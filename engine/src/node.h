@@ -98,7 +98,7 @@ private:
     // singular values
     // valueSum stores the sum of all incoming value evaluations
     double valueSum;
-    double vValue;
+    long double vValue;
     double initValue;
 
     unique_ptr<NodeData> d;
@@ -393,13 +393,20 @@ public:
             // set new Q-value based on return
             // (the initialization of the Q-value was by Q_INIT which we don't want to recover.)
             d->qValues[childIdx] = value;
+            vValue += childNumberVisit * qValue_exponent(value, searchSettings->power_mean);
         }
         else {
             assert(d->childNumberVisits[childIdx] != 0);
             Node* childNode = get_child_node(childIdx);
-            childNode->lock();           
+            info_string("virtual visits: ", d->childNumberVisits[childIdx]);
+            childNode->lock();
+            if (childNode->vValue == 0) {
+                childNode->vValue += qValue_exponent(childNode->initValue, searchSettings->power_mean);
+            }
+            info_string("child value sum: ", childNode->valueSum);
+            info_string("child vValue: ", childNode->vValue);
             uint32_t childVisitSum = childNode->get_real_visits();
-            double childvValue = pow(double(childNode->vValue) / childVisitSum, 1 / double(searchSettings->power_mean)) - 1;
+            long double childvValue = pow(childNode->vValue / childVisitSum, 1 / double(searchSettings->power_mean)) - 1.0;
             assert(!isnan(childvValue));
             childNode->unlock();
             if (childNumberVisit - 1 > 0) {
@@ -407,8 +414,9 @@ public:
             }
             d->qValues[childIdx] = - childvValue;
             assert(!isnan(d->qValues[childIdx]));
+            vValue += childNumberVisit * qValue_exponent(- childvValue, searchSettings->power_mean);
         }
-        vValue += childNumberVisit * qValue_exponent(d->qValues[childIdx], searchSettings->power_mean);
+        
         if (searchSettings->virtualLoss != 1) {
             d->childNumberVisits[childIdx] -= size_t(searchSettings->virtualLoss) - 1;
         }
@@ -432,7 +440,7 @@ public:
 
     float score_qValue_with_maxWeight(Node* node, const SearchSettings* searchSettings, ChildIdx childIdx, float value, float minimaxWeight);
 
-    double qValue_exponent(double qValue, double exponent);
+    long double qValue_exponent(long double qValue, double exponent);
 
     bool is_playout_node() const;
 
