@@ -133,7 +133,7 @@ void OptionsUCI::init(OptionsMap& o)
     o["Fixed_Movetime"] << Option(0, 0, 99999999);
     o["Last_Device_ID"] << Option(0, 0, 99999);
     o["Log_File"] << Option("", on_logger);
-    o["MCTS_Solver"] << Option(true);
+    o["MCTS_Solver"] << Option(false);
 #if defined(MODE_LICHESS) || defined(MODE_BOARDGAMES)
     o["Model_Directory"] << Option((string("model/") + engineName + "/" + get_first_variant_with_model()).c_str());
 #else

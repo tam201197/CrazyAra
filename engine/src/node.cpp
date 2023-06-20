@@ -296,6 +296,7 @@ void Node::update_solved_terminal(const Node* childNode, ChildIdx childIdx)
     define_end_ply_for_solved_terminal(childNode);
     set_value(targetValue);
     d->qValues[childIdx] = targetValue;
+    info_string("update_solved_terminal: ", targetValue);
 }
 
 void Node::mcts_policy_based_on_wins(DynamicVector<double> &mctsPolicy, const SearchSettings* searchSettings) const
@@ -540,6 +541,7 @@ float Node::get_max_qValue() const
 void Node::set_q_value(ChildIdx childIdx, float value)
 {
     d->qValues[childIdx] = value;
+    info_string("set_q_value: ", value);
 }
 
 ChildIdx Node::get_best_q_idx() const
@@ -711,16 +713,17 @@ float Node::score_qValue_with_maxWeight(Node* node, const SearchSettings* search
     return result;
 }
 
-float Node::qValue_exponent(float qValue, float exponent) {
+double Node::qValue_exponent(double qValue, double exponent) {
     bool isNeg = qValue < 0;
-    float posQValue = qValue;
+    double posQValue = qValue;
     if (isNeg) {
         posQValue = -qValue;
     }
-    float result = pow(posQValue, exponent);
+    double result = pow(posQValue, exponent);
     if (isNeg) {
         result = -result;
     }
+    assert(qValue == result);
     return result;
 }
 
