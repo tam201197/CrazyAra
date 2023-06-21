@@ -116,6 +116,7 @@ private:
     bool isTablebase;
     bool hasNNResults;
     bool sorted;
+    const SearchSettings* searchSettings;
 
 public:
     /**
@@ -385,9 +386,6 @@ public:
         update_virtual_loss_counter<false>(childIdx, searchSettings->virtualLoss);
         valueSum += value;
         ++realVisitsSum;
-        if (vValue == 0) {
-            vValue += qValue_exponent(initValue, searchSettings->power_mean);
-        }
         uint32_t childNumberVisit = d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx] * searchSettings->virtualLoss;
         if (d->childNumberVisits[childIdx] == searchSettings->virtualLoss) {
             // set new Q-value based on return
@@ -399,14 +397,11 @@ public:
             assert(d->childNumberVisits[childIdx] != 0);
             Node* childNode = get_child_node(childIdx);
             childNode->lock();
-            if (childNode->vValue == 0) {
-                childNode->vValue += qValue_exponent(childNode->initValue, searchSettings->power_mean);
-            }
-            uint32_t childVisitSum = childNode->get_real_visits();
-            double a = childNode->vValue / childVisitSum;
+            double childvValue = childNode->vValue;
             childNode->unlock();
+            double a = childvValue / childNumberVisit;
             double b = 1 / double(searchSettings->power_mean);
-            double childvValue = pow(a, b) - 1.0;
+            childvValue = pow(a, b) - 1.0;
             assert(!isnan(childvValue));
             assert(-1 <= childvValue && childvValue <= 1);
             if (childNumberVisit - 1 > 0) {

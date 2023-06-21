@@ -79,14 +79,14 @@ void Node::set_auxiliary_outputs(const float* auxiliaryOutputs)
 }
 #endif
 
-Node::Node(StateObj* state, const SearchSettings* searchSettings):
+Node::Node(StateObj* state, const SearchSettings* searchSettings) :
     legalActions(state->legal_actions()),
     key(state->hash_key()),
     valueSum(0),
     d(nullptr),
-    #ifdef MCTS_STORE_STATES
+#ifdef MCTS_STORE_STATES
     state(state),
-    #endif
+#endif
     realVisitsSum(0),
     pliesFromNull(state->steps_from_null()),
     numberParentNodes(1),
@@ -95,7 +95,8 @@ Node::Node(StateObj* state, const SearchSettings* searchSettings):
     hasNNResults(false),
     sorted(false),
     vValue(0),
-    initValue(0)
+    initValue(0),
+    searchSettings(searchSettings)
 {
     // specify the number of direct child nodes of this node
     check_for_terminal(state);
@@ -756,7 +757,7 @@ void Node::set_value(float value)
 {
     ++this->realVisitsSum;
     this->valueSum = value * this->realVisitsSum;
-    this->initValue = this->valueSum;
+    this->vValue = qValue_exponent(value, this->searchSettings->power_mean) * this->realVisitsSum;
 }
 
 Node* Node::add_new_node_to_tree(MapWithMutex* mapWithMutex, StateObj* newState, ChildIdx childIdx, const SearchSettings* searchSettings, bool& transposition)
