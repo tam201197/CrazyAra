@@ -62,7 +62,7 @@ SearchThread::SearchThread(NeuralNetAPI *netBatch, const SearchSettings* searchS
 }
 
 void SearchThread::set_root_node(Node *value)
-{
+{   
     rootNode = value;
     visitsPreSearch = rootNode->get_visits();
 }
@@ -284,6 +284,8 @@ void fill_nn_results(size_t batchIdx, bool isPolicyMap, const float* valueOutput
     node->set_probabilities_for_moves(get_policy_data_batch(batchIdx, probOutputs, isPolicyMap), mirrorPolicy);
     node_post_process_policy(node, searchSettings->nodePolicyTemperature, searchSettings);
     node_assign_value(node, valueOutputs, tbHits, batchIdx, isRootNodeTB);
+    // initiate vValue 
+    node->init_vValue(searchSettings);
 #ifdef MCTS_STORE_STATES
     node->set_auxiliary_outputs(get_auxiliary_data_batch(batchIdx, auxiliaryOutputs));
 #endif
@@ -354,7 +356,7 @@ void SearchThread::create_mini_batch()
         Node* newNode = get_new_child_to_evaluate(description);
         depthSum += description.depth;
         depthMax = max(depthMax, description.depth);
-
+        newNode->init_vValue(searchSettings);
         if(description.type == NODE_TERMINAL) {
             ++numTerminalNodes;
             backup_value<true>(newNode->get_value(), searchSettings, trajectoryBuffer, searchSettings->mctsSolver);

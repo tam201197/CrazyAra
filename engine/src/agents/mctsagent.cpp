@@ -333,7 +333,7 @@ void MCTSAgent::evaluate_board_state()
 }
 
 void MCTSAgent::run_mcts_search()
-{
+{   
     thread** threads = new thread*[searchSettings->threads];
     for (size_t i = 0; i < searchSettings->threads; ++i) {
         searchThreads[i]->set_root_node(rootNode.get());

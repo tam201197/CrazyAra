@@ -116,7 +116,6 @@ private:
     bool isTablebase;
     bool hasNNResults;
     bool sorted;
-    const SearchSettings* searchSettings;
 
 public:
     /**
@@ -337,6 +336,7 @@ public:
         update_virtual_loss_counter<false>(childIdx, searchSettings->virtualLoss);
         valueSum += value;
         ++realVisitsSum;
+        assert(vValue != 0);
         //float newQValue = 0;
         if (d->childNumberVisits[childIdx] == searchSettings->virtualLoss) {
             // set new Q-value based on return
@@ -379,7 +379,7 @@ public:
     }
 
     template<bool freeBackup>
-    void revert_virtual_loss_with_power_UCT_optimal(ChildIdx childIdx, float value, const SearchSettings* searchSettings, bool solveForTerminal)
+    void revert_virtual_loss_with_power_UCT_optimal(ChildIdx childIdx, float value, const SearchSettings* searchSettings, bool solveForTerminal, double& childvValue)
     {
         lock();
         // decrement virtual loss counter
@@ -395,24 +395,18 @@ public:
         }
         else {
             assert(d->childNumberVisits[childIdx] != 0);
-            Node* childNode = get_child_node(childIdx);
-            childNode->lock();
-            double childvValue = childNode->vValue;
-            childNode->unlock();
-            double a = childvValue / childNumberVisit;
-            double b = 1 / double(searchSettings->power_mean);
-            childvValue = pow(a, b) - 1.0;
-            assert(!isnan(childvValue));
-            assert(-1 <= childvValue && childvValue <= 1);
+            double new_qValue = pow(childvValue / childNumberVisit, 1 / double(searchSettings->power_mean)) - 1.0;
+            assert(!isnan(new_qValue));
+            assert(-1 <= new_qValue && new_qValue <= 1);
             if (childNumberVisit - 1 > 0) {
                 vValue -= (childNumberVisit - searchSettings->virtualLoss) * qValue_exponent(d->qValues[childIdx], searchSettings->power_mean);
             }
             
-            d->qValues[childIdx] = - childvValue;
+            d->qValues[childIdx] = - new_qValue;
             assert(!isnan(d->qValues[childIdx]));
-            vValue += childNumberVisit * qValue_exponent(- childvValue, searchSettings->power_mean);
+            vValue += childNumberVisit * qValue_exponent(- new_qValue, searchSettings->power_mean);
         }
-        
+        childvValue = vValue;
         if (searchSettings->virtualLoss != 1) {
             d->childNumberVisits[childIdx] -= size_t(searchSettings->virtualLoss) - 1;
         }
@@ -438,6 +432,8 @@ public:
 
     double qValue_exponent(double qValue, double exponent);
 
+    double get_vValue();
+
     bool is_playout_node() const;
 
     /**
@@ -459,6 +455,8 @@ public:
     bool is_terminal() const;
     bool has_nn_results() const;
     float get_value() const;
+
+    void init_vValue(const SearchSettings* searchSettings);
 
     /**
      * @brief get_value_display Return value evaluation which can be used for logging
@@ -1002,6 +1000,10 @@ float get_transposition_q_value(uint_fast32_t transposVisits, double transposQVa
 template <bool freeBackup>
 void backup_value(float value, const SearchSettings* searchSettings, const Trajectory& trajectory, bool solveForTerminal) {
     double targetQValue = 0;
+    Node* childNode = trajectory.rbegin()->node->get_child_node(trajectory.rbegin()->childIdx);
+    childNode->lock();
+    double childvValue = childNode->get_vValue();
+    childNode->unlock();
     for (auto it = trajectory.rbegin(); it != trajectory.rend(); ++it) { 
         if (targetQValue != 0) {
             const uint_fast32_t transposVisits = it->node->get_real_visits(it->childIdx);
@@ -1036,8 +1038,8 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
                 it->node->revert_virtual_loss_with_implicit_minimax<false>(it->childIdx, value, searchSettings, solveForTerminal);
             break;
         case BACKUP_POWER_MEAN:
-            freeBackup ? it->node->revert_virtual_loss_with_power_UCT_optimal<true>(it->childIdx, value, searchSettings, solveForTerminal) :
-                it->node->revert_virtual_loss_with_power_UCT_optimal<false>(it->childIdx, value, searchSettings, solveForTerminal);
+            freeBackup ? it->node->revert_virtual_loss_with_power_UCT_optimal<true>(it->childIdx, value, searchSettings, solveForTerminal, childvValue) :
+                it->node->revert_virtual_loss_with_power_UCT_optimal<false>(it->childIdx, value, searchSettings, solveForTerminal, childvValue);
             break;
         }
         if (it->node->is_transposition()) {
