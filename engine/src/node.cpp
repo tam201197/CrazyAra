@@ -764,8 +764,7 @@ void Node::set_value(float value)
 
 void Node::init_vValue(const SearchSettings* searchSettings)
 {   
-    if (this->vValue == 0)
-        this->vValue = qValue_exponent(initValue, searchSettings->power_mean) * this->realVisitsSum;
+    this->vValue = qValue_exponent(initValue, searchSettings->power_mean) * this->realVisitsSum;
 }
 
 Node* Node::add_new_node_to_tree(MapWithMutex* mapWithMutex, StateObj* newState, ChildIdx childIdx, const SearchSettings* searchSettings, bool& transposition)

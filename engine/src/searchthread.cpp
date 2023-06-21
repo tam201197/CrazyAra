@@ -284,8 +284,10 @@ void fill_nn_results(size_t batchIdx, bool isPolicyMap, const float* valueOutput
     node->set_probabilities_for_moves(get_policy_data_batch(batchIdx, probOutputs, isPolicyMap), mirrorPolicy);
     node_post_process_policy(node, searchSettings->nodePolicyTemperature, searchSettings);
     node_assign_value(node, valueOutputs, tbHits, batchIdx, isRootNodeTB);
-    // initiate vValue 
-    node->init_vValue(searchSettings);
+    // initiate vValue
+    if (searchSettings->backupOperator == BACKUP_POWER_MEAN) {
+        node->init_vValue(searchSettings);
+    }
 #ifdef MCTS_STORE_STATES
     node->set_auxiliary_outputs(get_auxiliary_data_batch(batchIdx, auxiliaryOutputs));
 #endif

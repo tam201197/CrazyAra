@@ -1001,15 +1001,19 @@ template <bool freeBackup>
 void backup_value(float value, const SearchSettings* searchSettings, const Trajectory& trajectory, bool solveForTerminal) {
     double targetQValue = 0;
     double childvValue = 0;
-    Node* childNode = trajectory.rbegin()->node->get_child_node(trajectory.rbegin()->childIdx);
-    if (childNode != nullptr) {
-        childNode->lock();
-        childvValue = childNode->get_vValue();
-        childNode->unlock();
+    if (searchSettings->backupOperator == BACKUP_POWER_MEAN) {
+        Node* childNode = trajectory.rbegin()->node->get_child_node(trajectory.rbegin()->childIdx);
+        if (childNode != nullptr) {
+            childNode->lock();
+            childvValue = childNode->get_vValue();
+            childNode->unlock();
+        }
+        else {
+            childvValue = pow(1 + double(value), searchSettings->power_mean);
+            info_string("child node is nullptr");
+        }
     }
-    else {
-        childvValue = pow(1 + double(value), searchSettings->power_mean);
-    }
+    
     for (auto it = trajectory.rbegin(); it != trajectory.rend(); ++it) { 
         if (targetQValue != 0) {
             const uint_fast32_t transposVisits = it->node->get_real_visits(it->childIdx);
