@@ -1000,10 +1000,13 @@ float get_transposition_q_value(uint_fast32_t transposVisits, double transposQVa
 template <bool freeBackup>
 void backup_value(float value, const SearchSettings* searchSettings, const Trajectory& trajectory, bool solveForTerminal) {
     double targetQValue = 0;
+    double childvValue = 0;
     Node* childNode = trajectory.rbegin()->node->get_child_node(trajectory.rbegin()->childIdx);
-    childNode->lock();
-    double childvValue = childNode->get_vValue();
-    childNode->unlock();
+    if (childNode != nullptr) {
+        childNode->lock();
+        childvValue = childNode->get_vValue();
+        childNode->unlock();
+    }
     for (auto it = trajectory.rbegin(); it != trajectory.rend(); ++it) { 
         if (targetQValue != 0) {
             const uint_fast32_t transposVisits = it->node->get_real_visits(it->childIdx);
