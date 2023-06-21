@@ -1007,6 +1007,9 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
         childvValue = childNode->get_vValue();
         childNode->unlock();
     }
+    else {
+        childvValue = pow(1 + double(value), searchSettings->power_mean);
+    }
     for (auto it = trajectory.rbegin(); it != trajectory.rend(); ++it) { 
         if (targetQValue != 0) {
             const uint_fast32_t transposVisits = it->node->get_real_visits(it->childIdx);

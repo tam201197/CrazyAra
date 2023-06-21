@@ -296,7 +296,6 @@ void Node::update_solved_terminal(const Node* childNode, ChildIdx childIdx)
     define_end_ply_for_solved_terminal(childNode);
     set_value(targetValue);
     d->qValues[childIdx] = targetValue;
-    info_string("update_solved_terminal: ", targetValue);
 }
 
 void Node::mcts_policy_based_on_wins(DynamicVector<double> &mctsPolicy, const SearchSettings* searchSettings) const
