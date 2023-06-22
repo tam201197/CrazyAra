@@ -271,7 +271,7 @@ public:
     }
 
     template<bool freeBackup>
-    void revert_virtual_loss_with_implicit_minimax(ChildIdx childIdx, float value, const SearchSettings * searchSettings, bool solveForTerminal)
+    void revert_virtual_loss_with_implicit_minimax(ChildIdx childIdx, float value, const SearchSettings* searchSettings, bool solveForTerminal,float minimax_weight, float& implicit_max_value)
     {
         lock();
         // decrement virtual loss counter
@@ -286,33 +286,7 @@ public:
         }
         else {
             assert(d->childNumberVisits[childIdx] != 0);
-            float minimaxWeight = 0.0;
-            uint32_t n = d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx] * searchSettings->virtualLoss;
-            if (n < 500) {
-                minimaxWeight = 0.1;
-            }
-            else if (n >= 500 && n < 1000) {
-                minimaxWeight = 0.2;
-            }
-            /*else if (n >= 800 && n < 1200) {
-               minimaxWeight = 0.4;
-            }*/
-            /*else if (n >= 500 && n < 600) {
-                minimaxWeight = 0.7;
-            }
-            else if (n >= 600 && n < 700) {
-                minimaxWeight = 0.8;
-            }
-            else if (n >= 700 && n < 800) {
-                minimaxWeight = 0.9;
-            }*/
-            /*else if (n >= 800 && n < 1000) {
-                minimaxWeight = 0.5;
-            }*/
-            else {
-                minimaxWeight = 0.3;
-            }
-            d->qValues[childIdx] = score_qValue_with_maxWeight(get_child_node(childIdx), searchSettings, childIdx, value, minimaxWeight);
+            d->qValues[childIdx] = implicit_max_value;
             assert(!isnan(d->qValues[childIdx]));
         }
         
@@ -325,6 +299,7 @@ public:
         if (solveForTerminal) {
             solve_for_terminal(childIdx, searchSettings);
         }
+        implicit_max_value = score_qValue_with_maxWeight(searchSettings, value, minimax_weight);
         unlock();
     }
 
@@ -428,7 +403,7 @@ public:
 
     float score_child_qValue_max(Node* node, const SearchSettings* searchSettings, ChildIdx childIdx, float value);
 
-    float score_qValue_with_maxWeight(Node* node, const SearchSettings* searchSettings, ChildIdx childIdx, float value, float minimaxWeight);
+    float score_qValue_with_maxWeight(const SearchSettings* searchSettings, float value, float minimaxWeight);
 
     double qValue_exponent(double qValue, double exponent);
 
@@ -1001,19 +976,32 @@ template <bool freeBackup>
 void backup_value(float value, const SearchSettings* searchSettings, const Trajectory& trajectory, bool solveForTerminal) {
     double targetQValue = 0;
     double childvValue = 0;
-    if (searchSettings->backupOperator == BACKUP_POWER_MEAN) {
-        Node* childNode = trajectory.rbegin()->node->get_child_node(trajectory.rbegin()->childIdx);
-        if (childNode != nullptr) {
-            childNode->lock();
-            childvValue = childNode->get_vValue();
-            childNode->unlock();
-        }
-        else {
-            childvValue = pow(1 + double(value), searchSettings->power_mean);
-            info_string("child node is nullptr");
-        }
+    float implicit_max_value = 0;
+    Node* childNode = trajectory.rbegin()->node->get_child_node(trajectory.rbegin()->childIdx);
+    switch (searchSettings->backupOperator) {
+        case BACKUP_POWER_MEAN:
+            if (childNode != nullptr) {
+                childNode->lock();
+                childvValue = childNode->get_vValue();
+                childNode->unlock();
+            }
+            else {
+                childvValue = pow(1 + double(value), searchSettings->power_mean);
+            }
+            break;
+        case BACKUP_IMPLICIT_MAX:
+            if (searchSettings->searchPlayerMode == MODE_TWO_PLAYER) {
+                implicit_max_value = -value;
+            }
+            if (childNode != nullptr) {
+                childNode->lock();
+                implicit_max_value = childNode->score_qValue_with_maxWeight(searchSettings, implicit_max_value, 0.1);
+                childNode->unlock();
+            }
+            break;
     }
-    
+    float minimaxWeight = 0.0;
+    uint32_t n = 0;
     for (auto it = trajectory.rbegin(); it != trajectory.rend(); ++it) { 
         if (targetQValue != 0) {
             const uint_fast32_t transposVisits = it->node->get_real_visits(it->childIdx);
@@ -1044,8 +1032,18 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
             }
             break;
         case BACKUP_IMPLICIT_MAX:
-            freeBackup ? it->node->revert_virtual_loss_with_implicit_minimax<true>(it->childIdx, value, searchSettings, solveForTerminal) :
-                it->node->revert_virtual_loss_with_implicit_minimax<false>(it->childIdx, value, searchSettings, solveForTerminal);
+            n = it->node->get_child_number_visits(it->childIdx) - it->node->get_virtual_loss_counter(it->childIdx) * searchSettings->virtualLoss;
+            if (n < 500) {
+                minimaxWeight = 0.1;
+            }
+            else if (n >= 500 && n < 1000) {
+                minimaxWeight = 0.2;
+            }
+            else {
+                minimaxWeight = 0.3;
+            }
+            freeBackup ? it->node->revert_virtual_loss_with_implicit_minimax<true>(it->childIdx, value, searchSettings, solveForTerminal, minimaxWeight, implicit_max_value) :
+                it->node->revert_virtual_loss_with_implicit_minimax<false>(it->childIdx, value, searchSettings, solveForTerminal, minimaxWeight, implicit_max_value);
             break;
         case BACKUP_POWER_MEAN:
             freeBackup ? it->node->revert_virtual_loss_with_power_UCT_optimal<true>(it->childIdx, value, searchSettings, solveForTerminal, childvValue) :
