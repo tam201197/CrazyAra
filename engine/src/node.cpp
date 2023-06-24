@@ -718,6 +718,16 @@ double Node::get_vValue() {
     return vValue;
 }
 
+float Node::get_power_mean() {
+    return power_mean;
+}
+
+void Node::set_power_mean(float value) {
+    lock();
+    power_mean = value;
+    unlock();
+}
+
 bool Node::is_playout_node() const
 {
     return d != nullptr;
