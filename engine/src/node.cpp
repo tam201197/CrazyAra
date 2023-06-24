@@ -95,7 +95,8 @@ Node::Node(StateObj* state, const SearchSettings* searchSettings) :
     hasNNResults(false),
     sorted(false),
     vValue(0),
-    initValue(0)
+    initValue(0),
+    power_mean(searchSettings->power_mean)
 {
     // specify the number of direct child nodes of this node
     check_for_terminal(state);
@@ -759,9 +760,9 @@ void Node::set_value(float value)
     this->initValue = this->valueSum;
 }
 
-void Node::init_vValue(const SearchSettings* searchSettings)
+void Node::init_vValue()
 {   
-    this->vValue = qValue_exponent(initValue, searchSettings->power_mean) * this->realVisitsSum;
+    this->vValue = qValue_exponent(initValue, this->power_mean) * this->realVisitsSum;
 }
 
 Node* Node::add_new_node_to_tree(MapWithMutex* mapWithMutex, StateObj* newState, ChildIdx childIdx, const SearchSettings* searchSettings, bool& transposition)

@@ -286,7 +286,7 @@ void fill_nn_results(size_t batchIdx, bool isPolicyMap, const float* valueOutput
     node_assign_value(node, valueOutputs, tbHits, batchIdx, isRootNodeTB);
     // initiate vValue
     if (searchSettings->backupOperator == BACKUP_POWER_MEAN) {
-        node->init_vValue(searchSettings);
+        node->init_vValue();
     }
 #ifdef MCTS_STORE_STATES
     node->set_auxiliary_outputs(get_auxiliary_data_batch(batchIdx, auxiliaryOutputs));

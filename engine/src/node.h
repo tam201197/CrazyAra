@@ -100,6 +100,7 @@ private:
     double valueSum;
     double vValue;
     double initValue;
+    float power_mean;
 
     unique_ptr<NodeData> d;
 #ifdef MCTS_STORE_STATES
@@ -354,7 +355,7 @@ public:
     }
 
     template<bool freeBackup>
-    void revert_virtual_loss_with_power_UCT_optimal(ChildIdx childIdx, float value, const SearchSettings* searchSettings, bool solveForTerminal, double& childvValue)
+    void revert_virtual_loss_with_power_UCT_optimal(ChildIdx childIdx, float value, const SearchSettings* searchSettings, bool solveForTerminal, double& childvValue, float new_power_mean)
     {
         lock();
         // decrement virtual loss counter
@@ -366,7 +367,7 @@ public:
             // set new Q-value based on return
             // (the initialization of the Q-value was by Q_INIT which we don't want to recover.)
             d->qValues[childIdx] = value;
-            vValue += childNumberVisit * qValue_exponent(value, searchSettings->power_mean);
+            vValue += childNumberVisit * qValue_exponent(value, this->power_mean);
         }
         else {
             assert(d->childNumberVisits[childIdx] != 0);
@@ -374,12 +375,14 @@ public:
             assert(!isnan(new_qValue));
             assert(-1 <= new_qValue && new_qValue <= 1);
             if (childNumberVisit - 1 > 0) {
-                vValue -= (childNumberVisit - searchSettings->virtualLoss) * qValue_exponent(d->qValues[childIdx], searchSettings->power_mean);
+                vValue -= (childNumberVisit - searchSettings->virtualLoss) * qValue_exponent(d->qValues[childIdx], this->power_mean);
             }
-            
+            if (new_power_mean != this->power_mean) {
+                this->power_mean = new_power_mean;
+            }
             d->qValues[childIdx] = - new_qValue;
             assert(!isnan(d->qValues[childIdx]));
-            vValue += childNumberVisit * qValue_exponent(- new_qValue, searchSettings->power_mean);
+            vValue += childNumberVisit * qValue_exponent(- new_qValue, this->power_mean);
         }
         childvValue = vValue;
         if (searchSettings->virtualLoss != 1) {
@@ -431,7 +434,7 @@ public:
     bool has_nn_results() const;
     float get_value() const;
 
-    void init_vValue(const SearchSettings* searchSettings);
+    void init_vValue();
 
     /**
      * @brief get_value_display Return value evaluation which can be used for logging
@@ -1001,6 +1004,7 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
             break;
     }
     float minimaxWeight = 0.0;
+    float power_mean = searchSettings->power_mean;
     uint32_t n = 0;
     for (auto it = trajectory.rbegin(); it != trajectory.rend(); ++it) { 
         if (targetQValue != 0) {
@@ -1046,8 +1050,24 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
                 it->node->revert_virtual_loss_with_implicit_minimax<false>(it->childIdx, value, searchSettings, solveForTerminal, minimaxWeight, implicit_max_value);
             break;
         case BACKUP_POWER_MEAN:
-            freeBackup ? it->node->revert_virtual_loss_with_power_UCT_optimal<true>(it->childIdx, value, searchSettings, solveForTerminal, childvValue) :
-                it->node->revert_virtual_loss_with_power_UCT_optimal<false>(it->childIdx, value, searchSettings, solveForTerminal, childvValue);
+            n = it->node->get_child_number_visits(it->childIdx) - it->node->get_virtual_loss_counter(it->childIdx) * searchSettings->virtualLoss;
+            if (n >= 400 && n < 500) {
+                power_mean = 5.0;
+            }
+            else if (n >= 500 && n < 600) {
+                power_mean = 4.0;
+            }
+            else if (n >= 600 && n < 700) {
+                power_mean = 3.0;
+            }
+            else if (n >= 700 && n < 800) {
+                power_mean = 2.0;
+            }
+            else {
+                power_mean = 1.0;
+            }
+            freeBackup ? it->node->revert_virtual_loss_with_power_UCT_optimal<true>(it->childIdx, value, searchSettings, solveForTerminal, childvValue, power_mean) :
+                it->node->revert_virtual_loss_with_power_UCT_optimal<false>(it->childIdx, value, searchSettings, solveForTerminal, childvValue, power_mean);
             break;
         }
         if (it->node->is_transposition()) {
