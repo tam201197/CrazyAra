@@ -95,8 +95,7 @@ Node::Node(StateObj* state, const SearchSettings* searchSettings) :
     hasNNResults(false),
     sorted(false),
     vValue(0),
-    initValue(0),
-    power_mean(searchSettings->power_mean)
+    initValue(0)
 {
     // specify the number of direct child nodes of this node
     check_for_terminal(state);
@@ -271,8 +270,8 @@ void Node::define_end_ply_for_solved_terminal(const Node* childNode)
         // choose the longest pv line
         for (auto it = d->childNodes.begin(); it != d->childNodes.end(); ++it) {
             const Node* curChildNode = it->get();
-            if (curChildNode->d->endInPly+1 > d->endInPly) {
-                d->endInPly = curChildNode->d->endInPly+1;
+            if (curChildNode->d->endInPly + 1 > d->endInPly) {
+                d->endInPly = curChildNode->d->endInPly + 1;
             }
         }
         return;
@@ -281,8 +280,8 @@ void Node::define_end_ply_for_solved_terminal(const Node* childNode)
         // choose the shortest pv line for draws
         for (auto it = d->childNodes.begin(); it != d->childNodes.end(); ++it) {
             const Node* curChildNode = it->get();
-            if (curChildNode->d->nodeType == DRAW && curChildNode->d->endInPly+1 < d->endInPly) {
-                d->endInPly = curChildNode->d->endInPly+1;
+            if (curChildNode->d->nodeType == DRAW && curChildNode->d->endInPly + 1 < d->endInPly) {
+                d->endInPly = curChildNode->d->endInPly + 1;
             }
         }
         return;
@@ -299,7 +298,7 @@ void Node::update_solved_terminal(const Node* childNode, ChildIdx childIdx)
     d->qValues[childIdx] = targetValue;
 }
 
-void Node::mcts_policy_based_on_wins(DynamicVector<double> &mctsPolicy, const SearchSettings* searchSettings) const
+void Node::mcts_policy_based_on_wins(DynamicVector<double>& mctsPolicy, const SearchSettings* searchSettings) const
 {
     mctsPolicy = 0;
     ChildIdx childIdx = 0;
@@ -322,7 +321,7 @@ void Node::mcts_policy_based_on_wins(DynamicVector<double> &mctsPolicy, const Se
     }
 }
 
-void Node::mcts_policy_based_on_losses(DynamicVector<double> &mctsPolicy) const
+void Node::mcts_policy_based_on_losses(DynamicVector<double>& mctsPolicy) const
 {
     mctsPolicy = 0;
     ChildIdx childIdx = 0;
@@ -341,7 +340,7 @@ void Node::mcts_policy_based_on_losses(DynamicVector<double> &mctsPolicy) const
     mctsPolicy[longestChildIdx] = 1.0f;
 }
 
-void Node::prune_losses_in_mcts_policy(DynamicVector<double> &mctsPolicy, const SearchSettings* searchSettings) const
+void Node::prune_losses_in_mcts_policy(DynamicVector<double>& mctsPolicy, const SearchSettings* searchSettings) const
 {
     // check if PV line leads to a loss
     if (d->numberUnsolvedChildNodes != get_number_child_nodes() && !is_loss_node_type(d->nodeType)) {
@@ -403,17 +402,17 @@ bool Node::solve_for_terminal(ChildIdx childIdx, const SearchSettings* searchSet
         d->nodeTypes[childIdx] = childNode->d->nodeType;
         switch (searchSettings->searchPlayerMode) {
         case MODE_TWO_PLAYER:
-            switch(childNode->d->nodeType) {
+            switch (childNode->d->nodeType) {
             case WIN:
                 disable_action(childIdx);
-            default: ; // pass
+            default:; // pass
             }
             break;
         case MODE_SINGLE_PLAYER:
-            switch(childNode->d->nodeType) {
+            switch (childNode->d->nodeType) {
             case LOSS:
                 disable_action(childIdx);
-            default: ; // pass
+            default:; // pass
             }
 
         }
@@ -477,7 +476,7 @@ Action Node::get_action(ChildIdx childIdx) const
     return legalActions[childIdx];
 }
 
-Node *Node::get_child_node(ChildIdx childIdx) const
+Node* Node::get_child_node(ChildIdx childIdx) const
 {
     return d->childNodes[childIdx].get();
 }
@@ -554,7 +553,8 @@ vector<ChildIdx> Node::get_q_idx_over_thresh(float qThresh)
     vector<ChildIdx> indices;
     for (ChildIdx idx = 0; idx < size(d->qValues); ++idx) {
         if (d->qValues[idx] > qThresh) {
-            indices.emplace_back(idx);        }
+            indices.emplace_back(idx);
+        }
     }
     return indices;
 }
@@ -683,11 +683,11 @@ float Node::score_child_qValue_max(Node* node, const SearchSettings* searchSetti
                     maxQValue = max(maxQValue, node->d->qValues[i]);
                 }
             }
-        }        
+        }
         node->unlock();
         if (-1.0 <= maxQValue && maxQValue <= 1.0)
             maxQValue = -maxQValue;
-        else 
+        else
             maxQValue = (double(d->qValues[childIdx]) * (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx]) + value) / (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx] + 1);
     }
     else {
@@ -697,14 +697,14 @@ float Node::score_child_qValue_max(Node* node, const SearchSettings* searchSetti
 }
 
 float Node::score_qValue_with_maxWeight(const SearchSettings* searchSettings, float value, float minimaxWeight) {
-    float result = value;     
+    float result = value;
     float qMean = value;
     if (get_real_visits() > 0) {
         qMean = -get_value();
     }
     result = qMean;
     if (is_playout_node()) {
-        float qMax = - max(d->qValues);
+        float qMax = -max(d->qValues);
         result = (1 - minimaxWeight) * qMean + minimaxWeight * qMax;
     }
     return result;
@@ -716,16 +716,6 @@ double Node::qValue_exponent(double qValue, double exponent) {
 
 double Node::get_vValue() {
     return vValue;
-}
-
-float Node::get_power_mean() {
-    return power_mean;
-}
-
-void Node::set_power_mean(float value) {
-    lock();
-    power_mean = value;
-    unlock();
 }
 
 bool Node::is_playout_node() const
@@ -770,21 +760,21 @@ void Node::set_value(float value)
     this->initValue = this->valueSum;
 }
 
-void Node::init_vValue()
-{   
-    this->vValue = qValue_exponent(initValue, this->power_mean) * this->realVisitsSum;
+void Node::init_vValue(const SearchSettings* searchSettings)
+{
+    this->vValue = qValue_exponent(initValue, searchSettings->power_mean) * this->realVisitsSum;
 }
 
 Node* Node::add_new_node_to_tree(MapWithMutex* mapWithMutex, StateObj* newState, ChildIdx childIdx, const SearchSettings* searchSettings, bool& transposition)
 {
-    if(searchSettings->useMCGS) {
+    if (searchSettings->useMCGS) {
         mapWithMutex->mtx.lock();
         HashMap::const_iterator it = mapWithMutex->hashTable.find(newState->hash_key());
         if (it != mapWithMutex->hashTable.end()) {
             shared_ptr<Node> transpositionNode = it->second.lock();
             Node* tranpositionNode = get_child_node(childIdx);
             if (tranpositionNode != nullptr) {
-                if(is_transposition_verified(tranpositionNode, newState)) {
+                if (is_transposition_verified(tranpositionNode, newState)) {
                     d->childNodes[childIdx] = atomic_load(&transpositionNode);
                     mapWithMutex->mtx.unlock();
                     tranpositionNode->lock();
@@ -795,7 +785,7 @@ Node* Node::add_new_node_to_tree(MapWithMutex* mapWithMutex, StateObj* newState,
                         if (tranpositionNode->is_playout_node() && tranpositionNode->get_node_type() == LOSS) {
                             set_checkmate_idx(childIdx);
                         }
-                    case MODE_SINGLE_PLAYER: ;
+                    case MODE_SINGLE_PLAYER:;
                     }
                     transposition = true;
                     return tranpositionNode;
@@ -810,7 +800,7 @@ Node* Node::add_new_node_to_tree(MapWithMutex* mapWithMutex, StateObj* newState,
     atomic_store(&d->childNodes[childIdx], newNode);
     if (searchSettings->useMCGS) {
         mapWithMutex->mtx.lock();
-        mapWithMutex->hashTable.insert({d->childNodes[childIdx]->hash_key(), d->childNodes[childIdx]});
+        mapWithMutex->hashTable.insert({ d->childNodes[childIdx]->hash_key(), d->childNodes[childIdx] });
         mapWithMutex->mtx.unlock();
     }
     transposition = false;
@@ -845,7 +835,7 @@ float Node::updated_value_eval() const
     if (d == nullptr || get_visits() == 1) {
         return get_value();
     }
-    switch(d->nodeType) {
+    switch (d->nodeType) {
     case WIN:
         return WIN_VALUE;
     case DRAW:
@@ -860,7 +850,7 @@ float Node::updated_value_eval() const
     case TB_LOSS:
         return LOSS_VALUE;
 #endif
-    default: ;  // UNSOLVED
+    default:;  // UNSOLVED
     }
     return d->qValues[argmax(d->childNumberVisits)];
 }
@@ -940,7 +930,7 @@ void Node::check_for_terminal(StateObj* pos)
 
     if (terminalType != TERMINAL_NONE) {
         mark_as_terminal();
-        switch(terminalType) {
+        switch (terminalType) {
         case TERMINAL_WIN:
             mark_as_win();
             break;
@@ -967,7 +957,7 @@ void Node::check_for_tablebase_wdl(StateObj* state)
 
     if (result != Tablebase::FAIL) {
         mark_as_tablebase();
-        switch(wdlScore) {
+        switch (wdlScore) {
         case Tablebase::WDLLoss:
             mark_as_tb_loss();
             break;
@@ -1006,7 +996,7 @@ void Node::unlock()
 void Node::apply_dirichlet_noise_to_prior_policy(const SearchSettings* searchSettings)
 {
     DynamicVector<float> dirichlet_noise = get_dirichlet_noise(get_number_child_nodes(), searchSettings->dirichletAlpha);
-    policyProbSmall = (1 - searchSettings->dirichletEpsilon ) * policyProbSmall + searchSettings->dirichletEpsilon * dirichlet_noise;
+    policyProbSmall = (1 - searchSettings->dirichletEpsilon) * policyProbSmall + searchSettings->dirichletEpsilon * dirichlet_noise;
 }
 
 void Node::apply_temperature_to_prior_policy(float temperature)
@@ -1014,7 +1004,7 @@ void Node::apply_temperature_to_prior_policy(float temperature)
     apply_temperature(policyProbSmall, temperature);
 }
 
-void Node::set_probabilities_for_moves(const float *data, bool mirrorPolicy)
+void Node::set_probabilities_for_moves(const float* data, bool mirrorPolicy)
 {
     // allocate sufficient memory -> is assumed that it has already been done
     assert(legalActions.size() == policyProbSmall.size());
@@ -1025,11 +1015,11 @@ void Node::set_probabilities_for_moves(const float *data, bool mirrorPolicy)
         // than calling policyProb.At(batchIdx, vectorIdx)
         if (mirrorPolicy) {
             // use mirrored action_to_index
-            policyProbSmall[mvIdx] = data[StateConstants::action_to_index<normal,mirrored>(legalActions[mvIdx])];
+            policyProbSmall[mvIdx] = data[StateConstants::action_to_index<normal, mirrored>(legalActions[mvIdx])];
         }
         else {
             // use non-mirrored action_to_index
-            policyProbSmall[mvIdx] = data[StateConstants::action_to_index<normal,notMirrored>(legalActions[mvIdx])];
+            policyProbSmall[mvIdx] = data[StateConstants::action_to_index<normal, notMirrored>(legalActions[mvIdx])];
         }
     }
 }
@@ -1155,7 +1145,7 @@ void Node::get_principal_variation(vector<Action>& pv, const SearchSettings* sea
     }
 }
 
-size_t get_best_action_index(const Node *curNode, bool fast, const SearchSettings* searchSettings)
+size_t get_best_action_index(const Node* curNode, bool fast, const SearchSettings* searchSettings)
 {
     if (curNode->get_checkmate_idx() != NO_CHECKMATE) {
         // chose mating line
@@ -1233,7 +1223,7 @@ NodeSplit Node::select_child_nodes(const SearchSettings* searchSettings, uint_fa
 
 const char* node_type_to_string(enum NodeType nodeType)
 {
-    switch(nodeType) {
+    switch (nodeType) {
     case WIN:
         return "WIN";
     case DRAW:
@@ -1254,7 +1244,7 @@ const char* node_type_to_string(enum NodeType nodeType)
 }
 
 NodeType flip_node_type(const enum NodeType nodeType) {
-    switch(nodeType) {
+    switch (nodeType) {
     case WIN:
         return LOSS;
     case LOSS:
@@ -1285,8 +1275,8 @@ void Node::print_node_statistics(const StateObj* state, const vector<size_t>& cu
     const string header = "  #  | Move  |    Visits    |  Policy   |  Q-values  |  CP   |    Type    ";
     const string filler = "-----+-------+--------------+-----------+------------+-------+------------";
     cout << header << endl
-         << std::showpoint << std::fixed << std::setprecision(7)
-         << filler << endl;
+        << std::showpoint << std::fixed << std::setprecision(7)
+        << filler << endl;
     for (size_t idx = 0; idx < get_number_child_nodes(); ++idx) {
         const size_t childIdx = customOrdering.size() == get_number_child_nodes() ? customOrdering[idx] : idx;
         size_t n = 0;
@@ -1305,20 +1295,20 @@ void Node::print_node_statistics(const StateObj* state, const vector<size_t>& cu
             cout << setw(5) << state->action_to_san(move, get_legal_actions(), false, false) << " | ";
         }
         cout << setw(12) << n << " | "
-             << setw(9) << policyProbSmall[childIdx] << " | "
-             << setw(10) << max(q, -9.9999999) << " | "
-             << setw(5) << value_to_centipawn(q) << " | ";
+            << setw(9) << policyProbSmall[childIdx] << " | "
+            << setw(10) << max(q, -9.9999999) << " | "
+            << setw(5) << value_to_centipawn(q) << " | ";
         if (childIdx < get_no_visit_idx() && d->childNodes[childIdx] != nullptr && d->childNodes[childIdx]->d != nullptr && d->childNodes[childIdx]->get_node_type() != UNSOLVED) {
             string nodeTypeToPrint;
             switch (searchSettings->searchPlayerMode) {
-                case MODE_TWO_PLAYER:
+            case MODE_TWO_PLAYER:
                 nodeTypeToPrint = node_type_to_string(flip_node_type(NodeType(d->childNodes[childIdx]->d->nodeType)));
                 break;
             case MODE_SINGLE_PLAYER:
                 nodeTypeToPrint = node_type_to_string(NodeType(d->childNodes[childIdx]->d->nodeType));
 
             }
-            cout << setfill(' ') << setw(4) << nodeTypeToPrint << " in " << setfill('0') << setw(2) << d->childNodes[childIdx]->d->endInPly+1;
+            cout << setfill(' ') << setw(4) << nodeTypeToPrint << " in " << setfill('0') << setw(2) << d->childNodes[childIdx]->d->endInPly + 1;
         }
         else {
             cout << setfill(' ') << setw(9) << node_type_to_string(UNSOLVED);
@@ -1326,13 +1316,13 @@ void Node::print_node_statistics(const StateObj* state, const vector<size_t>& cu
         cout << endl;
     }
     cout << filler << endl
-         << "initial value:\t" << get_value() << endl
-         << "nodeType:\t" << node_type_to_string(NodeType(d->nodeType)) << endl
-         << "isTerminal:\t" << is_terminal() << endl
-         << "isTablebase:\t" << is_tablebase() << endl
-         << "unsolvedNodes:\t" << d->numberUnsolvedChildNodes << endl
-         << "Visits:\t\t" << get_visits() << endl
-         << "freeVisits:\t" << get_free_visits() << "/" << get_visits() << endl;
+        << "initial value:\t" << get_value() << endl
+        << "nodeType:\t" << node_type_to_string(NodeType(d->nodeType)) << endl
+        << "isTerminal:\t" << is_terminal() << endl
+        << "isTablebase:\t" << is_tablebase() << endl
+        << "unsolvedNodes:\t" << d->numberUnsolvedChildNodes << endl
+        << "Visits:\t\t" << get_visits() << endl
+        << "freeVisits:\t" << get_free_visits() << "/" << get_visits() << endl;
 }
 
 uint32_t Node::get_node_count() const
@@ -1377,6 +1367,6 @@ float get_transposition_q_value(uint_fast32_t transposVisits, double transposQVa
 
 bool is_transposition_verified(const Node* node, const StateObj* state) {
     return  node->has_nn_results() &&
-            node->plies_from_null() == state->steps_from_null() &&
-            state->number_repetitions() == 0;
+        node->plies_from_null() == state->steps_from_null() &&
+        state->number_repetitions() == 0;
 }
