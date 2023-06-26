@@ -373,7 +373,7 @@ public:
         }
         else {
             assert(d->childNumberVisits[childIdx] != 0);
-            double new_qValue = pow(childvValue / childNumberVisit, 1 / double(searchSettings->power_mean)) - 1.0;
+            double new_qValue = pow(max(childvValue / childNumberVisit, 0.0), 1 / double(searchSettings->power_mean)) - 1.0;
             assert(!isnan(new_qValue));
             assert(-1 <= new_qValue && new_qValue <= 1);
             if (childNumberVisit - 1 > 0) {
