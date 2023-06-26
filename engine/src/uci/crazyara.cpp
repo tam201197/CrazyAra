@@ -762,7 +762,7 @@ void CrazyAra::init_search_settings()
     searchSettings.maxAtVisit = Options["Max_At_Visits"];
     searchSettings.switchingMaxOperatorAtNode = Options["Switching_Max_Operator_At_Node"];
     searchSettings.minimaxWeight = Options["Centi_Minimax_Weight"] / 100.0f;
-    searchSettings.power_mean = Options["Denti_Power_Mean"] / 10.0f;
+    searchSettings.power_mean = Options["Deci_Power_Mean"] / 10.0f;
     
 }
 
