@@ -358,7 +358,6 @@ void SearchThread::create_mini_batch()
         Node* newNode = get_new_child_to_evaluate(description);
         depthSum += description.depth;
         depthMax = max(depthMax, description.depth);
-        newNode->init_vValue(searchSettings);
         if(description.type == NODE_TERMINAL) {
             ++numTerminalNodes;
             backup_value<true>(newNode->get_value(), searchSettings, trajectoryBuffer, searchSettings->mctsSolver);

@@ -311,8 +311,6 @@ public:
         update_virtual_loss_counter<false>(childIdx, searchSettings->virtualLoss);
         valueSum += value;
         ++realVisitsSum;
-        assert(vValue != 0);
-        //float newQValue = 0;
         if (d->childNumberVisits[childIdx] == searchSettings->virtualLoss) {
             // set new Q-value based on return
             // (the initialization of the Q-value was by Q_INIT which we don't want to recover.)
@@ -322,23 +320,28 @@ public:
             assert(d->childNumberVisits[childIdx] != 0);
             Node* childNode = get_child_node(childIdx);
             childNode->lock();
-            double vValue = pow(double(1 + childNode->initValue), searchSettings->power_mean);
-            uint32_t childVisitSum = childNode->realVisitsSum;
-            assert(childVisitSum != 0);
-            if (childNode->is_playout_node()) {
+            double childvValue = qValue_exponent(childNode->initValue, searchSettings->power_mean);
+            if (childNode->is_playout_node()){
+                bool ísChanged = false;
                 for (uint_fast16_t i = 0; i < childNode->d->qValues.size(); ++i) {
-                    vValue += (childNode->d->childNumberVisits[i] - searchSettings->virtualLoss * childNode->d->virtualLossCounter[i]) * pow(double(1 + childNode->d->qValues[i]), searchSettings->power_mean);
+                    if (childNode->d->qValues[i] == -1) {
+                        continue;
+                    }
+                    ísChanged = true;
+                    childvValue += (childNode->d->childNumberVisits[i] - searchSettings->virtualLoss * childNode->d->virtualLossCounter[i]) * qValue_exponent(childNode->d->qValues[i], searchSettings->power_mean);
                 }
-                assert(!isnan(vValue));
+                if (!ísChanged) {
+                    childvValue += qValue_exponent(- value, searchSettings->power_mean);
+                }
             }
             else {
-                vValue += pow(double(1 + value), searchSettings->power_mean);
+                childvValue += qValue_exponent(- value, searchSettings->power_mean);
             }
-            double a = vValue / childVisitSum;
-            double b = 1 / double(searchSettings->power_mean);
-            vValue = pow(a, b) - 1;
             childNode->unlock();
-            d->qValues[childIdx] = -vValue;
+            double a = childvValue / (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx]);
+            double b = 1 / double(searchSettings->power_mean);
+            childvValue = pow(a, b) - 1;
+            d->qValues[childIdx] = -childvValue;
             assert(!isnan(d->qValues[childIdx]));
         }
         if (searchSettings->virtualLoss != 1) {
