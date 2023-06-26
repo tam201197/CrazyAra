@@ -322,15 +322,15 @@ public:
             childNode->lock();
             double childvValue = qValue_exponent(childNode->initValue, searchSettings->power_mean);
             if (childNode->is_playout_node()){
-                bool ísChanged = false;
+                bool isChanged = false;
                 for (uint_fast16_t i = 0; i < childNode->d->qValues.size(); ++i) {
                     if (childNode->d->qValues[i] == -1) {
                         continue;
                     }
-                    ísChanged = true;
+                    isChanged = true;
                     childvValue += (childNode->d->childNumberVisits[i] - searchSettings->virtualLoss * childNode->d->virtualLossCounter[i]) * qValue_exponent(childNode->d->qValues[i], searchSettings->power_mean);
                 }
-                if (!ísChanged) {
+                if (!isChanged) {
                     childvValue += qValue_exponent(- value, searchSettings->power_mean);
                 }
             }
