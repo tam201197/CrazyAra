@@ -90,6 +90,7 @@ struct SearchSettings
     uint32_t switchingMaxOperatorAtNode;
     float minimaxWeight;
     float power_mean;
+    bool mctsMiniMaxHybrid;
     SearchSettings();
 
 };

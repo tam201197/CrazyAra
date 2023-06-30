@@ -1183,12 +1183,56 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings)
     if (has_forced_win()) {
         return d->checkmateIdx;
     }
-
     assert(sum(d->childNumberVisits) == d->visitSum);
     // find the move according to the q- and u-values for each move
     // calculate the current u values
     // it's not worth to save the u values as a node attribute because u is updated every time n_sum changes
+    if (searchSettings->mctsMiniMaxHybrid && realVisitsSum == searchSettings->switchingMaxOperatorAtNode) {
+        float maxVal = minimax_with_depth(d->childNodes[0].get(), 2, -2.0, -2.0, true);
+        ChildIdx idx = 0;
+        for (uint16_t i=1; i < d->childNodes.size(); ++i) {
+            float value = minimax_with_depth(d->childNodes[i].get(), 2, -2.0, -2.0, true);
+            if (maxVal < value) {
+                maxVal = value;
+                idx = i;
+            }
+        }
+        return idx;
+        
+    }
     return argmax(d->qValues + get_current_u_values(searchSettings));
+}
+
+float Node::minimax_with_depth(Node* node, uint8_t depth, float alpha, float beta, bool isMax) {
+    if (depth == 0) {
+        node->lock();
+        float qValue = - node->get_value();
+        node->unlock();
+        return qValue;
+    }
+    float maxVal = -2.0;
+    node->lock();
+    if (node->is_playout_node()) {
+        for (uint16_t i; i < node->d->childNodes.size(); ++i) {
+            float value = minimax_with_depth(node->get_child_node(i), depth - 1, alpha, beta, !isMax);
+            maxVal = max(maxVal, value);
+            if (isMax) {
+                alpha = max(maxVal, alpha);
+            }
+            else {
+                beta = max(maxVal, beta);
+            }
+            if (beta <= alpha)
+                break;
+        }
+        node->unlock();
+        return maxVal;
+    }
+    else {
+        float qValue = - node->get_value();
+        node->unlock();
+        return qValue;
+    }
 }
 
 NodeSplit Node::select_child_nodes(const SearchSettings* searchSettings, uint_fast16_t budget)

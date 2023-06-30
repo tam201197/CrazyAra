@@ -147,6 +147,8 @@ public:
 
     ChildIdx select_child_node(const SearchSettings* searchSettings);
 
+    float minimax_with_depth(Node* node, uint8_t depth, float alpha, float beta, bool isMax);
+        
     /**
      * @brief select_child_nodes Selects multiple nodes at once
      * @param searchSettings Search settings struct

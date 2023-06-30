@@ -49,6 +49,7 @@ SearchSettings::SearchSettings() :
     epsilonGreedyCounter(20),
     reuseTree(true),
     mctsSolver(false),
+    mctsMiniMaxHybrid(true),
     searchPlayerMode(MODE_TWO_PLAYER),
     backupOperator(BACKUP_MEAN),
     maxAtVisit(20),
