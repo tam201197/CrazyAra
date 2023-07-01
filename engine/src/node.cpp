@@ -1213,7 +1213,7 @@ float Node::minimax_with_depth(Node* node, uint8_t depth, float alpha, float bet
     float maxVal = -2.0;
     node->lock();
     if (node->is_playout_node()) {
-        for (uint16_t i; i < node->d->childNodes.size(); ++i) {
+        for (uint16_t i=0; i < node->d->childNodes.size(); ++i) {
             float value = minimax_with_depth(node->get_child_node(i), depth - 1, alpha, beta, !isMax);
             maxVal = max(maxVal, value);
             if (isMax) {
