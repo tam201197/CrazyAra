@@ -1200,7 +1200,6 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings)
                 idx = i;
             }
         }
-        d->qValues[idx] = - maxVal;
         return idx;
         
     }
