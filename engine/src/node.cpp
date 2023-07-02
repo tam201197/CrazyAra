@@ -1191,7 +1191,10 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings)
         float maxVal = minimax_with_depth(d->childNodes[0].get(), 2, -2.0, -2.0, true);
         ChildIdx idx = 0;
         for (uint16_t i=1; i < d->childNodes.size(); ++i) {
-            float value = minimax_with_depth(d->childNodes[i].get(), 2, -2.0, -2.0, true);
+            Node* childNode = get_child_node(i);
+            if (childNode == nullptr)
+                continue;
+            float value = minimax_with_depth(childNode, 2, -2.0, -2.0, true);
             if (maxVal < value) {
                 maxVal = value;
                 idx = i;
@@ -1204,6 +1207,7 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings)
 }
 
 float Node::minimax_with_depth(Node* node, uint8_t depth, float alpha, float beta, bool isMax) {
+    assert(node != nullptr);
     if (depth == 0) {
         node->lock();
         float qValue = - node->get_value();
@@ -1214,7 +1218,10 @@ float Node::minimax_with_depth(Node* node, uint8_t depth, float alpha, float bet
     node->lock();
     if (node->is_playout_node()) {
         for (uint16_t i=0; i < node->d->childNodes.size(); ++i) {
-            float value = minimax_with_depth(node->get_child_node(i), depth - 1, alpha, beta, !isMax);
+            Node* childNode = node->get_child_node(i);
+            if (childNode == nullptr)
+                continue;
+            float value = minimax_with_depth(childNode, depth - 1, alpha, beta, !isMax);
             maxVal = max(maxVal, value);
             if (isMax) {
                 alpha = max(maxVal, alpha);
@@ -1226,7 +1233,7 @@ float Node::minimax_with_depth(Node* node, uint8_t depth, float alpha, float bet
                 break;
         }
         node->unlock();
-        return maxVal;
+        return - maxVal;
     }
     else {
         float qValue = - node->get_value();
