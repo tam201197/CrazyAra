@@ -55,6 +55,9 @@ public:
     Board(const Board& b);
     ~Board();
 
+    Value evaluate_nneu();
+    
+
 #ifdef CRAZYHOUSE
     Bitboard promoted_pieces() const;
     int get_pocket_count(Color c, PieceType pt) const;

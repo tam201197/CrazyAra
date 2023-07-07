@@ -46,6 +46,11 @@ Board::~Board()
 {
 }
 
+Value Board::evaluate_nneu() {
+    Value v = Eval::evaluate(*this);
+    return v;
+}
+
 #ifdef CRAZYHOUSE
 Bitboard Board::promoted_pieces() const
 {

@@ -100,6 +100,23 @@ void BoardState::do_action(Action action)
     board.do_move(Move(action), states->back());
 }
 
+
+template <class T>
+inline int
+sgn(T v) {
+    return (v > T(0)) - (v < T(0));
+}
+
+float BoardState::get_nnue_value()
+{
+    Value v = board.evaluate_nneu();
+    float result = -(sgn(v) * (1 - log(1.0f - pow(10.0f, -abs(v) * log(VALUE_TO_CENTI_PARAM) / 100.0f))));
+    if (abs(result) >= 1.0f)
+        return sgn(result) * 1.0f;
+    return result;
+
+}
+
 void BoardState::undo_action(Action action)
 {
     board.undo_move(Move(action));

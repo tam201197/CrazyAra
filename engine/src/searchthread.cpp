@@ -282,7 +282,7 @@ void SearchThread::reset_stats()
 void fill_nn_results(size_t batchIdx, bool isPolicyMap, const float* valueOutputs, const float* probOutputs, const float* auxiliaryOutputs, Node *node, size_t& tbHits, bool mirrorPolicy, const SearchSettings* searchSettings, bool isRootNodeTB)
 {
     node->set_probabilities_for_moves(get_policy_data_batch(batchIdx, probOutputs, isPolicyMap), mirrorPolicy);
-    node_post_process_policy(node, searchSettings->nodePolicyTemperature, searchSettings);
+    node_post_process_policy(node, searchSettings->nodePolicyTemperature, searchSettings); 
     node_assign_value(node, valueOutputs, tbHits, batchIdx, isRootNodeTB);
     // initiate vValue
     if (searchSettings->backupOperator == BACKUP_POWER_MEAN) {
@@ -360,7 +360,11 @@ void SearchThread::create_mini_batch()
         depthMax = max(depthMax, description.depth);
         if(description.type == NODE_TERMINAL) {
             ++numTerminalNodes;
-            backup_value<true>(newNode->get_value(), searchSettings, trajectoryBuffer, searchSettings->mctsSolver);
+            float new_value = newNode->get_value();
+            if (searchSettings->mctsMiniMaxHybrid) {
+                new_value = newNode->get_combine_value();
+            }
+            backup_value<true>(new_value, searchSettings, trajectoryBuffer, searchSettings->mctsSolver);
         }
         else if (description.type == NODE_COLLISION) {
             // store a pointer to the collision node in order to revert the virtual loss of the forward propagation
@@ -405,8 +409,12 @@ void SearchThread::backup_values(FixedVector<Node*>& nodes, vector<Trajectory>& 
 #ifdef MCTS_TB_SUPPORT
         const bool solveForTerminal = searchSettings->mctsSolver && node->is_tablebase();
         backup_value<false>(node->get_value(), searchSettings, trajectories[idx], solveForTerminal);
-#else
-        backup_value<false>(node->get_value(), searchSettings, trajectories[idx], false);
+#else   
+        float new_value = node->get_value();
+        if (searchSettings->mctsMiniMaxHybrid) {
+            new_value = node->get_combine_value();
+        }
+        backup_value<false>(new_value, searchSettings, trajectories[idx], false);
 #endif
     }
     nodes.reset_idx();

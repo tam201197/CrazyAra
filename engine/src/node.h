@@ -100,6 +100,7 @@ private:
     double valueSum;
     double vValue;
     double initValue;
+    float minimaxValue;
 
     unique_ptr<NodeData> d;
 #ifdef MCTS_STORE_STATES
@@ -147,7 +148,11 @@ public:
 
     ChildIdx select_child_node(const SearchSettings* searchSettings);
 
-    float minimax_with_depth(Node* node, uint8_t depth, float alpha, float beta, bool isMax);
+    float minimax_with_depth(Action action, StateObj* state, uint8_t depth, float alpha, float beta, bool isMax);
+
+    void store_minimax_value(StateObj* state) {
+        minimaxValue = minimax_with_depth(0, state, 2, -2.0, -2.0, true);
+    }
         
     /**
      * @brief select_child_nodes Selects multiple nodes at once
@@ -435,6 +440,7 @@ public:
     bool is_terminal() const;
     bool has_nn_results() const;
     float get_value() const;
+    float get_combine_value() const;
 
     void init_vValue(const SearchSettings* searchSettings);
 

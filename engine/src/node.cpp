@@ -95,7 +95,8 @@ Node::Node(StateObj* state, const SearchSettings* searchSettings) :
     hasNNResults(false),
     sorted(false),
     vValue(0),
-    initValue(0)
+    initValue(0),
+    minimaxValue(-2.0)
 {
     // specify the number of direct child nodes of this node
     check_for_terminal(state);
@@ -594,8 +595,13 @@ void Node::fully_expand_node()
 }
 
 float Node::get_value() const
-{
+{   
     return valueSum / realVisitsSum;
+}
+
+float Node::get_combine_value() const
+{
+    return ((valueSum / realVisitsSum) + minimaxValue) / 2;
 }
 
 float Node::get_value_display() const
@@ -797,6 +803,9 @@ Node* Node::add_new_node_to_tree(MapWithMutex* mapWithMutex, StateObj* newState,
 
     // connect the Node to the parent
     shared_ptr<Node> newNode = make_shared<Node>(newState, searchSettings);
+    if (searchSettings->mctsMiniMaxHybrid) {
+        newNode->store_minimax_value(newState);
+    }
     atomic_store(&d->childNodes[childIdx], newNode);
     if (searchSettings->useMCGS) {
         mapWithMutex->mtx.lock();
@@ -1187,7 +1196,7 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings)
     // find the move according to the q- and u-values for each move
     // calculate the current u values
     // it's not worth to save the u values as a node attribute because u is updated every time n_sum changes
-    if (searchSettings->mctsMiniMaxHybrid && realVisitsSum == searchSettings->switchingMaxOperatorAtNode) {
+    /*if (searchSettings->mctsMiniMaxHybrid && realVisitsSum == searchSettings->switchingMaxOperatorAtNode) {
         float maxVal = minimax_with_depth(d->childNodes[0].get(), 2, -2.0, -2.0, true);
         ChildIdx idx = 0;
         for (uint16_t i=1; i < d->childNodes.size(); ++i) {
@@ -1202,26 +1211,24 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings)
         }
         return idx;
         
-    }
+    }*/
     return argmax(d->qValues + get_current_u_values(searchSettings));
 }
 
-float Node::minimax_with_depth(Node* node, uint8_t depth, float alpha, float beta, bool isMax) {
-    assert(node != nullptr);
+float Node::minimax_with_depth(Action action, StateObj* state, uint8_t depth, float alpha, float beta, bool isMax) {
     if (depth == 0) {
-        node->lock();
-        float qValue = - node->get_value();
-        node->unlock();
-        return qValue;
+        state->do_action(action);
+        float result = state->get_nnue_value();
+        state->undo_action(action);
+        return result;
     }
     float maxVal = -2.0;
-    node->lock();
-    if (node->is_playout_node()) {
+    /*if (node->is_playout_node()) {
         for (uint16_t i=0; i < node->d->childNodes.size(); ++i) {
             Node* childNode = node->get_child_node(i);
             if (childNode == nullptr)
                 continue;
-            float value = minimax_with_depth(childNode, depth - 1, alpha, beta, !isMax);
+            float value = minimax_with_depth(childNode, state, depth - 1, alpha, beta, !isMax);
             maxVal = max(maxVal, value);
             if (isMax) {
                 alpha = max(maxVal, alpha);
@@ -1235,11 +1242,22 @@ float Node::minimax_with_depth(Node* node, uint8_t depth, float alpha, float bet
         node->unlock();
         return - maxVal;
     }
-    else {
-        float qValue = - node->get_value();
-        node->unlock();
-        return qValue;
-    }
+    else {*/
+        for (const Action& action : state->legal_actions()) {
+            state->do_action(action);
+            float value = minimax_with_depth(action, state, depth - 1, alpha, beta, !isMax);
+            state->undo_action(action);
+            maxVal = max(maxVal, value);
+            if (isMax) {
+                alpha = max(maxVal, alpha);
+            }
+            else {
+                beta = max(maxVal, beta);
+            }
+            if (beta <= alpha)
+                break;
+        }
+        return -maxVal;
 }
 
 NodeSplit Node::select_child_nodes(const SearchSettings* searchSettings, uint_fast16_t budget)

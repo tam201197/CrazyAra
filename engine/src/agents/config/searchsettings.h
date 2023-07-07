@@ -62,7 +62,6 @@ struct SearchSettings
     //    bool enhanceCaptures;   currently not support
     //    bool useFutureQValues;  currently not supported
     bool useMCGS;
-    bool useMaxOperatpr;
     float cpuctInit;
     float cpuctBase;
     float uInit;

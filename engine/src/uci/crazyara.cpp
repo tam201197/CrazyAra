@@ -101,7 +101,7 @@ void CrazyAra::uci_loop(int argc, char* argv[])
         //"setoption name Virtual_Style value virtual_visit",
         //"setoption name Switching_Max_Operator_At_Node value 200",
         //"isready",
-        //"go nodes 1000"
+        //"go nodes 10"
     };
 
     do {
