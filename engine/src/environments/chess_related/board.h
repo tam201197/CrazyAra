@@ -55,7 +55,10 @@ public:
     Board(const Board& b);
     ~Board();
 
-    Value evaluate_nneu();
+    Value evaluate_nneu(Thread* th);
+    void set_thread(Thread* th);
+
+    bool is_ok();
     
 
 #ifdef CRAZYHOUSE

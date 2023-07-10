@@ -383,7 +383,7 @@ private:
 public:
     BoardState();
     BoardState(const BoardState& b);
-
+    bool is_ok();
     // State interface
     bool mirror_policy(SideToMove sideToMove) const;
     vector<Action> legal_actions() const override;
@@ -408,7 +408,7 @@ public:
     void set_auxiliary_outputs(const float* auxiliaryOutputs) override;
     BoardState* clone() const override;
     void init(int variant, bool isChess960) override;
-    float get_nnue_value();
+    float get_nnue_value(Thread* th);
 };
 
 #endif // BOARTSTATE_H

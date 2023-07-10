@@ -46,9 +46,32 @@ Board::~Board()
 {
 }
 
-Value Board::evaluate_nneu() {
+bool Board::is_ok() {
+    Square s;
+    bool b = true;
+    for (Color c : {WHITE, BLACK}) {
+
+        const Square* pl = squares<PAWN>(c);
+        
+        while ((s = *pl++) != SQ_NONE) {
+            b &= piece_on(s) == make_piece(c, PAWN);
+        }
+    }
+    b &= !checkers();
+
+
+    return b;
+}
+
+
+Value Board::evaluate_nneu(Thread* th) {
     Value v = Eval::evaluate(*this);
     return v;
+}
+
+void Board::set_thread(Thread* th) 
+{
+    thisThread = th;
 }
 
 #ifdef CRAZYHOUSE

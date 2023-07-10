@@ -90,7 +90,7 @@ void SearchThread::set_reached_tablebases(bool value)
 Node* SearchThread::add_new_node_to_tree(StateObj* newState, Node* parentNode, ChildIdx childIdx, NodeBackup& nodeBackup)
 {
     bool transposition;
-    Node* newNode = parentNode->add_new_node_to_tree(mapWithMutex, newState, childIdx, searchSettings, transposition);
+    Node* newNode = parentNode->add_new_node_to_tree(mapWithMutex, newState, childIdx, searchSettings, transposition, Threads.front());
     if (transposition) {
         const float qValue =  parentNode->get_child_node(childIdx)->get_value();
         transpositionValues->add_element(qValue);

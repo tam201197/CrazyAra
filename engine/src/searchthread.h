@@ -34,6 +34,7 @@
 #include "config/searchlimits.h"
 #include "util/fixedvector.h"
 #include "nn/neuralnetapiuser.h"
+#include "thread.h"
 
 
 enum NodeBackup : uint8_t {
@@ -81,6 +82,7 @@ private:
     size_t visitsPreSearch;
     uint_fast32_t terminalNodeCache;  // TODO: better add "const" classifier here is possible
     bool reachedTablebases;
+    ThreadPool threads;
 public:
     /**
      * @brief SearchThread

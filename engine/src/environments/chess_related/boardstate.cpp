@@ -29,6 +29,7 @@
 #include "syzygy/tbprobe.h"
 #include "chess960position.h"
 #include "../util/communication.h"
+#include "thread.h"
 
 action_idx_map OutputRepresentation::MV_LOOKUP = {};
 action_idx_map OutputRepresentation::MV_LOOKUP_MIRRORED = {};
@@ -68,10 +69,13 @@ vector<Action> BoardState::legal_actions() const
     return legalMoves;
 }
 
+bool BoardState::is_ok() {
+    return board.is_ok();
+}
 void BoardState::set(const string &fenStr, bool isChess960, int variant)
 {
     states = StateListPtr(new std::deque<StateInfo>(1));
-    board.set(fenStr, isChess960, Variant(variant), &states->back(), nullptr);
+    board.set(fenStr, isChess960, Variant(variant), &states->back(), Threads.front());
 }
 
 void BoardState::get_state_planes(bool normalize, float *inputPlanes, uint_fast32_t size) const
@@ -107,9 +111,9 @@ sgn(T v) {
     return (v > T(0)) - (v < T(0));
 }
 
-float BoardState::get_nnue_value()
+float BoardState::get_nnue_value(Thread* th)
 {
-    Value v = board.evaluate_nneu();
+    Value v = board.evaluate_nneu(th);
     float result = -(sgn(v) * (1 - log(1.0f - pow(10.0f, -abs(v) * log(VALUE_TO_CENTI_PARAM) / 100.0f))));
     if (abs(result) >= 1.0f)
         return sgn(result) * 1.0f;
