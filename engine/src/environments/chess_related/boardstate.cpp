@@ -111,10 +111,11 @@ sgn(T v) {
     return (v > T(0)) - (v < T(0));
 }
 
-float BoardState::get_nnue_value(Thread* th)
+float BoardState::get_nnue_value()
 {
-    Value v = board.evaluate_nneu(th);
-    float result = -(sgn(v) * (1 - log(1.0f - pow(10.0f, -abs(v) * log(VALUE_TO_CENTI_PARAM) / 100.0f))));
+    Value v = board.evaluate_nneu();
+    //float result = -(sgn(v) * (1 - log(1.0f - pow(10.0f, -abs(v) * log(VALUE_TO_CENTI_PARAM) / 100.0f))));
+    float result = sgn(v) * -(pow(2.71, -abs(v) * log(VALUE_TO_CENTI_PARAM) / 100.0f) - 1);
     if (abs(result) >= 1.0f)
         return sgn(result) * 1.0f;
     return result;

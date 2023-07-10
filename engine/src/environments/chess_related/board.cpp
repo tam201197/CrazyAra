@@ -64,7 +64,7 @@ bool Board::is_ok() {
 }
 
 
-Value Board::evaluate_nneu(Thread* th) {
+Value Board::evaluate_nneu() {
     Value v = Eval::evaluate(*this);
     return v;
 }

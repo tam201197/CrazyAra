@@ -90,7 +90,7 @@ void SearchThread::set_reached_tablebases(bool value)
 Node* SearchThread::add_new_node_to_tree(StateObj* newState, Node* parentNode, ChildIdx childIdx, NodeBackup& nodeBackup)
 {
     bool transposition;
-    Node* newNode = parentNode->add_new_node_to_tree(mapWithMutex, newState, childIdx, searchSettings, transposition, Threads.front());
+    Node* newNode = parentNode->add_new_node_to_tree(mapWithMutex, newState, childIdx, searchSettings, transposition);
     if (transposition) {
         const float qValue =  parentNode->get_child_node(childIdx)->get_value();
         transpositionValues->add_element(qValue);
@@ -406,14 +406,14 @@ void run_search_thread(SearchThread *t)
 void SearchThread::backup_values(FixedVector<Node*>& nodes, vector<Trajectory>& trajectories) {
     for (size_t idx = 0; idx < nodes.size(); ++idx) {
         Node* node = nodes.get_element(idx);
-#ifdef MCTS_TB_SUPPORT
-        const bool solveForTerminal = searchSettings->mctsSolver && node->is_tablebase();
-        backup_value<false>(node->get_value(), searchSettings, trajectories[idx], solveForTerminal);
-#else   
         float new_value = node->get_value();
         if (searchSettings->mctsMiniMaxHybrid) {
             new_value = node->get_combine_value();
         }
+#ifdef MCTS_TB_SUPPORT
+        const bool solveForTerminal = searchSettings->mctsSolver && node->is_tablebase();
+        backup_value<false>(new_value, searchSettings, trajectories[idx], solveForTerminal);
+#else   
         backup_value<false>(new_value, searchSettings, trajectories[idx], false);
 #endif
     }

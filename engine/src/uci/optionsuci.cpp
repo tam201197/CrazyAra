@@ -187,7 +187,7 @@ void OptionsUCI::init(OptionsMap& o)
     o["SyzygyPath"] << Option("<empty>", on_tb_path);
 #endif
 #endif
-    o["Threads"] << Option(1, 1, 512);
+    o["Threads"] << Option(2, 1, 512);
 #ifdef OPENVINO
     o["Threads_NN_Inference"] << Option(8, 1, 512);
 #endif

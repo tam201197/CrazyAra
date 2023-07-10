@@ -148,9 +148,9 @@ public:
 
     ChildIdx select_child_node(const SearchSettings* searchSettings);
 
-    float minimax_with_depth(StateObj* state, uint8_t depth, float alpha, float beta, bool isMax, Thread* th);
+    float minimax_with_depth(StateObj* state, uint8_t depth, float alpha, float beta, bool isMax);
 
-    void store_minimax_value(StateObj* state, Thread* th);
+    void store_minimax_value(StateObj* state);
         
     /**
      * @brief select_child_nodes Selects multiple nodes at once
@@ -536,7 +536,7 @@ public:
      * @param transposition Return true, if the transposition request was successfull, else false, i.e. a new node was added
      * @return the newly added node
      */
-    Node* add_new_node_to_tree(MapWithMutex* mapWithMutex, StateObj* newState, ChildIdx childIdx, const SearchSettings* searchSettings, bool& transposition, Thread* th);
+    Node* add_new_node_to_tree(MapWithMutex* mapWithMutex, StateObj* newState, ChildIdx childIdx, const SearchSettings* searchSettings, bool& transposition);
 
     void add_transposition_parent_node();
 

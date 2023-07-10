@@ -771,7 +771,7 @@ void Node::init_vValue(const SearchSettings* searchSettings)
     this->vValue = qValue_exponent(initValue, searchSettings->power_mean) * this->realVisitsSum;
 }
 
-Node* Node::add_new_node_to_tree(MapWithMutex* mapWithMutex, StateObj* newState, ChildIdx childIdx, const SearchSettings* searchSettings, bool& transposition, Thread* th)
+Node* Node::add_new_node_to_tree(MapWithMutex* mapWithMutex, StateObj* newState, ChildIdx childIdx, const SearchSettings* searchSettings, bool& transposition)
 {
     if (searchSettings->useMCGS) {
         mapWithMutex->mtx.lock();
@@ -804,7 +804,7 @@ Node* Node::add_new_node_to_tree(MapWithMutex* mapWithMutex, StateObj* newState,
     // connect the Node to the parent
     shared_ptr<Node> newNode = make_shared<Node>(newState, searchSettings);
     if (searchSettings->mctsMiniMaxHybrid) {
-        newNode->store_minimax_value(newState, th);
+        newNode->store_minimax_value(newState);
     }
     atomic_store(&d->childNodes[childIdx], newNode);
     if (searchSettings->useMCGS) {
@@ -1215,18 +1215,14 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings)
     return argmax(d->qValues + get_current_u_values(searchSettings));
 }
 
-float Node::minimax_with_depth(StateObj* state, uint8_t depth, float alpha, float beta, bool isMax, Thread* th) {
-    StateObj newState = StateObj();
-    newState.set(state->fen(), false, 0);
-    string curFen = newState.fen();
-
+float Node::minimax_with_depth(StateObj* state, uint8_t depth, float alpha, float beta, bool isMax) {
+    //StateObj newState = StateObj();
+    //info_string("state fen at begin: ", state->fen());
+    //newState.set(state->fen(), false, 0);
+    //string curFen = newState.fen();
+    //info_string("state fen: ", curFen);
     if (depth == 0) {
-        float result = 0;
-        if (newState.is_ok())
-            result = newState.get_nnue_value(th);
-        else
-            info_string("is not ok", curFen);
-        return result;
+        return state->get_nnue_value();
     }
     float maxVal = -2.0;
     /*if (node->is_playout_node()) {
@@ -1251,7 +1247,7 @@ float Node::minimax_with_depth(StateObj* state, uint8_t depth, float alpha, floa
     else {*/
         for (const Action& action : state->legal_actions()) {
             state->do_action(action);
-            float value = minimax_with_depth(state, depth - 1, alpha, beta, !isMax, th);
+            float value = minimax_with_depth(state, depth - 1, alpha, beta, !isMax);
             state->undo_action(action);
             maxVal = max(maxVal, value);
             if (isMax) {
@@ -1266,9 +1262,11 @@ float Node::minimax_with_depth(StateObj* state, uint8_t depth, float alpha, floa
         return -maxVal;
 }
 
-void Node::store_minimax_value(StateObj* state, Thread* th)
+void Node::store_minimax_value(StateObj* state)
 {   
-    minimaxValue = minimax_with_depth(state, 0, -2.0, -2.0, true, th);
+    lock();
+    minimaxValue = minimax_with_depth(state, 0, -2.0, -2.0, true);
+    unlock();
 }
 
 NodeSplit Node::select_child_nodes(const SearchSettings* searchSettings, uint_fast16_t budget)
