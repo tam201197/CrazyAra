@@ -66,7 +66,6 @@ NodeData::NodeData():
     inspected(false),
     qValue_max(-2.0)
 {
-
 }
 
 NodeData::NodeData(size_t numberChildNodes):
@@ -75,6 +74,7 @@ NodeData::NodeData(size_t numberChildNodes):
     numberUnsolvedChildNodes = numberChildNodes;
     reserve_initial_space();
 }
+
 
 auto NodeData::get_q_values()
 {
