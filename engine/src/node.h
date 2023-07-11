@@ -252,7 +252,7 @@ public:
         else {
             assert(d->childNumberVisits[childIdx] != 0);
             if (isMaxOperator) {
-                d->qValues[childIdx] = score_child_qValue_max(get_child_node(childIdx), searchSettings, childIdx, -2.0, 2.0, true);
+                d->qValues[childIdx] = score_child_qValue_max(get_child_node(childIdx), searchSettings, childIdx, value);
                 //d->qValues[childIdx] = (double(d->qValues[childIdx]) * (d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx] * searchSettings->virtualLoss) - (d->virtualLossCounter[childIdx] * searchSettings->virtualLoss)) / double(d->childNumberVisits[childIdx]);
             }
             else {
@@ -409,7 +409,7 @@ public:
      */
     void revert_virtual_loss(ChildIdx childIdx, const SearchSettings* searchSettings);
 
-    float score_child_qValue_max(Node* node, const SearchSettings* searchSettings, ChildIdx childIdx, float alpha, float beta, bool isMax);
+    float score_child_qValue_max(Node* node, const SearchSettings* searchSettings, ChildIdx childIdx, float value);
 
     float score_qValue_with_maxWeight(const SearchSettings* searchSettings, float value, float minimaxWeight);
 

@@ -679,44 +679,29 @@ void Node::revert_virtual_loss(ChildIdx childIdx, const SearchSettings* searchSe
     unlock();
 }
 
-float Node::score_child_qValue_max(Node* node, const SearchSettings* searchSettings, ChildIdx childIdx, float alpha, float beta, bool isMax) {
+float Node::score_child_qValue_max(Node* node, const SearchSettings* searchSettings, ChildIdx childIdx, float value) {
     float maxQValue = -2.0;
-    node->lock();
-    float mean_value = node->get_value();
-    if (node->isTerminal) {
-        node->unlock();
-        return mean_value;
-    }       
-    maxQValue = - mean_value;
-    if (node->is_playout_node()) {
-        for (uint_fast16_t i = 0; i < node->d->qValues.size(); ++i) {
-            /*if (node->d->childNumberVisits[i] >= searchSettings->maxAtVisit) {
-            maxQValue = max(maxQValue, node->d->qValues[i]);
-            }*/
-            if (node->get_child_node(i) == nullptr)
-                continue;
-            float value = 0;
-            if (node->get_child_number_visits(i) - node->get_virtual_loss_counter(i) * searchSettings->virtualLoss >= searchSettings->maxAtVisit)
-                value = node->get_q_value(i);
-            else 
-                value = - score_child_qValue_max(node->get_child_node(i), searchSettings, i, -beta, -alpha, !isMax);
-            maxQValue = max(maxQValue, value);
-            alpha = max(alpha, maxQValue);
-            if (alpha >= beta)
-                break;
+    if (d->childNodes[childIdx] != nullptr) {
+        node->lock();
+        if (node->is_playout_node()) {
+            for (uint_fast16_t i = 0; i < node->d->qValues.size(); ++i) {
+                if (node->d->childNumberVisits[i] >= searchSettings->maxAtVisit) {
+                    maxQValue = max(maxQValue, node->d->qValues[i]);
+                }
+            }
         }
         node->unlock();
-        return maxQValue;
-    } 
-    else {
-        node->unlock();
-        return mean_value;
+        if (-1.0 <= maxQValue && maxQValue <= 1.0)
+            maxQValue = -maxQValue;
+        else
+            maxQValue = (double(d->qValues[childIdx]) * (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx]) + value) / (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx] + 1);
     }
-    /*if (-1.0 <= maxQValue && maxQValue <= 1.0)
-    maxQValue = -maxQValue;
-    else
-    maxQValue = (double(d->qValues[childIdx]) * (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx]) + value) / (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx] + 1);*/
+    else {
+        maxQValue = (double(d->qValues[childIdx]) * (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx]) + value) / (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx] + 1);
+    }
+    return maxQValue;
 }
+
 
 float Node::score_qValue_with_maxWeight(const SearchSettings* searchSettings, float value, float minimaxWeight) {
     float result = value;
