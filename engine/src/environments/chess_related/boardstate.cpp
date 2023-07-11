@@ -69,9 +69,6 @@ vector<Action> BoardState::legal_actions() const
     return legalMoves;
 }
 
-bool BoardState::is_ok() {
-    return board.is_ok();
-}
 void BoardState::set(const string &fenStr, bool isChess960, int variant)
 {
     states = StateListPtr(new std::deque<StateInfo>(1));
@@ -107,7 +104,8 @@ void BoardState::do_action(Action action)
 
 template <class T>
 inline int
-sgn(T v) {
+sgn(T v) 
+{
     return (v > T(0)) - (v < T(0));
 }
 
@@ -120,6 +118,11 @@ float BoardState::get_nnue_value()
         return sgn(result) * 1.0f;
     return result;
 
+}
+
+bool BoardState::is_board_terminal() 
+{
+    return board.is_terminal();
 }
 
 void BoardState::undo_action(Action action)

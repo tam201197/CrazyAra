@@ -148,7 +148,7 @@ public:
 
     ChildIdx select_child_node(const SearchSettings* searchSettings);
 
-    float minimax_with_depth(StateObj* state, uint8_t depth, float alpha, float beta, bool isMax);
+    float negamax(StateObj* state, uint8_t depth, float alpha, float beta, bool isMax);
 
     void store_minimax_value(StateObj* state);
         
