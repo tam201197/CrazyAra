@@ -808,7 +808,7 @@ Node* Node::add_new_node_to_tree(MapWithMutex* mapWithMutex, StateObj* newState,
     // connect the Node to the parent
     shared_ptr<Node> newNode = make_shared<Node>(newState, searchSettings);
     if (searchSettings->mctsMiniMaxHybrid) {
-        newNode->store_minimax_value(newState);
+        newNode->store_minimax_value(newState, searchSettings);
     }
     atomic_store(&d->childNodes[childIdx], newNode);
     if (searchSettings->useMCGS) {
@@ -1262,10 +1262,10 @@ float Node::negamax(StateObj* state, uint8_t depth, float alpha, float beta, boo
     return bestVal;
 }
 
-void Node::store_minimax_value(StateObj* state)
+void Node::store_minimax_value(StateObj* state, const SearchSettings* searchSettings)
 {   
     lock();
-    minimaxValue = negamax(state, 2, -2.0, -2.0, true);
+    minimaxValue = negamax(state, searchSettings->minimaxDepth, -2.0, -2.0, true);
     unlock();
 }
 

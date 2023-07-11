@@ -150,7 +150,7 @@ public:
 
     float negamax(StateObj* state, uint8_t depth, float alpha, float beta, bool isMax);
 
-    void store_minimax_value(StateObj* state);
+    void store_minimax_value(StateObj* state, const SearchSettings* searchSettings);
         
     /**
      * @brief select_child_nodes Selects multiple nodes at once

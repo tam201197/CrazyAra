@@ -90,6 +90,7 @@ struct SearchSettings
     float minimaxWeight;
     float power_mean;
     bool mctsMiniMaxHybrid;
+    uint8_t minimaxDepth;
     SearchSettings();
 
 };

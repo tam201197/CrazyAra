@@ -72,6 +72,7 @@ void OptionsUCI::init(OptionsMap& o)
     o["Switching_Max_Operator_At_Node"] << Option(800, 0, 99999999);
     o["Centi_Minimax_Weight"] << Option(0, 0, 100);
     o["Deci_Power_Mean"] << Option(10, 10, 99999999);
+    o["Minimax_Depth"] << Option(2, 0, 100);
 #ifdef USE_RL
     o["Batch_Size"] << Option(8, 1, 8192);
 #else
