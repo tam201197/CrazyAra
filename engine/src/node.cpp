@@ -1197,16 +1197,26 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings)
     // find the move according to the q- and u-values for each move
     // calculate the current u values
     // it's not worth to save the u values as a node attribute because u is updated every time n_sum changes
-    if (searchSettings->mctsMiniMaxHybrid && realVisitsSum == searchSettings->switchingMaxOperatorAtNode && searchSettings->mctsMinimaxHybridStyle == MCTS_IP) {
-        ChildIdx idx = 0;
+    ChildIdx bestIdx = argmax(d->qValues + get_current_u_values(searchSettings));
+    if (searchSettings->mctsMiniMaxHybrid && searchSettings->mctsMinimaxHybridStyle == MCTS_IP) {
+        Node* childNode = get_child_node(bestIdx);
+        childNode->lock();
+        if (childNode->realVisitsSum <= searchSettings->switchingMaxOperatorAtNode) {
+            childNode->unlock();
+            return bestIdx;
+        }
+        else
+        {
 #ifdef MCTS_STORE_STATES
-        float value = negamax_for_select_phase(get_state()->clone(), 2, -2.0, 2.0, true, idx);
-        return idx;
+            float value = negamax(childNode->get_state()->clone(), 2, -2.0, 2.0, true);
+            childNode->unlock();
+            d->qValues[bestIdx] = (d->qValues[bestIdx] + value) / 2;
 #else
-        return argmax(d->qValues + get_current_u_values(searchSettings));
-    }
+            childNode->unlock();
+            return bestIdx;
 #endif
-    return argmax(d->qValues + get_current_u_values(searchSettings));
+        }
+    }
 }
 
 float Node::negamax_for_select_phase(StateObj* state, uint8_t depth, float alpha, float beta, bool isMax, ChildIdx& childIdx) {
