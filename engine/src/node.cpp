@@ -693,7 +693,7 @@ float Node::score_child_qValue_max(Node* node, const SearchSettings* searchSetti
             /*if (node->d->childNumberVisits[i] >= searchSettings->maxAtVisit) {
             maxQValue = max(maxQValue, node->d->qValues[i]);
             }*/
-            if (node->get_q_value(i) == -1.0)
+            if (node->get_child_node(i) == nullptr)
                 continue;
             float value = - score_child_qValue_max(node->get_child_node(i), searchSettings, i, -beta, -alpha, !isMax);
             maxQValue = max(maxQValue, value);
@@ -701,13 +701,17 @@ float Node::score_child_qValue_max(Node* node, const SearchSettings* searchSetti
             if (alpha >= beta)
                 break;
         }
+        node->unlock();
+        return maxQValue;
+    } 
+    else {
+        node->unlock();
+        return mean_value;
     }
-    node->unlock();
     /*if (-1.0 <= maxQValue && maxQValue <= 1.0)
     maxQValue = -maxQValue;
     else
     maxQValue = (double(d->qValues[childIdx]) * (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx]) + value) / (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx] + 1);*/
-    return maxQValue;
 }
 
 float Node::score_qValue_with_maxWeight(const SearchSettings* searchSettings, float value, float minimaxWeight) {
