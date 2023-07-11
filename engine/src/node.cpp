@@ -1222,7 +1222,7 @@ float Node::minimax_with_depth(StateObj* state, uint8_t depth, float alpha, floa
     //string curFen = newState.fen();
     //info_string("state fen: ", curFen);
     if (depth == 0) {
-        return state->get_nnue_value();
+        return - state->get_nnue_value();
     }
     float maxVal = -2.0;
     /*if (node->is_playout_node()) {
