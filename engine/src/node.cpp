@@ -695,7 +695,11 @@ float Node::score_child_qValue_max(Node* node, const SearchSettings* searchSetti
             }*/
             if (node->get_child_node(i) == nullptr)
                 continue;
-            float value = - score_child_qValue_max(node->get_child_node(i), searchSettings, i, -beta, -alpha, !isMax);
+            float value = 0;
+            if (node->get_child_number_visits(i) - node->get_virtual_loss_counter(i) * searchSettings->virtualLoss >= searchSettings->maxAtVisit)
+                value = node->get_q_value(i);
+            else 
+                value = - score_child_qValue_max(node->get_child_node(i), searchSettings, i, -beta, -alpha, !isMax);
             maxQValue = max(maxQValue, value);
             alpha = max(alpha, maxQValue);
             if (alpha >= beta)
