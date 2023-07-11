@@ -1217,6 +1217,7 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings)
 #endif
         }
     }
+    return bestIdx;
 }
 
 float Node::negamax_for_select_phase(StateObj* state, uint8_t depth, float alpha, float beta, bool isMax, ChildIdx& childIdx) {
