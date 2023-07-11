@@ -692,6 +692,7 @@ float Node::score_child_qValue_max(Node* node, const SearchSettings* searchSetti
                 float value = score_child_qValue_max(node->get_child_node(i), searchSettings, i, value);
                 maxQValue = max(maxQValue, value);
             }
+            maxQValue = -maxQValue;
         } 
         /*if (-1.0 <= maxQValue && maxQValue <= 1.0)
             maxQValue = -maxQValue;
@@ -1280,7 +1281,7 @@ float Node::minimax_with_depth(StateObj* state, uint8_t depth, float alpha, floa
 void Node::store_minimax_value(StateObj* state)
 {   
     lock();
-    minimaxValue = minimax_with_depth(state, 2, -2.0, -2.0, true);
+    minimaxValue = minimax_with_depth(state, 0, -2.0, -2.0, true);
     unlock();
 }
 
