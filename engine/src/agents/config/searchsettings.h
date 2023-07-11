@@ -43,6 +43,11 @@ enum BackupOperatorType {
     BACKUP_POWER_MEAN
 };
 
+enum HybridStyle {
+    MCTS_IP,
+    MCTS_IC
+};
+
 struct SearchSettings
 {
     uint16_t multiPV;
@@ -85,6 +90,7 @@ struct SearchSettings
     SearchPlayerMode searchPlayerMode;
     // Defines backup operator use for MCTS.
     BackupOperatorType backupOperator;
+    HybridStyle mctsMinimaxHybridStyle;
     uint32_t maxAtVisit;
     uint32_t switchingMaxOperatorAtNode;
     float minimaxWeight;

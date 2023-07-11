@@ -804,7 +804,7 @@ Node* Node::add_new_node_to_tree(MapWithMutex* mapWithMutex, StateObj* newState,
 
     // connect the Node to the parent
     shared_ptr<Node> newNode = make_shared<Node>(newState, searchSettings);
-    if (searchSettings->mctsMiniMaxHybrid) {
+    if (searchSettings->mctsMiniMaxHybrid && searchSettings->mctsMinimaxHybridStyle == MCTS_IP) {
         newNode->store_minimax_value(newState, searchSettings);
     }
     atomic_store(&d->childNodes[childIdx], newNode);
@@ -1197,56 +1197,46 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings)
     // find the move according to the q- and u-values for each move
     // calculate the current u values
     // it's not worth to save the u values as a node attribute because u is updated every time n_sum changes
-    /*if (searchSettings->mctsMiniMaxHybrid && realVisitsSum == searchSettings->switchingMaxOperatorAtNode) {
-        float maxVal = minimax_with_depth(d->childNodes[0].get(), 2, -2.0, -2.0, true);
+    if (searchSettings->mctsMiniMaxHybrid && realVisitsSum == searchSettings->switchingMaxOperatorAtNode && searchSettings->mctsMinimaxHybridStyle == MCTS_IP) {
         ChildIdx idx = 0;
-        for (uint16_t i=1; i < d->childNodes.size(); ++i) {
-            Node* childNode = get_child_node(i);
-            if (childNode == nullptr)
-                continue;
-            float value = minimax_with_depth(childNode, 2, -2.0, -2.0, true);
-            if (maxVal < value) {
-                maxVal = value;
-                idx = i;
-            }
-        }
+#ifdef MCTS_STORE_STATES
+        float value = negamax_for_select_phase(get_state()->clone(), 2, -2.0, 2.0, true, idx);
         return idx;
-        
-    }*/
+#else
+        return argmax(d->qValues + get_current_u_values(searchSettings));
+    }
+#endif
     return argmax(d->qValues + get_current_u_values(searchSettings));
 }
 
-float Node::negamax(StateObj* state, uint8_t depth, float alpha, float beta, bool isMax) {
-    //StateObj newState = StateObj();
-    //info_string("state fen at begin: ", state->fen());
-    //newState.set(state->fen(), false, 0);
-    //string curFen = newState.fen();
-    //info_string("state fen: ", curFen);
-    float temp_value = 0;
+float Node::negamax_for_select_phase(StateObj* state, uint8_t depth, float alpha, float beta, bool isMax, ChildIdx& childIdx) {
     if (depth == 0 || state->is_board_terminal()) {
         return state->get_nnue_value();
     }
-    /*if (node->is_playout_node()) {
-        for (uint16_t i=0; i < node->d->childNodes.size(); ++i) {
-            Node* childNode = node->get_child_node(i);
-            if (childNode == nullptr)
-                continue;
-            float value = minimax_with_depth(childNode, state, depth - 1, alpha, beta, !isMax);
-            maxVal = max(maxVal, value);
-            if (isMax) {
-                alpha = max(maxVal, alpha);
-            }
-            else {
-                beta = max(maxVal, beta);
-            }
-            if (beta <= alpha)
-                break;
-        }
-        node->unlock();
-        return - maxVal;
-    }
-    else {*/
     float bestVal = -2.0;
+    int idx = 0;
+    for (const Action& action : state->legal_actions()) {
+        state->do_action(action);
+        float value = - negamax_for_select_phase(state, depth - 1, -beta, -alpha, !isMax, childIdx);
+        state->undo_action(action);
+        if (bestVal < value) {
+            childIdx = idx;
+            bestVal = value;
+        }
+        alpha = max(alpha, bestVal);
+        if (alpha >= beta)
+            break;
+    }
+    idx += 1;
+    return bestVal;
+}
+
+float Node::negamax(StateObj* state, uint8_t depth, float alpha, float beta, bool isMax) {
+    if (depth == 0 || state->is_board_terminal()) {
+        return state->get_nnue_value();
+    }
+    float bestVal = -2.0;
+    int idx = 0;
     for (const Action& action : state->legal_actions()) {
         state->do_action(action);
         float value = -negamax(state, depth - 1, -beta, -alpha, !isMax);
@@ -1256,6 +1246,7 @@ float Node::negamax(StateObj* state, uint8_t depth, float alpha, float beta, boo
         if (alpha >= beta)
             break;
     }
+    idx += 1;
     return bestVal;
 }
 

@@ -73,6 +73,7 @@ void OptionsUCI::init(OptionsMap& o)
     o["Centi_Minimax_Weight"] << Option(0, 0, 100);
     o["Deci_Power_Mean"] << Option(10, 10, 99999999);
     o["Minimax_Depth"] << Option(2, 0, 100);
+    o["MCTS_Minimax_Hybrid_Style"] << Option("mcts_ip", { "mcts_ip", "mcts_ic" });
 #ifdef USE_RL
     o["Batch_Size"] << Option(8, 1, 8192);
 #else

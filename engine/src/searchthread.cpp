@@ -361,7 +361,7 @@ void SearchThread::create_mini_batch()
         if(description.type == NODE_TERMINAL) {
             ++numTerminalNodes;
             float new_value = newNode->get_value();
-            if (searchSettings->mctsMiniMaxHybrid) {
+            if (searchSettings->mctsMiniMaxHybrid && searchSettings->mctsMinimaxHybridStyle == MCTS_IC) {
                 new_value = newNode->get_combine_value();
             }
             backup_value<true>(new_value, searchSettings, trajectoryBuffer, searchSettings->mctsSolver);
@@ -407,7 +407,7 @@ void SearchThread::backup_values(FixedVector<Node*>& nodes, vector<Trajectory>& 
     for (size_t idx = 0; idx < nodes.size(); ++idx) {
         Node* node = nodes.get_element(idx);
         float new_value = node->get_value();
-        if (searchSettings->mctsMiniMaxHybrid) {
+        if (searchSettings->mctsMiniMaxHybrid && searchSettings->mctsMinimaxHybridStyle == MCTS_IC) {
             new_value = node->get_combine_value();
         }
 #ifdef MCTS_TB_SUPPORT
