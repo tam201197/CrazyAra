@@ -1222,7 +1222,7 @@ float Node::minimax_with_depth(StateObj* state, uint8_t depth, float alpha, floa
     //string curFen = newState.fen();
     //info_string("state fen: ", curFen);
     if (depth == 0) {
-        return - state->get_nnue_value();
+        return state->get_nnue_value();
     }
     float maxVal = -2.0;
     /*if (node->is_playout_node()) {
@@ -1245,21 +1245,33 @@ float Node::minimax_with_depth(StateObj* state, uint8_t depth, float alpha, floa
         return - maxVal;
     }
     else {*/
+    if (isMax) {
+        float bestVal = -2.0;
         for (const Action& action : state->legal_actions()) {
             state->do_action(action);
-            float value = minimax_with_depth(state, depth - 1, alpha, beta, !isMax);
+            float value = minimax_with_depth(state, depth - 1, alpha, beta, false);
             state->undo_action(action);
-            maxVal = max(maxVal, value);
-            if (isMax) {
-                alpha = max(maxVal, alpha);
-            }
-            else {
-                beta = max(maxVal, beta);
-            }
+            bestVal = max(bestVal, value);
+            alpha = max(bestVal, alpha);
             if (beta <= alpha)
                 break;
         }
-        return -maxVal;
+        return bestVal;
+    }
+    else
+    {
+        float bestVal = 2.0;
+        for (const Action& action : state->legal_actions()) {
+            state->do_action(action);
+            float value = minimax_with_depth(state, depth - 1, alpha, beta, true);
+            state->undo_action(action);
+            bestVal = min(bestVal, value);
+            beta = min(bestVal, beta);
+            if (beta <= alpha)
+                break;
+        }
+        return bestVal;
+    }
 }
 
 void Node::store_minimax_value(StateObj* state)
