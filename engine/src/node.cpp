@@ -1200,8 +1200,10 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings)
     ChildIdx bestIdx = argmax(d->qValues + get_current_u_values(searchSettings));
     if (searchSettings->mctsMiniMaxHybrid && searchSettings->mctsMinimaxHybridStyle == MCTS_IP) {
         Node* childNode = get_child_node(bestIdx);
+        if (childNode == nullptr)
+            return bestIdx;
         childNode->lock();
-        if (childNode->realVisitsSum <= searchSettings->switchingMaxOperatorAtNode) {
+        if (childNode->realVisitsSum < searchSettings->switchingMaxOperatorAtNode) {
             childNode->unlock();
             return bestIdx;
         }
