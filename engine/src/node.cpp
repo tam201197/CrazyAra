@@ -680,25 +680,27 @@ void Node::revert_virtual_loss(ChildIdx childIdx, const SearchSettings* searchSe
 }
 
 float Node::score_child_qValue_max(Node* node, const SearchSettings* searchSettings, ChildIdx childIdx, float value) {
-    float maxQValue = -2.0;
+    node->lock();
+    float maxQValue = -node->get_value();
     if (d->childNodes[childIdx] != nullptr) {
-        node->lock();
         if (node->is_playout_node()) {
             for (uint_fast16_t i = 0; i < node->d->qValues.size(); ++i) {
-                if (node->d->childNumberVisits[i] >= searchSettings->maxAtVisit) {
+                /*if (node->d->childNumberVisits[i] >= searchSettings->maxAtVisit) {
                     maxQValue = max(maxQValue, node->d->qValues[i]);
-                }
+                }*/
+                float value = score_child_qValue_max(node->get_child_node(i), searchSettings, i, value);
+                maxQValue = max(maxQValue, value);
             }
-        }
-        node->unlock();
-        if (-1.0 <= maxQValue && maxQValue <= 1.0)
+        } 
+        /*if (-1.0 <= maxQValue && maxQValue <= 1.0)
             maxQValue = -maxQValue;
         else
-            maxQValue = (double(d->qValues[childIdx]) * (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx]) + value) / (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx] + 1);
+            maxQValue = (double(d->qValues[childIdx]) * (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx]) + value) / (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx] + 1);*/
     }
-    else {
+    node->unlock();
+    /*else {
         maxQValue = (double(d->qValues[childIdx]) * (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx]) + value) / (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx] + 1);
-    }
+    }*/
     return maxQValue;
 }
 
