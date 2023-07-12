@@ -1224,6 +1224,7 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings)
         ChildIdx idx = 0;
 #ifdef MCTS_STORE_STATES
         float value = negamax_for_select_phase(get_state()->clone(), 2, -2.0, 2.0, true, idx);
+        info_string("idx: ", idx);
         return idx;
 #else
         return argmax(d->qValues + get_current_u_values(searchSettings));
