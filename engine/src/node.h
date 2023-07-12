@@ -382,7 +382,8 @@ public:
             assert(d->childNumberVisits[childIdx] != 0);
             double new_qValue = pow(max(childvValue / childNumberVisit, 0.0), 1 / double(searchSettings->power_mean)) - 1.0;
             assert(!isnan(new_qValue));
-            assert(-1 <= new_qValue && new_qValue <= 1);
+            if ( - 1 > new_qValue || new_qValue > 1)
+                max_qValue = (double(d->qValues[childIdx]) * (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx]) + value) / (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx] + 1);
             if (childNumberVisit - 1 > 0) {
                 vValue -= (childNumberVisit - searchSettings->virtualLoss) * qValue_exponent(d->qValues[childIdx], searchSettings->power_mean);
             }
