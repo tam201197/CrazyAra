@@ -1295,7 +1295,7 @@ float Node::negamax(StateObj* state, uint8_t depth, float alpha, float beta, boo
 void Node::store_minimax_value(StateObj* state, const SearchSettings* searchSettings)
 {   
     lock();
-    minimaxValue = - negamax(state, searchSettings->minimaxDepth, -2.0, 2.0, true);
+    minimaxValue = negamax(state, searchSettings->minimaxDepth, -2.0, 2.0, true);
     unlock();
 }
 
