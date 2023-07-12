@@ -1249,8 +1249,8 @@ float Node::negamax_for_select_phase(StateObj* state, uint8_t depth, float alpha
         alpha = max(alpha, bestVal);
         if (alpha >= beta)
             break;
+        idx += 1;
     }
-    idx += 1;
     return bestVal;
 }
 
