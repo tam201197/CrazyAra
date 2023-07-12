@@ -1220,7 +1220,7 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings)
         }
     }
     return bestIdx;*/
-    if (searchSettings->mctsMiniMaxHybrid && realVisitsSum <= searchSettings->switchingMaxOperatorAtNode && searchSettings->mctsMinimaxHybridStyle == MCTS_IP) {
+    if (searchSettings->mctsMiniMaxHybrid && realVisitsSum >= searchSettings->switchingMaxOperatorAtNode && searchSettings->mctsMinimaxHybridStyle == MCTS_IP) {
         ChildIdx idx = 0;
 #ifdef MCTS_STORE_STATES
         float value = negamax_for_select_phase(get_state()->clone(), 2, -2.0, 2.0, true, idx);
