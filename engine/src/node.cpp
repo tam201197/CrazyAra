@@ -1249,6 +1249,11 @@ float Node::negamax_for_select_phase(StateObj* state, uint8_t depth, float alpha
     int idx = 0;
     for (const Action& action : state->legal_actions()) {
         state->do_action(action);
+        if (!state->is_board_ok()) {
+            state->undo_action(action);
+            idx += 1;
+            continue;
+        }
         float value = - negamax_for_select_phase(state, depth - 1, -beta, -alpha, !isMax, childIdx);
         state->undo_action(action);
         if (bestVal < value) {
@@ -1271,6 +1276,11 @@ float Node::negamax(StateObj* state, uint8_t depth, float alpha, float beta, boo
     int idx = 0;
     for (const Action& action : state->legal_actions()) {
         state->do_action(action);
+        if (!state->is_board_ok()) {
+            state->undo_action(action);
+            idx += 1;
+            continue;
+        }
         float value = -negamax(state, depth - 1, -beta, -alpha, !isMax);
         state->undo_action(action);
         bestVal = max(bestVal, value);

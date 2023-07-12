@@ -125,6 +125,11 @@ bool BoardState::is_board_terminal()
     return board.is_terminal();
 }
 
+bool BoardState::is_board_ok()
+{
+    return board.is_ok();
+}
+
 void BoardState::undo_action(Action action)
 {
     board.undo_move(Move(action));

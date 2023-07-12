@@ -46,7 +46,13 @@ Board::~Board()
 {
 }
 
-Value Board::evaluate_nneu() {
+bool Board::is_ok()
+{
+    return this->checkers();
+}
+
+Value Board::evaluate_nneu() 
+{
     Value v = Eval::evaluate(*this);
     return v;
 }

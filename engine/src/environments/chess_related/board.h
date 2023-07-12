@@ -57,6 +57,7 @@ public:
 
     Value evaluate_nneu();
     void set_thread(Thread* th);
+    bool is_ok();
 
 #ifdef CRAZYHOUSE
     Bitboard promoted_pieces() const;
