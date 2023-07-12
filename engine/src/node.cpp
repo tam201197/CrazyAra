@@ -1224,7 +1224,8 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings)
         ChildIdx idx = 0;
 #ifdef MCTS_STORE_STATES
         float maxVal = -2.0;
-        for (uint_fast16_t i = 0; i < d->childNodes.size(); ++i) {
+        fully_expand_node();
+        for (uint_fast16_t i = 0; i < legalActions.size(); ++i) {
             float value = negamax(get_child_node()->get_state()->clone(), 2, -2.0, 2.0, true);
             if (value > maxVal) {
                 maxVal = value;
