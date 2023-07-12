@@ -1223,8 +1223,14 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings)
     if (searchSettings->mctsMiniMaxHybrid && realVisitsSum >= searchSettings->switchingMaxOperatorAtNode && searchSettings->mctsMinimaxHybridStyle == MCTS_IP) {
         ChildIdx idx = 0;
 #ifdef MCTS_STORE_STATES
-        float value = negamax_for_select_phase(get_state()->clone(), 2, -2.0, 2.0, true, idx);
-        info_string("idx: ", idx);
+        float maxVal = -2.0;
+        for (uint_fast16_t i = 0; i < d->childNodes.size(); ++i) {
+            float value = negamax(get_child_node()->get_state()->clone(), 2, -2.0, 2.0, true);
+            if (value > maxVal) {
+                maxVal = value;
+                idx = i;
+            }
+        }
         return idx;
 #else
         return argmax(d->qValues + get_current_u_values(searchSettings));
