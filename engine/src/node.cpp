@@ -1242,6 +1242,7 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings)
 }
 
 float Node::negamax_for_select_phase(StateObj* state, uint8_t depth, float alpha, float beta, bool isMax, ChildIdx& childIdx) {
+    assert(typeid(*state) == typeid(BoardState));
     if (depth == 0 || state->is_board_terminal()) {
         return state->get_nnue_value();
     }
