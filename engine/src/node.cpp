@@ -1233,6 +1233,8 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings)
             }
         }*/
         negamax_for_select_phase(get_state()->clone(), searchSettings->minimaxDepth, -2.0, 2.0, true, idx);
+        if (get_state()->is_board_terminal() || !get_state()->is_board_ok())
+            return argmax(d->qValues + get_current_u_values(searchSettings));
         return idx;
 #else
         return argmax(d->qValues + get_current_u_values(searchSettings));
@@ -1274,12 +1276,10 @@ float Node::negamax(StateObj* state, uint8_t depth, float alpha, float beta, boo
         return state->get_nnue_value();
     }
     float bestVal = -2.0;
-    int idx = 0;
     for (const Action& action : state->legal_actions()) {
         state->do_action(action);
         if (!state->is_board_ok()) {
             state->undo_action(action);
-            idx += 1;
             continue;
         }
         float value = -negamax(state, depth - 1, -beta, -alpha, !isMax);
@@ -1289,7 +1289,6 @@ float Node::negamax(StateObj* state, uint8_t depth, float alpha, float beta, boo
         if (alpha >= beta)
             break;
     }
-    idx += 1;
     return bestVal;
 }
 
