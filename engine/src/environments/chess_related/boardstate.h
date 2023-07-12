@@ -409,6 +409,7 @@ public:
     void init(int variant, bool isChess960) override;
     float get_nnue_value();
     bool is_board_terminal();
+    bool is_board_ok();
 };
 
 #endif // BOARTSTATE_H
