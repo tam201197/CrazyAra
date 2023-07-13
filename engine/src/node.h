@@ -146,7 +146,7 @@ public:
      */
     Node* get_child_node(ChildIdx childIdx);
 
-    ChildIdx select_child_node(const SearchSettings* searchSettings);
+    ChildIdx select_child_node(const SearchSettings* searchSettings, StateObj* rootState, vector<Action> actionsBuffer);
 
     float negamax_for_select_phase(StateObj* state, uint8_t depth, float alpha, float beta, bool isMax, ChildIdx& childIdx);
 

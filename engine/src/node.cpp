@@ -1182,7 +1182,7 @@ size_t get_best_action_index(const Node* curNode, bool fast, const SearchSetting
     return bestMoveIdx;
 }
 
-ChildIdx Node::select_child_node(const SearchSettings* searchSettings)
+ChildIdx Node::select_child_node(const SearchSettings* searchSettings, StateObj* rootState, vector<Action> actionsBuffer)
 {
     if (!sorted) {
         prepare_node_for_visits();
@@ -1221,7 +1221,10 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings)
     }
     return bestIdx;*/
     if (searchSettings->mctsMiniMaxHybrid && realVisitsSum >= searchSettings->switchingMaxOperatorAtNode && searchSettings->mctsMinimaxHybridStyle == MCTS_IP) {
-#ifdef MCTS_STORE_STATES
+        StateObj* newState = rootState;
+        for (Action action : actionsBuffer) {
+            newState->do_action(action);
+        }
         //float maxVal = -2.0;
         ChildIdx idx = 0;
         fully_expand_node();
@@ -1232,13 +1235,10 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings)
                 idx = i;
             }
         }*/
-        negamax_for_select_phase(get_state()->clone(), searchSettings->minimaxDepth, -2.0, 2.0, true, idx);
-        if (get_state()->is_board_terminal() || !get_state()->is_board_ok())
+        negamax_for_select_phase(newState->clone(), searchSettings->minimaxDepth, -2.0, 2.0, true, idx);
+        if (newState->is_board_terminal() || !newState->is_board_ok())
             return argmax(d->qValues + get_current_u_values(searchSettings));
         return idx;
-#else
-        return argmax(d->qValues + get_current_u_values(searchSettings));
-#endif
     }
     return argmax(d->qValues + get_current_u_values(searchSettings));
 }
