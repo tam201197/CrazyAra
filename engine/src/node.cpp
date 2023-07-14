@@ -1245,6 +1245,8 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings, StateObj*
 
 float Node::negamax_for_select_phase(StateObj* state, uint8_t depth, float alpha, float beta, bool isMax, ChildIdx& childIdx) {
     if (depth == 0 || state->is_board_terminal()) {
+        if (!state->is_board_ok())
+            return 2;
         return state->get_nnue_value();
     }
     float bestVal = -2.0;
