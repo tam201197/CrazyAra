@@ -98,7 +98,7 @@ private:
     // singular values
     // valueSum stores the sum of all incoming value evaluations
     double valueSum;
-    double vValue;
+    long double vValue;
     double initValue;
     float minimaxValue;
 
@@ -364,7 +364,7 @@ public:
     }
 
     template<bool freeBackup>
-    void revert_virtual_loss_with_power_UCT_optimal(ChildIdx childIdx, float value, const SearchSettings* searchSettings, bool solveForTerminal, double& childvValue)
+    void revert_virtual_loss_with_power_UCT_optimal(ChildIdx childIdx, float value, const SearchSettings* searchSettings, bool solveForTerminal, long double& childvValue)
     {
         lock();
         // decrement virtual loss counter
@@ -380,8 +380,8 @@ public:
         }
         else {
             assert(d->childNumberVisits[childIdx] != 0);
-            double new_qValue = pow(max(childvValue / childNumberVisit, 0.0), 1 / double(searchSettings->power_mean)) - 1.0;
-            if ( - 1 > new_qValue || new_qValue > 1 || isnan(new_qValue))
+            float new_qValue = static_cast<float>(pow(max(childvValue / childNumberVisit, long double(0.0)), 1 / double(searchSettings->power_mean)) - 1.0);
+            if ( - 1 > new_qValue || new_qValue > 1)
                 new_qValue = - (double(d->qValues[childIdx]) * (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx]) + value) / (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx] + 1);
             if (childNumberVisit - 1 > 0) {
                 vValue -= (childNumberVisit - searchSettings->virtualLoss) * qValue_exponent(d->qValues[childIdx], searchSettings->power_mean);
@@ -415,7 +415,7 @@ public:
 
     float score_qValue_with_maxWeight(const SearchSettings* searchSettings, float value, float minimaxWeight);
 
-    double qValue_exponent(double qValue, double exponent);
+    long double qValue_exponent(long double qValue, double exponent);
 
     double get_vValue();
 
@@ -986,7 +986,7 @@ float get_transposition_q_value(uint_fast32_t transposVisits, double transposQVa
 template <bool freeBackup>
 void backup_value(float value, const SearchSettings* searchSettings, const Trajectory& trajectory, bool solveForTerminal) {
     double targetQValue = 0;
-    double childvValue = 0;
+    long double childvValue = 0;
     float implicit_max_value = 0;
     Node* childNode = trajectory.rbegin()->node->get_child_node(trajectory.rbegin()->childIdx);
     switch (searchSettings->backupOperator) {

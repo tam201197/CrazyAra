@@ -717,8 +717,8 @@ float Node::score_qValue_with_maxWeight(const SearchSettings* searchSettings, fl
     return result;
 }
 
-double Node::qValue_exponent(double qValue, double exponent) {
-    return pow(max(1.0 + qValue, 0.0), exponent);
+long double Node::qValue_exponent(long double qValue, double exponent) {
+    return pow(max(1.0 + qValue, long double(0.0)), exponent);
 }
 
 double Node::get_vValue() {
