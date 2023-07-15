@@ -380,8 +380,10 @@ public:
         }
         else {
             assert(d->childNumberVisits[childIdx] != 0);
-            float new_qValue = static_cast<float>(pow(max(childvValue / childNumberVisit, long double(0.0)), 1 / double(searchSettings->power_mean)) - 1.0);
-            if ( - 1 > new_qValue || new_qValue > 1)
+            float new_qValue = 0.0;
+            if (childvValue / childNumberVisit > 0.0)
+                new_qValue = static_cast<float>(pow(childvValue / childNumberVisit, 1 / double(searchSettings->power_mean)) - 1.0);
+            if ( - 1.0 > new_qValue || new_qValue > 1.0)
                 new_qValue = - (double(d->qValues[childIdx]) * (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx]) + value) / (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx] + 1);
             if (childNumberVisit - 1 > 0) {
                 vValue -= (childNumberVisit - searchSettings->virtualLoss) * qValue_exponent(d->qValues[childIdx], searchSettings->power_mean);
