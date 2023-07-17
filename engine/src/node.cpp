@@ -1237,7 +1237,11 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings, StateObj*
         }*/
         if (newState->is_board_terminal() || !newState->is_board_ok())
             return argmax(d->qValues + get_current_u_values(searchSettings));
-        negamax_for_select_phase(newState->clone(), searchSettings->minimaxDepth, -2.0, 2.0, true, idx);
+        float value = negamax_for_select_phase(newState->clone(), searchSettings->minimaxDepth, -2.0, 2.0, true, idx);
+        if (d->qValues[idx] > -1.0)
+            d->qValues[idx] = (d->qValues[idx] + value) / 2;
+        else
+            d->qValues[idx] = value;
         return idx;
     }
     return argmax(d->qValues + get_current_u_values(searchSettings));
