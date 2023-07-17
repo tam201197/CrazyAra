@@ -94,8 +94,9 @@ struct SearchSettings
     uint32_t maxAtVisit;
     uint32_t switchingMaxOperatorAtNode;
     float minimaxWeight;
-    float power_mean;
+    float powerMean;
     bool mctsMiniMaxHybrid;
+    uint32_t priorWeight;
     uint8_t minimaxDepth;
     SearchSettings();
 

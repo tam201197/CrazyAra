@@ -541,7 +541,6 @@ float Node::get_max_qValue() const
 void Node::set_q_value(ChildIdx childIdx, float value)
 {
     d->qValues[childIdx] = value;
-    info_string("set_q_value: ", value);
 }
 
 ChildIdx Node::get_best_q_idx() const
@@ -771,7 +770,7 @@ void Node::set_value(float value)
 
 void Node::init_vValue(const SearchSettings* searchSettings)
 {
-    this->vValue = qValue_exponent(initValue, searchSettings->power_mean) * this->realVisitsSum;
+    this->vValue = qValue_exponent(initValue, searchSettings->powerMean) * this->realVisitsSum;
 }
 
 Node* Node::add_new_node_to_tree(MapWithMutex* mapWithMutex, StateObj* newState, ChildIdx childIdx, const SearchSettings* searchSettings, bool& transposition)
@@ -1184,7 +1183,7 @@ size_t get_best_action_index(const Node* curNode, bool fast, const SearchSetting
     return bestMoveIdx;
 }
 
-ChildIdx Node::select_child_node(const SearchSettings* searchSettings, StateObj* rootState, vector<Action> actionsBuffer)
+ChildIdx Node::select_child_node(const SearchSettings* searchSettings)
 {
     if (!sorted) {
         prepare_node_for_visits();
@@ -1199,53 +1198,6 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings, StateObj*
     // find the move according to the q- and u-values for each move
     // calculate the current u values
     // it's not worth to save the u values as a node attribute because u is updated every time n_sum changes
- /*   ChildIdx bestIdx = argmax(d->qValues + get_current_u_values(searchSettings));
-    if (searchSettings->mctsMiniMaxHybrid && searchSettings->mctsMinimaxHybridStyle == MCTS_IP) {
-        Node* childNode = get_child_node(bestIdx);
-        if (childNode == nullptr)
-            return bestIdx;
-        childNode->lock();
-        if (childNode->realVisitsSum < searchSettings->switchingMaxOperatorAtNode) {
-            childNode->unlock();
-            return bestIdx;
-        }
-        else
-        {
-#ifdef MCTS_STORE_STATES
-            float value = negamax(childNode->get_state()->clone(), 2, -2.0, 2.0, true);
-            childNode->unlock();
-            d->qValues[bestIdx] = (d->qValues[bestIdx] + value) / 2;
-#else
-            childNode->unlock();
-            return bestIdx;
-#endif
-        }
-    }
-    return bestIdx;*/
-    if (searchSettings->mctsMiniMaxHybrid && realVisitsSum >= searchSettings->switchingMaxOperatorAtNode && searchSettings->mctsMinimaxHybridStyle == MCTS_IP) {
-        StateObj* newState = rootState;
-        for (Action action : actionsBuffer) {
-            newState->do_action(action);
-        }
-        //float maxVal = -2.0;
-        ChildIdx idx = 0;
-        fully_expand_node();
-        /*for (uint_fast16_t i = 0; i < legalActions.size(); ++i) {
-            float value = negamax(get_child_node(i)->get_state()->clone(), 2, -2.0, 2.0, true);
-            if (value > maxVal) {
-                maxVal = value;
-                idx = i;
-            }
-        }*/
-        if (newState->is_board_terminal() || !newState->is_board_ok())
-            return argmax(d->qValues + get_current_u_values(searchSettings));
-        float value = negamax_for_select_phase(newState->clone(), searchSettings->minimaxDepth, -2.0, 2.0, true, idx);
-        if (d->qValues[idx] > -1.0)
-            d->qValues[idx] = (d->qValues[idx] + value) / 2;
-        else
-            d->qValues[idx] = value;
-        return idx;
-    }
     return argmax(d->qValues + get_current_u_values(searchSettings));
 }
 
@@ -1297,6 +1249,18 @@ float Node::negamax(StateObj* state, uint8_t depth, float alpha, float beta, boo
             break;
     }
     return bestVal;
+}
+
+void Node::update_qValue_after_minimax_search(Node* parentNode, ChildIdx childIdx, float value, const SearchSettings* searchSettings)
+{
+    uint32_t oldChildNumberVisits = parentNode->d->childNumberVisits[childIdx] - parentNode->d->virtualLossCounter[childIdx] * searchSettings->virtualLoss;
+    parentNode->d->childNumberVisits[childIdx] += searchSettings->priorWeight;
+    parentNode->d->visitSum += searchSettings->priorWeight;
+    parentNode->d->qValues[childIdx] = (double(parentNode->d->qValues[childIdx]) * oldChildNumberVisits - value * searchSettings->priorWeight) / (parentNode->d->childNumberVisits[childIdx] - searchSettings->virtualLoss * parentNode->d->virtualLossCounter[childIdx]);
+    lock();
+    valueSum += value * searchSettings->priorWeight;
+    realVisitsSum += searchSettings->priorWeight;
+    unlock();
 }
 
 void Node::store_minimax_value(StateObj* state, const SearchSettings* searchSettings)

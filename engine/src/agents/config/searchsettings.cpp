@@ -57,8 +57,9 @@ SearchSettings::SearchSettings() :
     switchingMaxOperatorAtNode(800),
     minimaxWeight(0.0),
     useVirtualLoss(true),
-    power_mean(2.2),
-    minimaxDepth(2)
+    powerMean(2.2),
+    minimaxDepth(2),
+    priorWeight(100)
 {
 
 }

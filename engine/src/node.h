@@ -146,11 +146,13 @@ public:
      */
     Node* get_child_node(ChildIdx childIdx);
 
-    ChildIdx select_child_node(const SearchSettings* searchSettings, StateObj* rootState, vector<Action> actionsBuffer);
+    ChildIdx select_child_node(const SearchSettings* searchSettings);
 
     float negamax_for_select_phase(StateObj* state, uint8_t depth, float alpha, float beta, bool isMax, ChildIdx& childIdx);
 
     float negamax(StateObj* state, uint8_t depth, float alpha, float beta, bool isMax);
+
+    void update_qValue_after_minimax_search(Node* parentNode, ChildIdx childIdx, float value, const SearchSettings* searchSettings);
 
     void store_minimax_value(StateObj* state, const SearchSettings* searchSettings);
         
@@ -327,7 +329,7 @@ public:
             assert(d->childNumberVisits[childIdx] != 0);
             Node* childNode = get_child_node(childIdx);
             childNode->lock();
-            double childvValue = qValue_exponent(childNode->initValue, searchSettings->power_mean);
+            double childvValue = qValue_exponent(childNode->initValue, searchSettings->powerMean);
             if (childNode->is_playout_node()){
                 bool isChanged = false;
                 for (uint_fast16_t i = 0; i < childNode->d->qValues.size(); ++i) {
@@ -335,18 +337,18 @@ public:
                         continue;
                     }
                     isChanged = true;
-                    childvValue += (childNode->d->childNumberVisits[i] - searchSettings->virtualLoss * childNode->d->virtualLossCounter[i]) * qValue_exponent(childNode->d->qValues[i], searchSettings->power_mean);
+                    childvValue += (childNode->d->childNumberVisits[i] - searchSettings->virtualLoss * childNode->d->virtualLossCounter[i]) * qValue_exponent(childNode->d->qValues[i], searchSettings->powerMean);
                 }
                 if (!isChanged) {
-                    childvValue += qValue_exponent(- value, searchSettings->power_mean);
+                    childvValue += qValue_exponent(- value, searchSettings->powerMean);
                 }
             }
             else {
-                childvValue += qValue_exponent(- value, searchSettings->power_mean);
+                childvValue += qValue_exponent(- value, searchSettings->powerMean);
             }
             childNode->unlock();
             double a = childvValue / (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx]);
-            double b = 1 / double(searchSettings->power_mean);
+            double b = 1 / double(searchSettings->powerMean);
             childvValue = pow(a, b) - 1;
             d->qValues[childIdx] = -childvValue;
             assert(!isnan(d->qValues[childIdx]));
@@ -376,20 +378,20 @@ public:
             // set new Q-value based on return
             // (the initialization of the Q-value was by Q_INIT which we don't want to recover.)
             d->qValues[childIdx] = value;
-            vValue += childNumberVisit * qValue_exponent(value, searchSettings->power_mean);
+            vValue += childNumberVisit * qValue_exponent(value, searchSettings->powerMean);
         }
         else {
             assert(d->childNumberVisits[childIdx] != 0);
-            double new_qValue = pow(max(childvValue / childNumberVisit, 0.0), 1 / double(searchSettings->power_mean)) - 1.0;
+            double new_qValue = pow(max(childvValue / childNumberVisit, 0.0), 1 / double(searchSettings->powerMean)) - 1.0;
             if (isnan(new_qValue) || -1 > new_qValue || new_qValue > 1)
                 new_qValue = -(double(d->qValues[childIdx]) * (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx]) + value) / (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx] + 1);
             if (childNumberVisit - 1 > 0) {
-                vValue -= (childNumberVisit - searchSettings->virtualLoss) * qValue_exponent(d->qValues[childIdx], searchSettings->power_mean);
+                vValue -= (childNumberVisit - searchSettings->virtualLoss) * qValue_exponent(d->qValues[childIdx], searchSettings->powerMean);
             }
 
             d->qValues[childIdx] = -new_qValue;
             assert(!isnan(d->qValues[childIdx]));
-            vValue += childNumberVisit * qValue_exponent(-new_qValue, searchSettings->power_mean);
+            vValue += childNumberVisit * qValue_exponent(-new_qValue, searchSettings->powerMean);
         }
         childvValue = vValue;
         if (searchSettings->virtualLoss != 1) {
@@ -997,7 +999,7 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
             childNode->unlock();
         }
         else {
-            childvValue = pow(1 + double(value), searchSettings->power_mean);
+            childvValue = pow(1 + double(value), searchSettings->powerMean);
         }
         break;
     case BACKUP_IMPLICIT_MAX:

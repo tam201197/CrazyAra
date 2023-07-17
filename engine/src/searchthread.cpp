@@ -173,7 +173,7 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
         currentNode = get_starting_node(currentNode, description, childIdx);
         currentNode->lock();
         childIdx = select_enhanced_move(currentNode);
-        if (childIdx ==  uint16_t(-1)) {
+        if (childIdx == uint16_t(-1)) {
             random_playout(currentNode, childIdx);
         }
         currentNode->unlock();
@@ -182,53 +182,94 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
     while (true) {
         currentNode->lock();
         if (childIdx == uint16_t(-1)) {
-            unique_ptr<StateObj> pos = unique_ptr<StateObj>(rootState->clone());
-            childIdx = currentNode->select_child_node(searchSettings, pos.get(), actionsBuffer);
+            childIdx = currentNode->select_child_node(searchSettings);
         }
         currentNode->apply_virtual_loss_to_child(childIdx, searchSettings);
         trajectoryBuffer.emplace_back(NodeAndIdx(currentNode, childIdx));
-
         nextNode = currentNode->get_child_node(childIdx);
         description.depth++;
-        if (nextNode == nullptr) {
-#ifdef MCTS_STORE_STATES
-            StateObj* newState = currentNode->get_state()->clone();
-#else
-            newState = unique_ptr<StateObj>(rootState->clone());
-            assert(actionsBuffer.size() == description.depth-1);
+        //MCTS_IP
+        uint32_t childNumberVisits = currentNode->get_child_number_visits(childIdx) - currentNode->get_virtual_loss_counter(childIdx) * searchSettings->virtualLoss;
+        if (searchSettings->mctsMiniMaxHybrid && searchSettings->mctsMinimaxHybridStyle == MCTS_IP && childNumberVisits >= searchSettings->switchingMaxOperatorAtNode){
+            unique_ptr<StateObj> newState = unique_ptr<StateObj>(rootState->clone());
+            assert(actionsBuffer.size() == description.depth - 1);
             for (Action action : actionsBuffer) {
                 newState->do_action(action);
             }
-#endif
-            newState->do_action(currentNode->get_action(childIdx));
-            currentNode->increment_no_visit_idx();
-#ifdef MCTS_STORE_STATES
-            nextNode = add_new_node_to_tree(newState, currentNode, childIdx, description.type);
-#else
-            nextNode = add_new_node_to_tree(newState.get(), currentNode, childIdx, description.type);
-#endif
-            currentNode->unlock();
-
-            if (description.type == NODE_NEW_NODE) {
-#ifdef SEARCH_UCT
-                Node* nextNode = currentNode->get_child_node(childIdx);
-                nextNode->set_value(newState->random_rollout());
-                nextNode->enable_has_nn_results();
-                if (searchSettings->useTranspositionTable && !nextNode->is_terminal()) {
-                    mapWithMutex->mtx.lock();
-                    mapWithMutex->hashTable.insert({nextNode->hash_key(), nextNode});
-                    mapWithMutex->mtx.unlock();
-                }
-#else
-                // fill a new board in the input_planes vector
-                // we shift the index by nbNNInputValues each time
-                newState->get_state_planes(true, inputPlanes + newNodes->size() * net->get_nb_input_values_total(), net->get_version());
-                // save a reference newly created list in the temporary list for node creation
-                // it will later be updated with the evaluation of the NN
-                newNodeSideToMove->add_element(newState->side_to_move());
-#endif
+            if (nextNode != nullptr) {
+                float value = nextNode->negamax(newState.get(), searchSettings->minimaxDepth, -2.0, 2.0, true);
+                nextNode->update_qValue_after_minimax_search(currentNode, childIdx, value, searchSettings);
             }
-            return nextNode;
+            else
+            {
+                newState->do_action(currentNode->get_action(childIdx));
+                currentNode->increment_no_visit_idx();
+                nextNode = add_new_node_to_tree(newState.get(), currentNode, childIdx, description.type);
+                currentNode->unlock();
+                if (description.type == NODE_NEW_NODE) {
+#ifdef SEARCH_UCT
+                    Node* nextNode = currentNode->get_child_node(childIdx);
+                    nextNode->set_value(newState->random_rollout());
+                    nextNode->enable_has_nn_results();
+                    if (searchSettings->useTranspositionTable && !nextNode->is_terminal()) {
+                        mapWithMutex->mtx.lock();
+                        mapWithMutex->hashTable.insert({ nextNode->hash_key(), nextNode });
+                        mapWithMutex->mtx.unlock();
+            }
+#else
+                    // fill a new board in the input_planes vector
+                    // we shift the index by nbNNInputValues each time
+                    newState->get_state_planes(true, inputPlanes + newNodes->size() * net->get_nb_input_values_total(), net->get_version());
+                    // save a reference newly created list in the temporary list for node creation
+                    // it will later be updated with the evaluation of the NN
+                    newNodeSideToMove->add_element(newState->side_to_move());
+#endif
+        }
+                return nextNode;
+    }
+        }
+        else 
+        {
+            if (nextNode == nullptr) {
+#ifdef MCTS_STORE_STATES
+                StateObj* newState = currentNode->get_state()->clone();
+#else
+                newState = unique_ptr<StateObj>(rootState->clone());
+                assert(actionsBuffer.size() == description.depth - 1);
+                for (Action action : actionsBuffer) {
+                    newState->do_action(action);
+                }
+#endif
+                newState->do_action(currentNode->get_action(childIdx));
+                currentNode->increment_no_visit_idx();
+#ifdef MCTS_STORE_STATES
+                nextNode = add_new_node_to_tree(newState, currentNode, childIdx, description.type);
+#else
+                nextNode = add_new_node_to_tree(newState.get(), currentNode, childIdx, description.type);
+#endif
+                currentNode->unlock();
+
+                if (description.type == NODE_NEW_NODE) {
+#ifdef SEARCH_UCT
+                    Node* nextNode = currentNode->get_child_node(childIdx);
+                    nextNode->set_value(newState->random_rollout());
+                    nextNode->enable_has_nn_results();
+                    if (searchSettings->useTranspositionTable && !nextNode->is_terminal()) {
+                        mapWithMutex->mtx.lock();
+                        mapWithMutex->hashTable.insert({ nextNode->hash_key(), nextNode });
+                        mapWithMutex->mtx.unlock();
+                    }
+#else
+                    // fill a new board in the input_planes vector
+                    // we shift the index by nbNNInputValues each time
+                    newState->get_state_planes(true, inputPlanes + newNodes->size() * net->get_nb_input_values_total(), net->get_version());
+                    // save a reference newly created list in the temporary list for node creation
+                    // it will later be updated with the evaluation of the NN
+                    newNodeSideToMove->add_element(newState->side_to_move());
+#endif
+                }
+                return nextNode;
+            }
         }
         if (nextNode->is_terminal()) {
             description.type = NODE_TERMINAL;
