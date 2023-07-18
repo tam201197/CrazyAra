@@ -109,13 +109,15 @@ sgn(T v)
     return (v > T(0)) - (v < T(0));
 }
 
-float BoardState::get_nnue_value()
+float BoardState::get_stockfish_value()
 {
-    Value v = board.evaluate_nneu();
+    Value v = board.evaluate();
     if (v == VALUE_KNOWN_WIN)
         return 1.0;
-    //float result = -(sgn(v) * (1 - log(1.0f - pow(10.0f, -abs(v) * log(VALUE_TO_CENTI_PARAM) / 100.0f))));
-    float result = sgn(v) * -(pow(2.71, -abs(v) * log(VALUE_TO_CENTI_PARAM) / 100.0f) - 1);
+    if (v == VALUE_DRAW)
+        return 0;
+    float result = (sgn(v) * abs(1 - pow(10.0f, -abs(v) * log(VALUE_TO_CENTI_PARAM) / 100.0f)));
+    //float result = sgn(v) * -(pow(2.71, -abs(v) * log(VALUE_TO_CENTI_PARAM) / 100.0f) - 1);
     if (abs(result) >= 1.0f)
         return sgn(result) * 1.0f;
     return result;

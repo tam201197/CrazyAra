@@ -407,7 +407,7 @@ public:
     void set_auxiliary_outputs(const float* auxiliaryOutputs) override;
     BoardState* clone() const override;
     void init(int variant, bool isChess960) override;
-    float get_nnue_value();
+    float get_stockfish_value();
     bool is_board_terminal();
     bool is_board_ok();
 };

@@ -1203,9 +1203,7 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings)
 
 float Node::negamax_for_select_phase(StateObj* state, uint8_t depth, float alpha, float beta, bool isMax, ChildIdx& childIdx) {
     if (depth == 0 || state->is_board_terminal()) {
-        if (!state->is_board_ok())
-            return 2;
-        return state->get_nnue_value();
+        return state->get_stockfish_value();
     }
     float bestVal = -2.0;
     int idx = 0;
@@ -1232,12 +1230,12 @@ float Node::negamax_for_select_phase(StateObj* state, uint8_t depth, float alpha
 
 float Node::negamax(StateObj* state, uint8_t depth, float alpha, float beta, bool isMax) {
     if (depth == 0 || state->is_board_terminal()) {
-        return state->get_nnue_value();
+        return state->get_stockfish_value();
     }
     float bestVal = -2.0;
     for (const Action& action : state->legal_actions()) {
         state->do_action(action);
-        if (!state->is_board_ok()) {
+        if (!state->is_board_ok() || state->is_board_terminal()) {
             state->undo_action(action);
             continue;
         }

@@ -51,7 +51,7 @@ bool Board::is_ok()
     return checkers();
 }
 
-Value Board::evaluate_nneu() 
+Value Board::evaluate() 
 {
     Value v = Eval::evaluate(*this);
     return v;
