@@ -197,8 +197,9 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                 newState->do_action(action);
             }
             if (nextNode != nullptr) {
-                float value = nextNode->negamax(newState.get(), searchSettings->minimaxDepth, -2.0, 2.0, true);
-                nextNode->update_qValue_after_minimax_search(currentNode, childIdx, value, searchSettings);
+                float minimaxValue = nextNode->negamax(newState.get(), searchSettings->minimaxDepth, -2.0, 2.0, true);
+                info_string("minimaxValue: ", minimaxValue);
+                nextNode->update_qValue_after_minimax_search(currentNode, childIdx, minimaxValue, searchSettings);
             }
             else
             {
