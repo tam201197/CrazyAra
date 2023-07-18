@@ -1253,11 +1253,12 @@ void Node::update_qValue_after_minimax_search(Node* parentNode, ChildIdx childId
     uint32_t oldChildNumberVisits = parentNode->d->childNumberVisits[childIdx] - parentNode->d->virtualLossCounter[childIdx] * searchSettings->virtualLoss;
     parentNode->d->childNumberVisits[childIdx] += searchSettings->priorWeight;
     parentNode->d->visitSum += searchSettings->priorWeight;
-    parentNode->d->qValues[childIdx] = (double(parentNode->d->qValues[childIdx]) * oldChildNumberVisits + value * searchSettings->priorWeight) / (oldChildNumberVisits + searchSettings->priorWeight);
     lock();
     valueSum += value * searchSettings->priorWeight;
     realVisitsSum += searchSettings->priorWeight;
+    float qValue = valueSum / realVisitsSum;
     unlock();
+    parentNode->d->qValues[childIdx] = - qValue;
 }
 
 void Node::store_minimax_value(StateObj* state, const SearchSettings* searchSettings)
