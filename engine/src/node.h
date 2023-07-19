@@ -1060,7 +1060,7 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
             break;
         case BACKUP_POWER_MEAN:
             n = it->node->get_child_number_visits(it->childIdx) - it->node->get_virtual_loss_counter(it->childIdx) * searchSettings->virtualLoss;
-            if (n >= searchSettings->maxAtVisit || isnan(childvValue)) {
+            if (n >= searchSettings->maxAtVisit) {
                 freeBackup ? it->node->revert_virtual_loss_and_update<true>(it->childIdx, value, searchSettings, solveForTerminal) :
                     it->node->revert_virtual_loss_and_update<false>(it->childIdx, value, searchSettings, solveForTerminal);
             }
