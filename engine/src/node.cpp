@@ -1228,16 +1228,15 @@ float Node::negamax_for_select_phase(StateObj* state, uint8_t depth, float alpha
 }
 
 float Node::negamax(StateObj* state, uint8_t depth, float alpha, float beta, bool isMax) {
+    if (depth == 0 && !state->is_board_ok()) {
+        return -negamax(state, 1, -beta, -alpha, !isMax);
+    }
     if (depth == 0 || state->is_board_terminal()) {
         return state->get_stockfish_value();
     }
     float bestVal = -2.0;
     for (const Action& action : state->legal_actions()) {
         state->do_action(action);
-        /*if (!state->is_board_ok()) {
-            state->undo_action(action);
-            continue;
-        }*/
         float value = - negamax(state, depth - 1, -beta, -alpha, !isMax);
         state->undo_action(action);
         bestVal = max(bestVal, value);
@@ -1265,7 +1264,6 @@ void Node::store_minimax_value(StateObj* state, const SearchSettings* searchSett
 {   
     lock();
     minimaxValue = negamax(state, searchSettings->minimaxDepth, -2.0, 2.0, true);
-    info_string("minimaxValue: ", minimaxValue);
     unlock();
 }
 

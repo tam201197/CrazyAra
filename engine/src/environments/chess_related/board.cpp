@@ -48,7 +48,7 @@ Board::~Board()
 
 bool Board::is_ok()
 {
-    return checkers();
+    return !checkers();
 }
 
 Value Board::evaluate() 

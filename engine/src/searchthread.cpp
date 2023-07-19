@@ -196,9 +196,8 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
             for (Action action : actionsBuffer) {
                 newState->do_action(action);
             }
-            if (nextNode != nullptr) {
+            if (nextNode != nullptr && nextNode->get_real_visits() > searchSettings->switchingMaxOperatorAtNode) {
                 float minimaxValue = nextNode->negamax(newState.get(), searchSettings->minimaxDepth, -2.0, 2.0, true);
-                info_string("minimaxValue: ", minimaxValue);
                 nextNode->update_qValue_after_minimax_search(currentNode, childIdx, minimaxValue, searchSettings);
             }
             else
