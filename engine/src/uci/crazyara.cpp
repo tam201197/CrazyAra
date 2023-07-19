@@ -96,15 +96,15 @@ void CrazyAra::uci_loop(int argc, char* argv[])
 
     // this is debug vector which can contain uci commands which will be automatically processed when the executable is launched
     vector<string> commands = {
-        "setoption name MCTS_Minimax_Hybrid value true",
+        //"setoption name MCTS_Minimax_Hybrid value true",
         //"setoption name Batch_Size value 1",
         //"setoption name Threads value 1",
-        "setoption name Virtual_Style value virtual_visit",
-        "setoption name Switching_Max_Operator_At_Node value 2",
-        "setoption name Prior_Weight value 1",
-        "setoption name First_Device_ID value 8",
-        "isready",
-        "go infinite",
+        //"setoption name Virtual_Style value virtual_visit",
+        //"setoption name Switching_Max_Operator_At_Node value 2",
+        //"setoption name Prior_Weight value 1",
+        //"setoption name First_Device_ID value 8",
+        //"isready",
+        //"go infinite",
         //"go nodes 100"
     };
 
