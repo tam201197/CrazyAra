@@ -192,7 +192,7 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
         uint32_t childNumberVisits = currentNode->get_child_number_visits(childIdx) - currentNode->get_virtual_loss_counter(childIdx) * searchSettings->virtualLoss;
         if (searchSettings->mctsMiniMaxHybrid && searchSettings->mctsMinimaxHybridStyle == MCTS_IP){
 
-            if (nextNode != nullptr && nextNode->get_real_visits() > searchSettings->switchingMaxOperatorAtNode) {
+            if (nextNode != nullptr && nextNode->get_real_visits() == searchSettings->switchingMaxOperatorAtNode) {
                 unique_ptr<StateObj> newState = unique_ptr<StateObj>(rootState->clone());
                 assert(actionsBuffer.size() == description.depth - 1);
                 for (Action action : actionsBuffer) {
