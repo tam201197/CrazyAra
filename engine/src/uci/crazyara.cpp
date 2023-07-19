@@ -70,7 +70,7 @@ CrazyAra::CrazyAra() :
 #endif
     changedUCIoption(false)
 {
-i}
+}
 
 CrazyAra::~CrazyAra()
 {
