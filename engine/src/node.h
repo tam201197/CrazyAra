@@ -1008,7 +1008,7 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
         }
         if (childNode != nullptr) {
             childNode->lock();
-            implicit_max_value = childNode->score_qValue_with_maxWeight(searchSettings, implicit_max_value, 0.1);
+            implicit_max_value = childNode->score_qValue_with_maxWeight(searchSettings, implicit_max_value, searchSettings->minimaxWeight);
             childNode->unlock();
         }
         break;
@@ -1055,8 +1055,8 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
             else {
                 minimaxWeight = 0.3;
             }
-            freeBackup ? it->node->revert_virtual_loss_with_implicit_minimax<true>(it->childIdx, value, searchSettings, solveForTerminal, minimaxWeight, implicit_max_value) :
-                it->node->revert_virtual_loss_with_implicit_minimax<false>(it->childIdx, value, searchSettings, solveForTerminal, minimaxWeight, implicit_max_value);
+            freeBackup ? it->node->revert_virtual_loss_with_implicit_minimax<true>(it->childIdx, value, searchSettings, solveForTerminal, searchSettings->minimaxWeight, implicit_max_value) :
+                it->node->revert_virtual_loss_with_implicit_minimax<false>(it->childIdx, value, searchSettings, solveForTerminal, searchSettings->minimaxWeight, implicit_max_value);
             break;
         case BACKUP_POWER_MEAN:
             n = it->node->get_child_number_visits(it->childIdx) - it->node->get_virtual_loss_counter(it->childIdx) * searchSettings->virtualLoss;
