@@ -1035,7 +1035,7 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
                 it->node->revert_virtual_loss_and_update<false>(it->childIdx, value, searchSettings, solveForTerminal);
             break;
         case BACKUP_MAX:
-            if (it->node->get_child_number_visits(it->childIdx) - it->node->get_virtual_loss_counter(it->childIdx) * searchSettings->virtualLoss >= searchSettings->switchingMaxOperatorAtNode) {
+            if (it->node->get_child_number_visits(it->childIdx) - it->node->get_virtual_loss_counter(it->childIdx) * searchSettings->virtualLoss >= searchSettings->switchingAtVisits) {
                 freeBackup ? it->node->revert_virtual_loss_and_update_max_operator<true>(it->childIdx, value, searchSettings, solveForTerminal, true) :
                     it->node->revert_virtual_loss_and_update_max_operator<false>(it->childIdx, value, searchSettings, solveForTerminal, true);
             }
@@ -1059,15 +1059,15 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
                 it->node->revert_virtual_loss_with_implicit_minimax<false>(it->childIdx, value, searchSettings, solveForTerminal, searchSettings->minimaxWeight, implicit_max_value);
             break;
         case BACKUP_POWER_MEAN:
-            //n = it->node->get_child_number_visits(it->childIdx) - it->node->get_virtual_loss_counter(it->childIdx) * searchSettings->virtualLoss;
-            /*if (n >= searchSettings->maxAtVisit) {
+            n = it->node->get_child_number_visits(it->childIdx) - it->node->get_virtual_loss_counter(it->childIdx) * searchSettings->virtualLoss;
+            if (n >= searchSettings->switchingAtVisits) {
                 freeBackup ? it->node->revert_virtual_loss_and_update<true>(it->childIdx, value, searchSettings, solveForTerminal) :
                     it->node->revert_virtual_loss_and_update<false>(it->childIdx, value, searchSettings, solveForTerminal);
             }
-            else {*/
+            else {
                 freeBackup ? it->node->revert_virtual_loss_with_power_UCT_optimal<true>(it->childIdx, value, searchSettings, solveForTerminal, childvValue) :
                     it->node->revert_virtual_loss_with_power_UCT_optimal<false>(it->childIdx, value, searchSettings, solveForTerminal, childvValue);
-            //}
+            }
             break;
         }
         if (it->node->is_transposition()) {

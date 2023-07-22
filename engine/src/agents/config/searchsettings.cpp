@@ -54,7 +54,7 @@ SearchSettings::SearchSettings() :
     backupOperator(BACKUP_MEAN),
     mctsMinimaxHybridStyle(MCTS_IP),
     maxAtVisit(20),
-    switchingMaxOperatorAtNode(800),
+    switchingAtVisits(800),
     minimaxWeight(0.0),
     useVirtualLoss(true),
     powerMean(2.2),

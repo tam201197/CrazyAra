@@ -69,7 +69,7 @@ void OptionsUCI::init(OptionsMap& o)
     o["Backup_Operator"] << Option("mean_op", { "mean_op", "max_op", "implicit_max_op", "power_mean_op"});
     o["Virtual_Style"] << Option("virtual_visit", { "virtual_loss", "virtual_visit" });
     o["Max_At_Visits"]  << Option(20 , 0, 500);
-    o["Switching_Max_Operator_At_Node"] << Option(800, 0, 99999999);
+    o["Switching_At_Visits"] << Option(800, 0, 99999999);
     o["Centi_Minimax_Weight"] << Option(0, 0, 100);
     o["Deci_Power_Mean"] << Option(10, 10, 99999999);
     o["Minimax_Depth"] << Option(2, 0, 100);

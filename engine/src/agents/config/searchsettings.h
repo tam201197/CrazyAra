@@ -92,7 +92,7 @@ struct SearchSettings
     BackupOperatorType backupOperator;
     HybridStyle mctsMinimaxHybridStyle;
     uint32_t maxAtVisit;
-    uint32_t switchingMaxOperatorAtNode;
+    uint32_t switchingAtVisits;
     float minimaxWeight;
     float powerMean;
     bool mctsMiniMaxHybrid;

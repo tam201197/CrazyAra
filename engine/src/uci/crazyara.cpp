@@ -100,7 +100,7 @@ void CrazyAra::uci_loop(int argc, char* argv[])
         //"setoption name Batch_Size value 1",
         //"setoption name Threads value 1",
         //"setoption name Virtual_Style value virtual_visit",
-        //"setoption name Switching_Max_Operator_At_Node value 2",
+        //"setoption name Switching_At_Visits value 2",
         //"setoption name Prior_Weight value 1",
         //"setoption name First_Device_ID value 8",
         //"isready",
@@ -775,7 +775,7 @@ void CrazyAra::init_search_settings()
         searchSettings.mctsMinimaxHybridStyle = MCTS_IC;
     }
     searchSettings.maxAtVisit = Options["Max_At_Visits"];
-    searchSettings.switchingMaxOperatorAtNode = Options["Switching_Max_Operator_At_Node"];
+    searchSettings.switchingAtVisits = Options["Switching_At_Visits"];
     searchSettings.minimaxWeight = Options["Centi_Minimax_Weight"] / 100.0f;
     searchSettings.powerMean = Options["Deci_Power_Mean"] / 10.0f;
     searchSettings.minimaxDepth = Options["Minimax_Depth"];
