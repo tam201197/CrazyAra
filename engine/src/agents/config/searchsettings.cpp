@@ -49,7 +49,7 @@ SearchSettings::SearchSettings() :
     epsilonGreedyCounter(20),
     reuseTree(true),
     mctsSolver(false),
-    mctsMiniMaxHybrid(true),
+    mctsMiniMaxHybrid(false),
     searchPlayerMode(MODE_TWO_PLAYER),
     backupOperator(BACKUP_MEAN),
     mctsMinimaxHybridStyle(MCTS_IP),
