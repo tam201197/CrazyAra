@@ -383,8 +383,12 @@ public:
         else {
             assert(d->childNumberVisits[childIdx] != 0);
             double new_qValue = pow(max(childvValue / childNumberVisit, 0.0), 1 / double(searchSettings->powerMean)) - 1.0;
-            if (isnan(new_qValue) || -1 > new_qValue || new_qValue > 1)
+            if (isnan(new_qValue))
                 new_qValue = -(double(d->qValues[childIdx]) * (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx]) + value) / (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx] + 1);
+            else if (new_qValue < -1)
+                new_qValue = -1.0;
+            else if (new_qValue > 1)
+                new_qValue = 1.0;
             if (childNumberVisit - 1 > 0) {
                 vValue -= (childNumberVisit - searchSettings->virtualLoss) * qValue_exponent(d->qValues[childIdx], searchSettings->powerMean);
             }
@@ -1059,6 +1063,10 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
                 it->node->revert_virtual_loss_with_implicit_minimax<false>(it->childIdx, value, searchSettings, solveForTerminal, searchSettings->minimaxWeight, implicit_max_value);
             break;
         case BACKUP_POWER_MEAN:
+            freeBackup ? it->node->revert_virtual_loss_with_power_UCT_optimal<true>(it->childIdx, value, searchSettings, solveForTerminal, childvValue) :
+                it->node->revert_virtual_loss_with_power_UCT_optimal<false>(it->childIdx, value, searchSettings, solveForTerminal, childvValue);
+            break;
+        case BACKUP_POWER_MEAN_MEAN:
             n = it->node->get_child_number_visits(it->childIdx) - it->node->get_virtual_loss_counter(it->childIdx) * searchSettings->virtualLoss;
             if (n >= searchSettings->switchingAtVisits) {
                 freeBackup ? it->node->revert_virtual_loss_and_update<true>(it->childIdx, value, searchSettings, solveForTerminal) :

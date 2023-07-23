@@ -40,7 +40,8 @@ enum BackupOperatorType {
     BACKUP_MEAN,
     BACKUP_MAX,
     BACKUP_IMPLICIT_MAX,
-    BACKUP_POWER_MEAN
+    BACKUP_POWER_MEAN,
+    BACKUP_POWER_MEAN_MEAN
 };
 
 enum HybridStyle {

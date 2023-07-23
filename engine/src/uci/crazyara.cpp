@@ -768,11 +768,17 @@ void CrazyAra::init_search_settings()
         searchSettings.backupOperator = BACKUP_POWER_MEAN;
         searchSettings.useVirtualLoss = false;
     }
+    else if (Options["Backup_Operator"] == "power_mean_mean_op") {
+        searchSettings.backupOperator = BACKUP_POWER_MEAN_MEAN;
+        searchSettings.useVirtualLoss = false;
+    }
     if (Options["MCTS_Minimax_Hybrid_Style"] == "mcts_ip") {
         searchSettings.mctsMinimaxHybridStyle = MCTS_IP;
+        searchSettings.useVirtualLoss = false;
     }
     else if (Options["MCTS_Minimax_Hybrid_Style"] == "mcts_ic") {
         searchSettings.mctsMinimaxHybridStyle = MCTS_IC;
+        searchSettings.useVirtualLoss = false;
     }
     searchSettings.maxAtVisit = Options["Max_At_Visits"];
     searchSettings.switchingAtVisits = Options["Switching_At_Visits"];
