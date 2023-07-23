@@ -758,19 +758,15 @@ void CrazyAra::init_search_settings()
     }
     else if (Options["Backup_Operator"] == "max_op") {
         searchSettings.backupOperator = BACKUP_MAX;
-        searchSettings.useVirtualLoss = false;
     }
     else if (Options["Backup_Operator"] == "implicit_max_op") {
         searchSettings.backupOperator = BACKUP_IMPLICIT_MAX;
-        searchSettings.useVirtualLoss = false;
     }
     else if (Options["Backup_Operator"] == "power_mean_op") {
         searchSettings.backupOperator = BACKUP_POWER_MEAN;
-        searchSettings.useVirtualLoss = false;
     }
     else if (Options["Backup_Operator"] == "power_mean_mean_op") {
         searchSettings.backupOperator = BACKUP_POWER_MEAN_MEAN;
-        searchSettings.useVirtualLoss = false;
     }
     searchSettings.maxAtVisit = Options["Max_At_Visits"];
     searchSettings.switchingAtVisits = Options["Switching_At_Visits"];

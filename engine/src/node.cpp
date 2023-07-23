@@ -1228,11 +1228,13 @@ float Node::negamax_for_select_phase(StateObj* state, uint8_t depth, float alpha
 }
 
 float Node::negamax(StateObj* state, uint8_t depth, float alpha, float beta, bool isMax) {
-    if (depth == 0 && !state->is_board_ok()) {
-        return -negamax(state, 1, -beta, -alpha, !isMax);
-    }
-    if (depth == 0 || state->is_board_terminal()) {
+    if (state->is_board_terminal())
         return state->get_stockfish_value();
+    if (depth == 0 ) {
+        if (!state->is_board_ok())
+            return -negamax(state, 1, -beta, -alpha, !isMax);
+        else
+            return state->get_stockfish_value();
     }
     float bestVal = -2.0;
     for (const Action& action : state->legal_actions()) {

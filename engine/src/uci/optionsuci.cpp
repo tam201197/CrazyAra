@@ -71,7 +71,7 @@ void OptionsUCI::init(OptionsMap& o)
     o["Max_At_Visits"]  << Option(20 , 0, 500);
     o["Switching_At_Visits"] << Option(800, 0, 99999999);
     o["Centi_Minimax_Weight"] << Option(0, 0, 100);
-    o["Deci_Power_Mean"] << Option(10, 10, 99999999);
+    o["Deci_Power_Mean"] << Option(22, 10, 99999999);
     o["Minimax_Depth"] << Option(2, 0, 100);
     o["Prior_Weight"] << Option(1, 0, 99999999);
     o["MCTS_IP_M"] << Option(false);
