@@ -383,14 +383,12 @@ public:
         else {
             assert(d->childNumberVisits[childIdx] != 0);
             double new_qValue = pow(max(childvValue / childNumberVisit, 0.0), 1 / double(searchSettings->powerMean)) - 1.0;
-            if (isnan(new_qValue))
-                new_qValue = -(double(d->qValues[childIdx]) * (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx]) + value) / (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx] + 1);
-            else if (new_qValue < -1)
+            if (new_qValue < -1.0)
                 new_qValue = -1.0;
-            else if (new_qValue > 1)
+            else if (new_qValue > 1.0)
                 new_qValue = 1.0;
             if (childNumberVisit - 1 > 0) {
-                vValue -= (childNumberVisit - searchSettings->virtualLoss) * qValue_exponent(d->qValues[childIdx], searchSettings->powerMean);
+                vValue -= (childNumberVisit - 1) * qValue_exponent(d->qValues[childIdx], searchSettings->powerMean);
             }
 
             d->qValues[childIdx] = -new_qValue;
