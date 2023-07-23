@@ -804,7 +804,7 @@ Node* Node::add_new_node_to_tree(MapWithMutex* mapWithMutex, StateObj* newState,
 
     // connect the Node to the parent
     shared_ptr<Node> newNode = make_shared<Node>(newState, searchSettings);
-    if (searchSettings->mctsMiniMaxHybrid) {
+    if (searchSettings->mctsIpM) {
         newNode->store_minimax_value(newState, searchSettings);
     }
     atomic_store(&d->childNodes[childIdx], newNode);

@@ -190,8 +190,7 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
         description.depth++;
         //MCTS_IP
         uint32_t childNumberVisits = currentNode->get_child_number_visits(childIdx) - currentNode->get_virtual_loss_counter(childIdx) * searchSettings->virtualLoss;
-        if (searchSettings->mctsMiniMaxHybrid && searchSettings->mctsMinimaxHybridStyle == MCTS_IP){
-
+        if (searchSettings->mctsIpM){
             if (nextNode != nullptr && nextNode->get_real_visits() == searchSettings->switchingAtVisits) {
                 unique_ptr<StateObj> newState = unique_ptr<StateObj>(rootState->clone());
                 assert(actionsBuffer.size() == description.depth - 1);
@@ -374,11 +373,7 @@ void SearchThread::create_mini_batch()
         depthMax = max(depthMax, description.depth);
         if(description.type == NODE_TERMINAL) {
             ++numTerminalNodes;
-            float new_value = newNode->get_value();
-            if (searchSettings->mctsMiniMaxHybrid && searchSettings->mctsMinimaxHybridStyle == MCTS_IC) {
-                new_value = newNode->get_combine_value();
-            }
-            backup_value<true>(new_value, searchSettings, trajectoryBuffer, searchSettings->mctsSolver);
+            backup_value<true>(newNode->get_value(), searchSettings, trajectoryBuffer, searchSettings->mctsSolver);
         }
         else if (description.type == NODE_COLLISION) {
             // store a pointer to the collision node in order to revert the virtual loss of the forward propagation
@@ -420,15 +415,11 @@ void run_search_thread(SearchThread *t)
 void SearchThread::backup_values(FixedVector<Node*>& nodes, vector<Trajectory>& trajectories) {
     for (size_t idx = 0; idx < nodes.size(); ++idx) {
         Node* node = nodes.get_element(idx);
-        float new_value = node->get_value();
-        if (searchSettings->mctsMiniMaxHybrid && searchSettings->mctsMinimaxHybridStyle == MCTS_IC) {
-            new_value = node->get_combine_value();
-        }
 #ifdef MCTS_TB_SUPPORT
         const bool solveForTerminal = searchSettings->mctsSolver && node->is_tablebase();
-        backup_value<false>(new_value, searchSettings, trajectories[idx], solveForTerminal);
+        backup_value<false>(node->get_value(), searchSettings, trajectories[idx], solveForTerminal);
 #else   
-        backup_value<false>(new_value, searchSettings, trajectories[idx], false);
+        backup_value<false>(node->get_value(), searchSettings, trajectories[idx], false);
 #endif
     }
     nodes.reset_idx();

@@ -73,8 +73,8 @@ void OptionsUCI::init(OptionsMap& o)
     o["Centi_Minimax_Weight"] << Option(0, 0, 100);
     o["Deci_Power_Mean"] << Option(10, 10, 99999999);
     o["Minimax_Depth"] << Option(2, 0, 100);
-    o["MCTS_Minimax_Hybrid_Style"] << Option("mcts_ip", { "mcts_ip", "mcts_ic" });
     o["Prior_Weight"] << Option(1, 0, 99999999);
+    o["MCTS_IP_M"] << Option(false);
 #ifdef USE_RL
     o["Batch_Size"] << Option(8, 1, 8192);
 #else
@@ -137,7 +137,6 @@ void OptionsUCI::init(OptionsMap& o)
     o["Last_Device_ID"] << Option(0, 0, 99999);
     o["Log_File"] << Option("", on_logger);
     o["MCTS_Solver"] << Option(false);
-    o["MCTS_Minimax_Hybrid"] << Option(false);
 #if defined(MODE_LICHESS) || defined(MODE_BOARDGAMES)
     o["Model_Directory"] << Option((string("model/") + engineName + "/" + get_first_variant_with_model()).c_str());
 #else
