@@ -53,7 +53,9 @@ bool Board::is_ok()
 
 Value Board::evaluate() 
 {
+    thisThread->mutex.lock();
     Value v = Eval::evaluate(*this);
+    thisThread->mutex.unlock();
     return v;
 }
 

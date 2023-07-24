@@ -1231,19 +1231,14 @@ float Node::negamax(StateObj* state, uint8_t depth, float alpha, float beta, boo
     if (state->is_board_terminal())
         return state->get_stockfish_value();
     if (depth == 0 ) {
-        return state->get_stockfish_value();
-        /*if (!state->is_board_ok())
+        if (!state->is_board_ok())
             return -negamax(state, 1, -beta, -alpha, !isMax);
         else
-            return state->get_stockfish_value();*/
+            return state->get_stockfish_value();
     }
     float bestVal = -2.0;
     for (const Action& action : state->legal_actions()) {
         state->do_action(action);
-        if (!state->is_board_ok()) {
-            state->undo_action(action);
-            continue;
-        }
         float value = - negamax(state, depth - 1, -beta, -alpha, !isMax);
         state->undo_action(action);
         bestVal = max(bestVal, value);
