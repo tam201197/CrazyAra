@@ -382,7 +382,7 @@ public:
         }
         else {
             assert(d->childNumberVisits[childIdx] != 0);
-            double new_qValue = pow(max(childvValue / double(childNumberVisit + 1), 0.0), 1 / double(searchSettings->powerMean)) - 1.0;
+            double new_qValue = pow(max(childvValue / double(childNumberVisit), 0.0), 1 / double(searchSettings->powerMean)) - 1.0;
             if (new_qValue < -1.0)
                 new_qValue = -1.0;
             else if (new_qValue > 1.0)
