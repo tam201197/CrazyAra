@@ -206,7 +206,7 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
             StateObj* newState = currentNode->get_state()->clone();
 #else
             newState = unique_ptr<StateObj>(rootState->clone());
-            assert(actionsBuffer.size() == description.depth - 1);                
+            assert(actionsBuffer.size() == description.depth - 1);
             for (Action action : actionsBuffer) {
                 newState->do_action(action);
             }
@@ -217,7 +217,7 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
             nextNode = add_new_node_to_tree(newState, currentNode, childIdx, description.type);
 #else
             nextNode = add_new_node_to_tree(newState.get(), currentNode, childIdx, description.type);
-#endif                
+#endif
             currentNode->unlock();
 
             if (description.type == NODE_NEW_NODE) {
@@ -233,7 +233,7 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
 #else
                 // fill a new board in the input_planes vector
                 // we shift the index by nbNNInputValues each time
-                // newState->get_state_planes(true, inputPlanes + newNodes->size() * net->get_nb_input_values_total(), net->get_version());
+                newState->get_state_planes(true, inputPlanes + newNodes->size() * net->get_nb_input_values_total(), net->get_version());
                 // save a reference newly created list in the temporary list for node creation
                 // it will later be updated with the evaluation of the NN
                 newNodeSideToMove->add_element(newState->side_to_move());
