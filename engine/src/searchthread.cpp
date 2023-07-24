@@ -192,12 +192,12 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
         uint32_t childNumberVisits = currentNode->get_child_number_visits(childIdx) - currentNode->get_virtual_loss_counter(childIdx) * searchSettings->virtualLoss;
         if (searchSettings->mctsIpM){
             if (nextNode != nullptr && nextNode->get_real_visits() == searchSettings->switchingAtVisits) {
-                unique_ptr<StateObj> evalState = unique_ptr<StateObj>(rootState->clone());
+                StateObj* evalState = unique_ptr<StateObj>(rootState->clone()).get();
                 assert(actionsBuffer.size() == description.depth - 1);
                 for (Action action : actionsBuffer) {
                     evalState->do_action(action);
                 }
-                float minimaxValue = nextNode->negamax(evalState.get(), searchSettings->minimaxDepth, -2.0, 2.0, true);
+                float minimaxValue = nextNode->negamax(evalState, searchSettings->minimaxDepth, -2.0, 2.0, true);
                 nextNode->update_qValue_after_minimax_search(currentNode, childIdx, minimaxValue, searchSettings);
             }
         }                    
