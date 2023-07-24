@@ -382,15 +382,14 @@ public:
         }
         else {
             assert(d->childNumberVisits[childIdx] != 0);
-            double new_qValue = pow(max(childvValue / (childNumberVisit + 1), 0.0), 1 / double(searchSettings->powerMean)) - 1.0;
+            double new_qValue = pow(max(childvValue / double(childNumberVisit + 1), 0.0), 1 / double(searchSettings->powerMean)) - 1.0;
             if (new_qValue < -1.0)
                 new_qValue = -1.0;
             else if (new_qValue > 1.0)
                 new_qValue = 1.0;
-            if (childNumberVisit - 1 > 0) {
-                vValue -= (childNumberVisit - 1) * qValue_exponent(d->qValues[childIdx], searchSettings->powerMean);
+            if (childNumberVisit - searchSettings->virtualLoss > 0) {
+                vValue -= (childNumberVisit - searchSettings->virtualLoss) * qValue_exponent(d->qValues[childIdx], searchSettings->powerMean);
             }
-
             d->qValues[childIdx] = -new_qValue;
             assert(!isnan(d->qValues[childIdx]));
             vValue += childNumberVisit * qValue_exponent(-new_qValue, searchSettings->powerMean);
@@ -993,8 +992,7 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
     double childvValue = 0.0;
     float implicit_max_value = 0.0f;
     Node* childNode = trajectory.rbegin()->node->get_child_node(trajectory.rbegin()->childIdx);
-    switch (searchSettings->backupOperator) {
-    case BACKUP_POWER_MEAN:
+    if (searchSettings->backupOperator == BACKUP_POWER_MEAN || searchSettings->backupOperator == BACKUP_POWER_MEAN_MEAN) {
         if (childNode != nullptr) {
             childNode->lock();
             childvValue = childNode->get_vValue();
@@ -1003,18 +1001,8 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
         else {
             childvValue = pow(1 + double(value), searchSettings->powerMean);
         }
-        break;
-    case BACKUP_POWER_MEAN_MEAN:
-        if (childNode != nullptr) {
-            childNode->lock();
-            childvValue = childNode->get_vValue();
-            childNode->unlock();
-        }
-        else {
-            childvValue = pow(1 + double(value), searchSettings->powerMean);
-        }
-        break;
-    case BACKUP_IMPLICIT_MAX:
+    }
+    else if (searchSettings->backupOperator == BACKUP_IMPLICIT_MAX) {
         if (searchSettings->searchPlayerMode == MODE_TWO_PLAYER) {
             implicit_max_value = -value;
         }
@@ -1023,7 +1011,6 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
             implicit_max_value = childNode->score_qValue_with_maxWeight(searchSettings, implicit_max_value, searchSettings->minimaxWeight);
             childNode->unlock();
         }
-        break;
     }
     float minimaxWeight = 0.0;
     uint32_t n = 0;
