@@ -199,8 +199,10 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                 }
                 float minimaxValue = nextNode->negamax(evalState.get(), searchSettings->minimaxDepth, -2.0, 2.0, true);
                 nextNode->update_qValue_after_minimax_search(currentNode, childIdx, minimaxValue, searchSettings);
-                for (uint16_t idx = actionsBuffer.size()-1; idx >= 0; idx--) {
+                uint16_t idx = actionsBuffer.size() - 1;
+                for (Action action : actionsBuffer) {
                     evalState->undo_action(actionsBuffer[idx]);
+                    idx -= 1;
                 }
             }
         }                    
