@@ -995,6 +995,15 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
     Node* childNode = trajectory.rbegin()->node->get_child_node(trajectory.rbegin()->childIdx);
     switch (searchSettings->backupOperator) {
     case BACKUP_POWER_MEAN:
+        if (childNode != nullptr) {
+            childNode->lock();
+            childvValue = childNode->get_vValue();
+            childNode->unlock();
+        }
+        else {
+            childvValue = pow(1 + double(value), searchSettings->powerMean);
+        }
+        break;
     case BACKUP_POWER_MEAN_MEAN:
         if (childNode != nullptr) {
             childNode->lock();
