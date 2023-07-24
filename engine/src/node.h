@@ -382,7 +382,7 @@ public:
         }
         else {
             assert(d->childNumberVisits[childIdx] != 0);
-            double new_qValue = pow(max(childvValue / childNumberVisit, 0.0), 1 / double(searchSettings->powerMean)) - 1.0;
+            double new_qValue = pow(max(childvValue / (childNumberVisit + 1), 0.0), 1 / double(searchSettings->powerMean)) - 1.0;
             if (new_qValue < -1.0)
                 new_qValue = -1.0;
             else if (new_qValue > 1.0)
@@ -990,8 +990,8 @@ float get_transposition_q_value(uint_fast32_t transposVisits, double transposQVa
 template <bool freeBackup>
 void backup_value(float value, const SearchSettings* searchSettings, const Trajectory& trajectory, bool solveForTerminal) {
     double targetQValue = 0;
-    double childvValue = 0;
-    float implicit_max_value = 0;
+    double childvValue = 0.0;
+    float implicit_max_value = 0.0f;
     Node* childNode = trajectory.rbegin()->node->get_child_node(trajectory.rbegin()->childIdx);
     switch (searchSettings->backupOperator) {
     case BACKUP_POWER_MEAN:
