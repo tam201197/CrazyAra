@@ -1245,7 +1245,6 @@ float Node::negamax(StateObj* state, uint8_t depth, float alpha, float beta, boo
         alpha = max(alpha, bestVal);
         if (alpha >= beta)
             break;
-        n += 1;
     }
     return bestVal;
 }
