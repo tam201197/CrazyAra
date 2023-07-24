@@ -30,6 +30,7 @@
 #include "../util/communication.h"
 #include "evalinfo.h"
 #include "thread.h"
+#include <random>
 
 bool Node::is_sorted() const
 {
@@ -1228,13 +1229,20 @@ float Node::negamax_for_select_phase(StateObj* state, uint8_t depth, float alpha
 }
 
 float Node::negamax(StateObj* state, uint8_t depth, float alpha, float beta, bool isMax) {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+
+    // Create a uniform real distribution in the range [-1, 1]
+    std::uniform_real_distribution<float> dist(-1.0, 1.0);
     if (state->is_board_terminal())
-        return state->get_stockfish_value();
+        return dist(gen);
+        //return state->get_stockfish_value();
     if (depth == 0 ) {
         if (!state->is_board_ok())
             return -negamax(state, 1, -beta, -alpha, !isMax);
         else
-            return state->get_stockfish_value();
+            return dist(gen);
+            //return state->get_stockfish_value();
     }
     float bestVal = -2.0;
     for (const Action& action : state->legal_actions()) {
