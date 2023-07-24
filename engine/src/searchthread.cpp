@@ -297,7 +297,7 @@ void fill_nn_results(size_t batchIdx, bool isPolicyMap, const float* valueOutput
     node_post_process_policy(node, searchSettings->nodePolicyTemperature, searchSettings); 
     node_assign_value(node, valueOutputs, tbHits, batchIdx, isRootNodeTB);
     // initiate vValue
-    if (searchSettings->backupOperator == BACKUP_POWER_MEAN) {
+    if (searchSettings->backupOperator == BACKUP_POWER_MEAN || searchSettings->backupOperator == BACKUP_POWER_MEAN_MEAN) {
         node->init_vValue(searchSettings);
     }
 #ifdef MCTS_STORE_STATES
