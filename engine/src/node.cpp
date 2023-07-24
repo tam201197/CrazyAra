@@ -1237,7 +1237,10 @@ float Node::negamax(StateObj* state, uint8_t depth, float alpha, float beta, boo
             return state->get_stockfish_value();
     }
     float bestVal = -2.0;
+    uint8_t n = 0;
     for (const Action& action : state->legal_actions()) {
+        if (n == 10)
+            break;
         state->do_action(action);
         float value = - negamax(state, depth - 1, -beta, -alpha, !isMax);
         state->undo_action(action);
@@ -1245,6 +1248,7 @@ float Node::negamax(StateObj* state, uint8_t depth, float alpha, float beta, boo
         alpha = max(alpha, bestVal);
         if (alpha >= beta)
             break;
+        n += 1;
     }
     return bestVal;
 }
