@@ -768,6 +768,9 @@ void CrazyAra::init_search_settings()
     else if (Options["Backup_Operator"] == "power_mean_mean_op") {
         searchSettings.backupOperator = BACKUP_POWER_MEAN_MEAN;
     }
+    else if (Options["Backup_Operator"] == "power_mean_max_op") {
+        searchSettings.backupOperator = BACKUP_POWER_MEAN_MAX;
+    }
     searchSettings.maxAtVisit = Options["Max_At_Visits"];
     searchSettings.switchingAtVisits = Options["Switching_At_Visits"];
     searchSettings.minimaxWeight = Options["Centi_Minimax_Weight"] / 100.0f;

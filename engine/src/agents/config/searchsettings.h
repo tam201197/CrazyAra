@@ -41,7 +41,8 @@ enum BackupOperatorType {
     BACKUP_MAX,
     BACKUP_IMPLICIT_MAX,
     BACKUP_POWER_MEAN,
-    BACKUP_POWER_MEAN_MEAN
+    BACKUP_POWER_MEAN_MEAN,
+    BACKUP_POWER_MEAN_MAX
 };
 
 struct SearchSettings

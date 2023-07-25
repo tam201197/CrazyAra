@@ -280,6 +280,30 @@ public:
     }
 
     template<bool freeBackup>
+    void revert_virtual_loss_and_update_max_operator_optimal(ChildIdx childIdx, float value, float maxValue, const SearchSettings* searchSettings, bool solveForTerminal)
+    {
+        lock();
+        // decrement virtual loss counter
+        update_virtual_loss_counter<false>(childIdx, searchSettings->virtualLoss);
+        valueSum += value;
+        ++realVisitsSum;
+        assert(d->childNumberVisits[childIdx] != 0);
+        d->qValues[childIdx] = - maxValue;
+        assert(!isnan(d->qValues[childIdx]));
+        if (searchSettings->virtualLoss != 1) {
+            d->childNumberVisits[childIdx] -= size_t(searchSettings->virtualLoss) - 1;
+            d->visitSum -= size_t(searchSettings->virtualLoss) - 1;
+        }
+        if (freeBackup) {
+            ++d->freeVisits;
+        }
+        if (solveForTerminal) {
+            solve_for_terminal(childIdx, searchSettings);
+        }
+        unlock();
+    }
+
+    template<bool freeBackup>
     void revert_virtual_loss_with_implicit_minimax(ChildIdx childIdx, float value, const SearchSettings* searchSettings, bool solveForTerminal, float minimax_weight, float& implicit_max_value)
     {
         lock();
@@ -997,7 +1021,9 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
     double childvValue = 0.0;
     float implicit_max_value = 0.0f;
     Node* childNode = trajectory.rbegin()->node->get_child_node(trajectory.rbegin()->childIdx);
-    if (searchSettings->backupOperator == BACKUP_POWER_MEAN || searchSettings->backupOperator == BACKUP_POWER_MEAN_MEAN) {
+    if (searchSettings->backupOperator == BACKUP_POWER_MEAN || 
+        searchSettings->backupOperator == BACKUP_POWER_MEAN_MEAN ||
+        searchSettings->backupOperator == BACKUP_POWER_MEAN_MAX) {
         if (childNode != nullptr) {
             childNode->lock();
             childvValue = childNode->get_vValue();
@@ -1071,6 +1097,21 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
             if (n >= searchSettings->switchingAtVisits) {
                 freeBackup ? it->node->revert_virtual_loss_and_update<true>(it->childIdx, value, searchSettings, solveForTerminal) :
                     it->node->revert_virtual_loss_and_update<false>(it->childIdx, value, searchSettings, solveForTerminal);
+            }
+            else {
+                freeBackup ? it->node->revert_virtual_loss_with_power_UCT_optimal<true>(it->childIdx, value, searchSettings, solveForTerminal, childvValue) :
+                    it->node->revert_virtual_loss_with_power_UCT_optimal<false>(it->childIdx, value, searchSettings, solveForTerminal, childvValue);
+            }
+            break;
+        case BACKUP_POWER_MEAN_MAX:
+            n = it->node->get_child_number_visits(it->childIdx) - it->node->get_virtual_loss_counter(it->childIdx) * searchSettings->virtualLoss;
+            if (n >= searchSettings->switchingAtVisits) {
+                Node* childNode = it->node->get_child_node(it->childIdx);
+                childNode->lock();
+                float maxValue = max(childNode->get_q_values());
+                childNode->unlock();
+                freeBackup ? it->node->revert_virtual_loss_and_update_max_operator_optimal<true>(it->childIdx, value, maxValue, searchSettings, solveForTerminal) :
+                    it->node->revert_virtual_loss_and_update_max_operator_optimal<false>(it->childIdx, value, maxValue, searchSettings, solveForTerminal);
             }
             else {
                 freeBackup ? it->node->revert_virtual_loss_with_power_UCT_optimal<true>(it->childIdx, value, searchSettings, solveForTerminal, childvValue) :
