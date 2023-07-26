@@ -406,7 +406,7 @@ public:
         }
         else {
             assert(d->childNumberVisits[childIdx] != 0);
-            float new_qValue = 0.0;
+            double new_qValue = 0.0;
             if (isnan(childvValue))
                 new_qValue = (double(d->qValues[childIdx]) * (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx]) + value) / (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx] + 1);
             else {
@@ -419,7 +419,7 @@ public:
             if (childNumberVisit - searchSettings->virtualLoss > 0) {
                 vValue -= (childNumberVisit - searchSettings->virtualLoss) * qValue_exponent(d->qValues[childIdx], searchSettings->powerMean);
             }
-            d->qValues[childIdx] = -new_qValue;
+            d->qValues[childIdx] = static_cast<float>( - new_qValue);
             assert(!isnan(d->qValues[childIdx]));
             vValue += childNumberVisit * qValue_exponent(-new_qValue, searchSettings->powerMean);
         }
