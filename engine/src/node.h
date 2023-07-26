@@ -406,7 +406,7 @@ public:
         }
         else {
             assert(d->childNumberVisits[childIdx] != 0);
-            double new_qValue = 0.0;
+            float new_qValue = 0.0;
             if (isnan(childvValue))
                 new_qValue = (double(d->qValues[childIdx]) * (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx]) + value) / (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx] + 1);
             else {
