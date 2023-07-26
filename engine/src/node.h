@@ -1020,6 +1020,7 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
     double targetQValue = 0;
     double childvValue = 0.0;
     float implicit_max_value = 0.0f;
+    float canSwitch = false;
     Node* beginNode = trajectory.rbegin()->node;
     beginNode->lock();
     Node* childNode = beginNode->get_child_node(trajectory.rbegin()->childIdx);
@@ -1096,17 +1097,10 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
                 it->node->revert_virtual_loss_with_power_UCT_optimal<false>(it->childIdx, value, searchSettings, solveForTerminal, childvValue);
             break;
         case BACKUP_POWER_MEAN_MEAN:
-            Node* childNode = nullptr;
             it->node->lock();
-            if (it->node->is_playout_node() &&
-                (it->node->get_child_number_visits(it->childIdx) - it->node->get_virtual_loss_counter(it->childIdx) * searchSettings->virtualLoss) >= searchSettings->switchingAtVisits) {
-                childNode = it->node->get_child_node(it->childIdx);
-            }
+            canSwitch = it->node->get_child_number_visits(it->childIdx) - it->node->get_virtual_loss_counter(it->childIdx) * searchSettings->virtualLoss >= searchSettings->switchingAtVisits;
             it->node->unlock();
-            if (childNode != nullptr) {
-                childNode->lock();
-                float maxValue = childNode->get_max_qValue();
-                childNode->unlock();
+            if (canSwitch) {
                 freeBackup ? it->node->revert_virtual_loss_and_update<true>(it->childIdx, value, searchSettings, solveForTerminal) :
                     it->node->revert_virtual_loss_and_update<false>(it->childIdx, value, searchSettings, solveForTerminal);
             }
@@ -1116,7 +1110,7 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
             }
             break;
         case BACKUP_POWER_MEAN_MAX:
-            Node* childNode = nullptr;
+            childNode = nullptr;
             it->node->lock();
             if (it->node->get_child_number_visits(it->childIdx) - it->node->get_virtual_loss_counter(it->childIdx) * searchSettings->virtualLoss >= searchSettings->switchingAtVisits) {
                 childNode = it->node->get_child_node(it->childIdx);
