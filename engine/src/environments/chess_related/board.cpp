@@ -259,7 +259,9 @@ void Board::do_move(Move m, StateInfo &newSt, bool givesCheck)
 
 void Board::undo_move(Move m)
 {
-    lastMoves.pop_front();
+    if (!lastMoves.empty()) {
+        lastMoves.pop_front();
+    }
     Position::undo_move(m);
 }
 

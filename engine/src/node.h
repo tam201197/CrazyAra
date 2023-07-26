@@ -1093,8 +1093,8 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
                 it->node->revert_virtual_loss_with_power_UCT_optimal<false>(it->childIdx, value, searchSettings, solveForTerminal, childvValue);
             break;
         case BACKUP_POWER_MEAN_MEAN:
-            n = it->node->get_child_number_visits(it->childIdx) - it->node->get_virtual_loss_counter(it->childIdx) * searchSettings->virtualLoss;
-            if (n >= searchSettings->switchingAtVisits) {
+            if (it->node->is_playout_node() &&
+                (it->node->get_child_number_visits(it->childIdx) - it->node->get_virtual_loss_counter(it->childIdx) * searchSettings->virtualLoss) >= searchSettings->switchingAtVisits) {
                 freeBackup ? it->node->revert_virtual_loss_and_update<true>(it->childIdx, value, searchSettings, solveForTerminal) :
                     it->node->revert_virtual_loss_and_update<false>(it->childIdx, value, searchSettings, solveForTerminal);
             }
@@ -1104,8 +1104,8 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
             }
             break;
         case BACKUP_POWER_MEAN_MAX:
-            n = it->node->get_child_number_visits(it->childIdx) - it->node->get_virtual_loss_counter(it->childIdx) * searchSettings->virtualLoss;
-            if (n >= searchSettings->switchingAtVisits) {
+            if (it->node->is_playout_node() &&
+                (it->node->get_child_number_visits(it->childIdx) - it->node->get_virtual_loss_counter(it->childIdx) * searchSettings->virtualLoss) >= searchSettings->switchingAtVisits) {
                 Node* childNode = it->node->get_child_node(it->childIdx);
                 childNode->lock();
                 float maxValue = max(childNode->get_q_values());
