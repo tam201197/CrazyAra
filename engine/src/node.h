@@ -1104,9 +1104,14 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
             }
             break;
         case BACKUP_POWER_MEAN_MAX:
+            Node* childNode = nullptr;
+            it->node->lock();
             if (it->node->is_playout_node() &&
                 (it->node->get_child_number_visits(it->childIdx) - it->node->get_virtual_loss_counter(it->childIdx) * searchSettings->virtualLoss) >= searchSettings->switchingAtVisits) {
-                Node* childNode = it->node->get_child_node(it->childIdx);
+                childNode = it->node->get_child_node(it->childIdx);
+            }
+            it->node->unlock();
+            if (childNode != nullptr) {
                 childNode->lock();
                 float maxValue = childNode->get_max_qValue();
                 childNode->unlock();

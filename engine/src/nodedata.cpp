@@ -63,8 +63,7 @@ NodeData::NodeData():
     endInPly(0),
     noVisitIdx(1),
     nodeType(UNSOLVED),
-    inspected(false),
-    qValue_max(-2.0)
+    inspected(false)
 {
 
 }
