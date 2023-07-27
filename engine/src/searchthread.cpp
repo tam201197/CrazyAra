@@ -253,7 +253,7 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
         }
         if (nextNode->is_transposition()) {
             nextNode->lock();
-            const uint_fast32_t transposVisits = currentNode->get_real_visits(childIdx);
+            const uint_fast32_t transposVisits = currentNode->get_real_visits(childIdx, searchSettings);
             const double transposQValue = -currentNode->get_q_sum(childIdx, searchSettings->virtualLoss) / transposVisits;
             if (nextNode->is_transposition_return(transposQValue)) {
                 const float qValue = get_transposition_q_value(transposVisits, transposQValue, nextNode->get_value());

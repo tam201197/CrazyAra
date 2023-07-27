@@ -654,9 +654,9 @@ uint32_t Node::get_visits() const
     return d->visitSum;
 }
 
-uint32_t Node::get_real_visits(ChildIdx childIdx) const
+uint32_t Node::get_real_visits(ChildIdx childIdx,const SearchSettings* searchSettings) const
 {
-    return d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx];
+    return d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx] * searchSettings->virtualLoss;
 }
 
 void backup_collision(const SearchSettings* searchSettings, const Trajectory& trajectory) {

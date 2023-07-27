@@ -203,7 +203,6 @@ public:
     void revert_virtual_loss_and_update(ChildIdx childIdx, float value, const SearchSettings* searchSettings, bool solveForTerminal)
     {
         lock();
-        // decrement virtual loss counter
         valueSum += value;
         ++realVisitsSum;
 
@@ -211,22 +210,23 @@ public:
             // set new Q-value based on return
             // (the initialization of the Q-value was by Q_INIT which we don't want to recover.)
             d->qValues[childIdx] = value;
-            update_virtual_loss_counter<false>(childIdx, searchSettings->virtualLoss);
         }
         else {
             // revert virtual loss and update the Q-value
             assert(d->childNumberVisits[childIdx] != 0);
             if (searchSettings->useVirtualLoss) {
-                update_virtual_loss_counter<false>(childIdx, searchSettings->virtualLoss);
                 d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] + searchSettings->virtualLoss + value) / d->childNumberVisits[childIdx];
             }
             else {
-                d->qValues[childIdx] = (double(d->qValues[childIdx]) * (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx]) + value) / (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * (d->virtualLossCounter[childIdx] - searchSettings->virtualLoss));
-                update_virtual_loss_counter<false>(childIdx, searchSettings->virtualLoss);
+                const uint_fast32_t childRealVisits = get_real_visits(childIdx, searchSettings);
+                d->qValues[childIdx] = (double(d->qValues[childIdx]) * childRealVisits + value) / (childRealVisits + 1);
+                
             }
-
+            
             assert(!isnan(d->qValues[childIdx]));
         }
+        // decrement virtual loss counter
+        update_virtual_loss_counter<false>(childIdx, searchSettings->virtualLoss);
 
         if (searchSettings->virtualLoss != 1) {
             d->childNumberVisits[childIdx] -= size_t(searchSettings->virtualLoss) - 1;
@@ -519,7 +519,7 @@ public:
      * @param childIdx Child index
      * @return uint32_t
      */
-    uint32_t get_real_visits(ChildIdx childIdx) const;
+    uint32_t get_real_visits(ChildIdx childIdx, const SearchSettings* searchSettings) const;
 
     void lock();
     void unlock();
@@ -1052,7 +1052,7 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
     uint32_t n = 0;
     for (auto it = trajectory.rbegin(); it != trajectory.rend(); ++it) {
         if (targetQValue != 0) {
-            const uint_fast32_t transposVisits = it->node->get_real_visits(it->childIdx);
+            const uint_fast32_t transposVisits = it->node->get_real_visits(it->childIdx, searchSettings);
             if (transposVisits != 0) {
                 const double transposQValue = -it->node->get_q_sum(it->childIdx, searchSettings->virtualLoss) / transposVisits;
                 value = get_transposition_q_value(transposVisits, transposQValue, targetQValue);

@@ -84,7 +84,7 @@ void OptionsUCI::init(OptionsMap& o)
 #ifdef MODE_CHESS
     o["Batch_Size"] << Option(64, 1, 8192);
 #else
-    o["Batch_Size"] << Option(16, 1, 8192);
+    o["Batch_Size"] << Option(64, 1, 8192);
 #endif
 #endif
 #endif
