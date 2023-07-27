@@ -204,8 +204,6 @@ public:
     {
         lock();
         // decrement virtual loss counter
-        update_virtual_loss_counter<false>(childIdx, searchSettings->virtualLoss);
-
         valueSum += value;
         ++realVisitsSum;
 
@@ -218,10 +216,12 @@ public:
             // revert virtual loss and update the Q-value
             assert(d->childNumberVisits[childIdx] != 0);
             if (searchSettings->useVirtualLoss) {
+                update_virtual_loss_counter<false>(childIdx, searchSettings->virtualLoss);
                 d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] + searchSettings->virtualLoss + value) / d->childNumberVisits[childIdx];
             }
             else {
-                d->qValues[childIdx] = (double(d->qValues[childIdx]) * (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx]) + value) / (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx] + 1);
+                d->qValues[childIdx] = (double(d->qValues[childIdx]) * (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * d->virtualLossCounter[childIdx]) + value) / (d->childNumberVisits[childIdx] - searchSettings->virtualLoss * (d->virtualLossCounter[childIdx] - searchSettings->virtualLoss));
+                update_virtual_loss_counter<false>(childIdx, searchSettings->virtualLoss);
             }
 
             assert(!isnan(d->qValues[childIdx]));
