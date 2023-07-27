@@ -211,6 +211,7 @@ public:
             // set new Q-value based on return
             // (the initialization of the Q-value was by Q_INIT which we don't want to recover.)
             d->qValues[childIdx] = value;
+            update_virtual_loss_counter<false>(childIdx, searchSettings->virtualLoss);
         }
         else {
             // revert virtual loss and update the Q-value
