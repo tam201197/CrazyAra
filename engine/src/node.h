@@ -1089,18 +1089,10 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
             }
             break;
         case BACKUP_IMPLICIT_MAX:
-            /*n = it->node->get_child_number_visits(it->childIdx) - it->node->get_virtual_loss_counter(it->childIdx) * searchSettings->virtualLoss;
-            if (n < 500) {
-                minimaxWeight = 0.1;
-            }
-            else if (n >= 500 && n < 1000) {
-                minimaxWeight = 0.2;
-            }
-            else {
-                minimaxWeight = 0.3;
-            }*/
-            freeBackup ? it->node->revert_virtual_loss_with_implicit_minimax<true>(it->childIdx, value, searchSettings, solveForTerminal, searchSettings->minimaxWeight, implicit_max_value) :
-                it->node->revert_virtual_loss_with_implicit_minimax<false>(it->childIdx, value, searchSettings, solveForTerminal, searchSettings->minimaxWeight, implicit_max_value);
+            n = it->node->get_real_visits(it->childIdx, searchSettings);
+            minimaxWeight = min(n / 1000.0f, 1.0f);
+            freeBackup ? it->node->revert_virtual_loss_with_implicit_minimax<true>(it->childIdx, value, searchSettings, solveForTerminal, minimaxWeight, implicit_max_value) :
+                it->node->revert_virtual_loss_with_implicit_minimax<false>(it->childIdx, value, searchSettings, solveForTerminal, minimaxWeight, implicit_max_value);
             break;
         case BACKUP_POWER_MEAN:
             freeBackup ? it->node->revert_virtual_loss_with_power_UCT_optimal<true>(it->childIdx, value, searchSettings, solveForTerminal, childvValue) :
