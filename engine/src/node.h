@@ -1090,7 +1090,8 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
             break;
         case BACKUP_IMPLICIT_MAX:
             n = it->node->get_real_visits(it->childIdx, searchSettings);
-            minimaxWeight = min(n / 1000.0f, 1.0f);
+
+            minimaxWeight = min(n / 2000.0f, 1.0f);
             freeBackup ? it->node->revert_virtual_loss_with_implicit_minimax<true>(it->childIdx, value, searchSettings, solveForTerminal, minimaxWeight, implicit_max_value) :
                 it->node->revert_virtual_loss_with_implicit_minimax<false>(it->childIdx, value, searchSettings, solveForTerminal, minimaxWeight, implicit_max_value);
             break;
