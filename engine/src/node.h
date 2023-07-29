@@ -1070,9 +1070,18 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
                 it->node->revert_virtual_loss_and_update<false>(it->childIdx, value, searchSettings, solveForTerminal);
             break;
         case BACKUP_MAX:
-            if (it->node->get_child_number_visits(it->childIdx) - it->node->get_virtual_loss_counter(it->childIdx) * searchSettings->virtualLoss >= searchSettings->switchingAtVisits) {
-                freeBackup ? it->node->revert_virtual_loss_and_update_max_operator<true>(it->childIdx, value, searchSettings, solveForTerminal, true) :
-                    it->node->revert_virtual_loss_and_update_max_operator<false>(it->childIdx, value, searchSettings, solveForTerminal, true);
+            childNode = nullptr;
+            it->node->lock();
+            if (it->node->get_real_visits(it->childIdx, searchSettings) >= searchSettings->switchingAtVisits) {
+                childNode = it->node->get_child_node(it->childIdx);
+            }
+            it->node->unlock();
+            if (childNode != nullptr) {
+                childNode->lock();
+                float maxValue = childNode->get_max_qValue();
+                childNode->unlock();
+                freeBackup ? it->node->revert_virtual_loss_and_update_max_operator_optimal<true>(it->childIdx, value, maxValue, searchSettings, solveForTerminal) :
+                    it->node->revert_virtual_loss_and_update_max_operator_optimal<false>(it->childIdx, value, maxValue, searchSettings, solveForTerminal);
             }
             else {
                 freeBackup ? it->node->revert_virtual_loss_and_update_max_operator<true>(it->childIdx, value, searchSettings, solveForTerminal, false) :
@@ -1080,7 +1089,7 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
             }
             break;
         case BACKUP_IMPLICIT_MAX:
-            n = it->node->get_child_number_visits(it->childIdx) - it->node->get_virtual_loss_counter(it->childIdx) * searchSettings->virtualLoss;
+            /*n = it->node->get_child_number_visits(it->childIdx) - it->node->get_virtual_loss_counter(it->childIdx) * searchSettings->virtualLoss;
             if (n < 500) {
                 minimaxWeight = 0.1;
             }
@@ -1089,7 +1098,7 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
             }
             else {
                 minimaxWeight = 0.3;
-            }
+            }*/
             freeBackup ? it->node->revert_virtual_loss_with_implicit_minimax<true>(it->childIdx, value, searchSettings, solveForTerminal, searchSettings->minimaxWeight, implicit_max_value) :
                 it->node->revert_virtual_loss_with_implicit_minimax<false>(it->childIdx, value, searchSettings, solveForTerminal, searchSettings->minimaxWeight, implicit_max_value);
             break;
@@ -1099,7 +1108,7 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
             break;
         case BACKUP_POWER_MEAN_MEAN:
             it->node->lock();
-            canSwitch = it->node->get_child_number_visits(it->childIdx) - it->node->get_virtual_loss_counter(it->childIdx) * searchSettings->virtualLoss >= searchSettings->switchingAtVisits;
+            canSwitch = it->node->get_real_visits(it->childIdx, searchSettings) >= searchSettings->switchingAtVisits;
             it->node->unlock();
             if (canSwitch) {
                 freeBackup ? it->node->revert_virtual_loss_and_update<true>(it->childIdx, value, searchSettings, solveForTerminal) :
@@ -1113,7 +1122,7 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
         case BACKUP_POWER_MEAN_MAX:
             childNode = nullptr;
             it->node->lock();
-            if (it->node->get_child_number_visits(it->childIdx) - it->node->get_virtual_loss_counter(it->childIdx) * searchSettings->virtualLoss >= searchSettings->switchingAtVisits) {
+            if (it->node->get_real_visits(it->childIdx, searchSettings) >= searchSettings->switchingAtVisits) {
                 childNode = it->node->get_child_node(it->childIdx);
             }
             it->node->unlock();
