@@ -712,8 +712,8 @@ float Node::score_qValue_with_maxWeight(const SearchSettings* searchSettings, fl
     result = qMean;
     if (is_playout_node()) {
         float qMax = -max(d->qValues);
-        if (qMax == 1.0) {
-            return result;
+        if (minimaxWeight > 0.5) {
+            minimaxWeight -= 0.5;
         }
         result = (1 - minimaxWeight) * qMean + minimaxWeight * qMax;
     }
