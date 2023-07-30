@@ -1085,8 +1085,8 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
                     it->node->revert_virtual_loss_and_update_max_operator_optimal<false>(it->childIdx, value, maxValue, searchSettings, solveForTerminal);
             }
             else {
-                freeBackup ? it->node->revert_virtual_loss_and_update_max_operator<true>(it->childIdx, value, searchSettings, solveForTerminal, false) :
-                    it->node->revert_virtual_loss_and_update_max_operator<false>(it->childIdx, value, searchSettings, solveForTerminal, false);
+                freeBackup ? it->node->revert_virtual_loss_and_update<true>(it->childIdx, value, searchSettings, solveForTerminal, false) :
+                    it->node->revert_virtual_loss_and_update<false>(it->childIdx, value, searchSettings, solveForTerminal, false);
             }
             break;
         case BACKUP_IMPLICIT_MAX:
