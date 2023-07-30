@@ -333,7 +333,8 @@ public:
         if (solveForTerminal) {
             solve_for_terminal(childIdx, searchSettings);
         }
-        implicit_max_value = score_qValue_with_maxWeight(searchSettings, value, double(get_real_visits(childIdx, searchSettings))/ realVisitsSum);
+        //implicit_max_value = score_qValue_with_maxWeight(searchSettings, value, double(get_real_visits(childIdx, searchSettings))/ realVisitsSum);
+        implicit_max_value = score_qValue_with_maxWeight(searchSettings, value, searchSettings->minimaxWeight);
         unlock();
     }
 
@@ -1045,7 +1046,7 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
         }
         if (childNode != nullptr) {
             childNode->lock();
-            implicit_max_value = childNode->score_qValue_with_maxWeight(searchSettings, implicit_max_value, minimaxWeight);
+            implicit_max_value = childNode->score_qValue_with_maxWeight(searchSettings, implicit_max_value, searchSettings->minimaxWeight);
             childNode->unlock();
         }
     }
