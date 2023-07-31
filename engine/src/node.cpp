@@ -712,9 +712,9 @@ float Node::score_qValue_with_maxWeight(const SearchSettings* searchSettings, fl
     result = qMean;
     if (is_playout_node()) {
         float qMax = -max(d->qValues);
-        /*if (minimaxWeight > 0.5) {
+        if (minimaxWeight > 0.5) {
             minimaxWeight = 1 - minimaxWeight;
-        }*/
+        }
         result = (1 - minimaxWeight) * qMean + minimaxWeight * qMax;
     }
     return result;
@@ -1232,12 +1232,12 @@ float Node::negamax_for_select_phase(StateObj* state, uint8_t depth, float alpha
 
 float Node::negamax(StateObj* state, uint8_t depth, float alpha, float beta, bool isMax) {
     if (state->is_board_terminal())
-        return state->get_stockfish_value();
+        return isMax * state->get_stockfish_value();
     if (depth == 0 ) {
         if (!state->is_board_ok())
             return -negamax(state, 1, -beta, -alpha, !isMax);
         else
-            return state->get_stockfish_value();
+            return isMax * state->get_stockfish_value();
     }
     float bestVal = -2.0;
     for (const Action& action : state->legal_actions()) {

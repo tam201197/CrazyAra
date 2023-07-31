@@ -333,8 +333,8 @@ public:
         if (solveForTerminal) {
             solve_for_terminal(childIdx, searchSettings);
         }
-        //implicit_max_value = score_qValue_with_maxWeight(searchSettings, value, double(get_real_visits(childIdx, searchSettings))/ realVisitsSum);
-        implicit_max_value = score_qValue_with_maxWeight(searchSettings, value, searchSettings->minimaxWeight);
+        implicit_max_value = score_qValue_with_maxWeight(searchSettings, value, double(get_real_visits(childIdx, searchSettings))/ realVisitsSum);
+        //implicit_max_value = score_qValue_with_maxWeight(searchSettings, value, searchSettings->minimaxWeight);
         unlock();
     }
 
@@ -1046,7 +1046,7 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
         }
         if (childNode != nullptr) {
             childNode->lock();
-            implicit_max_value = childNode->score_qValue_with_maxWeight(searchSettings, implicit_max_value, searchSettings->minimaxWeight);
+            implicit_max_value = childNode->score_qValue_with_maxWeight(searchSettings, implicit_max_value, minimaxWeight);
             childNode->unlock();
         }
     }
@@ -1071,7 +1071,7 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
                 it->node->revert_virtual_loss_and_update<false>(it->childIdx, value, searchSettings, solveForTerminal);
             break;
         case BACKUP_MAX:
-            childNode = nullptr;
+            /*childNode = nullptr;
             it->node->lock();
             if (it->node->get_real_visits(it->childIdx, searchSettings) >= searchSettings->switchingAtVisits) {
                 childNode = it->node->get_child_node(it->childIdx);
@@ -1079,7 +1079,7 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
             it->node->unlock();
             if (childNode != nullptr) {
                 childNode->lock();
-                float maxValue = childNode->get_max_qValue();
+                float maxValue = childNode->score_child_qValue_max();
                 childNode->unlock();
                 freeBackup ? it->node->revert_virtual_loss_and_update_max_operator_optimal<true>(it->childIdx, value, maxValue, searchSettings, solveForTerminal) :
                     it->node->revert_virtual_loss_and_update_max_operator_optimal<false>(it->childIdx, value, maxValue, searchSettings, solveForTerminal);
@@ -1087,6 +1087,15 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
             else {
                 freeBackup ? it->node->revert_virtual_loss_and_update<true>(it->childIdx, value, searchSettings, solveForTerminal) :
                     it->node->revert_virtual_loss_and_update<false>(it->childIdx, value, searchSettings, solveForTerminal);
+            }
+            break;*/
+            if (it->node->get_real_visits(it->childIdx, searchSettings) >= searchSettings->switchingAtVisits) {
+                freeBackup ? it->node->revert_virtual_loss_and_update_max_operator<true>(it->childIdx, value, searchSettings, solveForTerminal, true) :
+                    it->node->revert_virtual_loss_and_update_max_operator<false>(it->childIdx, value, searchSettings, solveForTerminal, true);
+            }
+            else {
+                freeBackup ? it->node->revert_virtual_loss_and_update_max_operator<true>(it->childIdx, value, searchSettings, solveForTerminal, false) :
+                    it->node->revert_virtual_loss_and_update_max_operator<false>(it->childIdx, value, searchSettings, solveForTerminal, false);
             }
             break;
         case BACKUP_IMPLICIT_MAX:
