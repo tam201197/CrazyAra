@@ -49,6 +49,7 @@ protected:
 
 public:
     NeuralNetAPIUser(NeuralNetAPI* net);
+    //NeuralNetAPIUser(NeuralNetAPI* net, uint8_t batchSize);
     ~NeuralNetAPIUser();
     NeuralNetAPIUser(NeuralNetAPIUser&) = delete;
 

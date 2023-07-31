@@ -173,6 +173,18 @@ void MCTSAgent::set_root_node_predictions()
                     rootState->mirror_policy(state->side_to_move()), searchSettings, rootNode->is_tablebase());
 }
 
+float MCTSAgent::evaluate(StateObj* newState)
+{
+    float* newInputPlanes = new float[net->get_nb_input_values_total()];
+    float* newValueOutputs = new float[1];
+    newState->get_state_planes(true,inputPlanes, net->get_version());
+    net->predict(newInputPlanes, newValueOutputs, probOutputs, auxiliaryOutputs);
+    float result = valueOutputs[0];
+    delete[] inputPlanes;
+    delete[] valueOutputs;
+    return result;
+}
+
 void MCTSAgent::create_new_root_node(StateObj* state)
 {
     info_string("create new tree");
