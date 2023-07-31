@@ -197,7 +197,7 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                 for (Action action : actionsBuffer) {
                     evalState->do_action(action);
                 }
-                float minimaxValue = nextNode->negamax(evalState.get(), searchSettings->minimaxDepth, -2.0, 2.0, true);
+                float minimaxValue = negamax(evalState.get(), searchSettings->minimaxDepth, -2.0, 2.0, true);
                 nextNode->update_qValue_after_minimax_search(currentNode, childIdx, minimaxValue, searchSettings);
             }
         }                    
@@ -272,6 +272,57 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
         currentNode = nextNode;
         childIdx = uint16_t(-1);
     }
+}
+
+float SearchThread::evaluate(StateObj* newState)
+{
+    float* newInputPlanes;
+    float* newValueOutputs;
+#ifdef TENSORRT
+#ifdef DYNAMIC_NN_ARCH
+    CHECK(cudaMallocHost((void**)&newInputPlanes, net->get_nb_input_values_total() * sizeof(float)));
+#else
+    CHECK(cudaMallocHost((void**)&newInputPlanes, StateConstants::NB_VALUES_TOTAL() * sizeof(float)));
+#endif
+    CHECK(cudaMallocHost((void**)&newValueOutputs, sizeof(float)));
+#else
+    newInputPlanes = new float[net->get_nb_input_values_total()];
+    newValueOutputs = new float[1];
+#endif 
+    newState->get_state_planes(true, newInputPlanes, net->get_version());
+    net->predict(newInputPlanes, newValueOutputs, probOutputs, auxiliaryOutputs);
+    float result = valueOutputs[0];
+#ifdef TENSORRT
+    CHECK(cudaFreeHost(inputPlanes));
+    CHECK(cudaFreeHost(valueOutputs));
+#else
+    delete[] newInputPlanes;
+    delete[] newValueOutputs;
+#endif
+    return result;
+}
+
+float SearchThread::negamax(StateObj* state, uint8_t depth, float alpha, float beta, bool isMax)
+{
+    if (state->is_board_terminal())
+        return isMax * evaluate(state);
+    if (depth == 0) {
+        if (!state->is_board_ok())
+            return -negamax(state, 1, -beta, -alpha, !isMax);
+        else
+            return isMax * evaluate(state);
+    }
+    float bestVal = -2.0;
+    for (const Action& action : state->legal_actions()) {
+        state->do_action(action);
+        float value = -negamax(state, depth - 1, -beta, -alpha, !isMax);
+        state->undo_action(action);
+        bestVal = max(bestVal, value);
+        alpha = max(alpha, bestVal);
+        if (alpha >= beta)
+            break;
+    }
+    return bestVal;
 }
 
 void SearchThread::set_root_state(StateObj* value)

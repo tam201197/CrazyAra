@@ -209,7 +209,6 @@ public:
      */
     void update_nps_measurement(float curNPS);
 
-    float evaluate(StateObj* newState);
 private:
     void set_root_node_predictions();
 };

@@ -179,6 +179,10 @@ private:
      */
     Node* get_new_child_to_evaluate(NodeDescription& description);
 
+    float evaluate(StateObj* newState);
+
+    float negamax(StateObj* state, uint8_t depth, float alpha, float beta, bool isMax);
+
     void backup_values(FixedVector<Node*>& nodes, vector<Trajectory>& trajectories);
     void backup_values(FixedVector<float>* values, vector<Trajectory>& trajectories);
 

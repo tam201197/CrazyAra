@@ -63,38 +63,6 @@ NeuralNetAPIUser::NeuralNetAPIUser(NeuralNetAPI *net):
 #endif
 }
 
-//NeuralNetAPIUser::NeuralNetAPIUser(NeuralNetAPI* net, uint8_t batchSize) :
-//    net(net),
-//    auxiliaryOutputs(nullptr)
-//{
-//    // allocate memory for all predictions and results
-//#ifdef TENSORRT
-//#ifdef DYNAMIC_NN_ARCH
-//    CHECK(cudaMallocHost((void**)&inputPlanes, batchSize * net->get_nb_input_values_total() * sizeof(float)));
-//#else
-//    CHECK(cudaMallocHost((void**)&inputPlanes, batchSize * StateConstants::NB_VALUES_TOTAL() * sizeof(float)));
-//#endif
-//    CHECK(cudaMallocHost((void**)&valueOutputs, batchSize * sizeof(float)));
-//    CHECK(cudaMallocHost((void**)&probOutputs, batchSize * net->get_nb_policy_values() * sizeof(float)));
-//    if (net->has_auxiliary_outputs()) {
-//        CHECK(cudaMallocHost((void**)&auxiliaryOutputs, batchSize * net->get_nb_auxiliary_outputs() * sizeof(float)));
-//    }
-//#else
-//    inputPlanes = new float[batchSize * net->get_nb_input_values_total()];
-//    valueOutputs = new float[batchSize];
-//    probOutputs = new float[batchSize * net->get_nb_policy_values()];
-//#ifdef DYNAMIC_NN_ARCH
-//    if (net->has_auxiliary_outputs()) {
-//        auxiliaryOutputs = new float[batchSize * net->get_nb_auxiliary_outputs()];
-//    }
-//#else
-//    if (StateConstants::NB_AUXILIARY_OUTPUTS()) {
-//        auxiliaryOutputs = new float[batchSize * StateConstants::NB_AUXILIARY_OUTPUTS()];
-//    }
-//#endif
-//#endif
-//}
-
 NeuralNetAPIUser::~NeuralNetAPIUser()
 {
 #ifdef TENSORRT
