@@ -180,8 +180,8 @@ float MCTSAgent::evaluate(StateObj* newState)
     newState->get_state_planes(true,inputPlanes, net->get_version());
     net->predict(newInputPlanes, newValueOutputs, probOutputs, auxiliaryOutputs);
     float result = valueOutputs[0];
-    delete[] inputPlanes;
-    delete[] valueOutputs;
+    delete[] newInputPlanes;
+    delete[] newValueOutputs;
     return result;
 }
 
