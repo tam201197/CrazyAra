@@ -177,7 +177,7 @@ float MCTSAgent::evaluate(StateObj* newState)
 {
     float* newInputPlanes = new float[net->get_nb_input_values_total()];
     float* newValueOutputs = new float[1];
-    newState->get_state_planes(true,inputPlanes, net->get_version());
+    newState->get_state_planes(true, newInputPlanes, net->get_version());
     net->predict(newInputPlanes, newValueOutputs, probOutputs, auxiliaryOutputs);
     float result = valueOutputs[0];
     delete[] newInputPlanes;
