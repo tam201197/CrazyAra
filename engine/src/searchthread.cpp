@@ -291,7 +291,7 @@ float SearchThread::evaluate(StateObj* newState)
 #endif 
     newState->get_state_planes(true, newInputPlanes, net->get_version());
     net->predict(newInputPlanes, newValueOutputs, probOutputs, auxiliaryOutputs);
-    float result = valueOutputs[0];
+    float result = newValueOutputs[0];
 #ifdef TENSORRT
     CHECK(cudaFreeHost(inputPlanes));
     CHECK(cudaFreeHost(valueOutputs));
