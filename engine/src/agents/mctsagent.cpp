@@ -174,14 +174,30 @@ void MCTSAgent::set_root_node_predictions()
 }
 
 float MCTSAgent::evaluate(StateObj* newState)
-{
-    float* newInputPlanes = new float[net->get_nb_input_values_total()];
-    float* newValueOutputs = new float[1];
+{   
+    float* newInputPlanes;
+    float* newValueOutputs;
+#ifdef TENSORRT
+#ifdef DYNAMIC_NN_ARCH
+    CHECK(cudaMallocHost((void**)&newInputPlanes, net->get_nb_input_values_total() * sizeof(float)));
+#else
+    CHECK(cudaMallocHost((void**)&newInputPlanes, StateConstants::NB_VALUES_TOTAL() * sizeof(float)));
+#endif
+    CHECK(cudaMallocHost((void**)&newValueOutputs, sizeof(float)));
+#else
+    newInputPlanes = new float[net->get_nb_input_values_total()];
+    newValueOutputs = new float[1];
+#endif 
     newState->get_state_planes(true, newInputPlanes, net->get_version());
     net->predict(newInputPlanes, newValueOutputs, probOutputs, auxiliaryOutputs);
     float result = valueOutputs[0];
+#ifdef TENSORRT
+    CHECK(cudaFreeHost(inputPlanes));
+    CHECK(cudaFreeHost(valueOutputs));
+#else
     delete[] newInputPlanes;
     delete[] newValueOutputs;
+#endif
     return result;
 }
 
