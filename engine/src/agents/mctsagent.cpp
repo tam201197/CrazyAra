@@ -53,7 +53,7 @@ MCTSAgent::MCTSAgent(NeuralNetAPI *netSingle, vector<unique_ptr<NeuralNetAPI>>& 
     mapWithMutex.hashTable.reserve(1e6);
 
     for (auto i = 0; i < searchSettings->threads; ++i) {
-        searchThreads.emplace_back(new SearchThread(netBatches[i].get(), searchSettings, &mapWithMutex, this));
+        searchThreads.emplace_back(new SearchThread(netBatches[i].get(), searchSettings, &mapWithMutex));
     }
     timeManager = make_unique<TimeManager>(searchSettings->randomMoveFactor);
     generator = default_random_engine(r());
