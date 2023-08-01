@@ -293,8 +293,8 @@ float SearchThread::evaluate(StateObj* newState)
     net->predict(newInputPlanes, newValueOutputs, probOutputs, auxiliaryOutputs);
     float result = newValueOutputs[0];
 #ifdef TENSORRT
-    CHECK(cudaFreeHost(inputPlanes));
-    CHECK(cudaFreeHost(valueOutputs));
+    CHECK(cudaFreeHost(newInputPlanes));
+    CHECK(cudaFreeHost(bewValueOutputs));
 #else
     delete[] newInputPlanes;
     delete[] newValueOutputs;
