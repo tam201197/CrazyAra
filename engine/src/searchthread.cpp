@@ -294,7 +294,7 @@ float SearchThread::evaluate(StateObj* newState)
     float result = newValueOutputs[0];
 #ifdef TENSORRT
     CHECK(cudaFreeHost(newInputPlanes));
-    CHECK(cudaFreeHost(bewValueOutputs));
+    CHECK(cudaFreeHost(newValueOutputs));
 #else
     delete[] newInputPlanes;
     delete[] newValueOutputs;
