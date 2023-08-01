@@ -154,7 +154,7 @@ public:
 
     void update_qValue_after_minimax_search(Node* parentNode, ChildIdx childIdx, float value, const SearchSettings* searchSettings);
 
-    void store_minimax_value(StateObj* state, const SearchSettings* searchSettings);
+    void store_minimax_value(StateObj* state, const SearchSettings* searchSettings, float maxValue);
         
     /**
      * @brief select_child_nodes Selects multiple nodes at once

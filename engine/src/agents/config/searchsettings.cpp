@@ -58,7 +58,8 @@ SearchSettings::SearchSettings() :
     useVirtualLoss(false),
     powerMean(2.2),
     minimaxDepth(2),
-    priorWeight(100)
+    priorWeight(100),
+    mctsIc(false)
 {
 
 }

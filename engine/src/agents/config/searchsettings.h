@@ -92,6 +92,7 @@ struct SearchSettings
     float minimaxWeight;
     float powerMean;
     bool mctsIpM;
+    bool mctsIc;
     uint32_t priorWeight;
     uint8_t minimaxDepth;
     SearchSettings();

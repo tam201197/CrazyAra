@@ -752,6 +752,7 @@ void CrazyAra::init_search_settings()
     searchSettings.reuseTree = Options["Reuse_Tree"];
     searchSettings.mctsSolver = Options["MCTS_Solver"];
     searchSettings.mctsIpM = Options["MCTS_IP_M"];
+    searchSettings.mctsIc = Options["MCTS_IC"];
     searchSettings.useVirtualLoss = Options["Virtual_Style"] == "virtual_loss";
     if (Options["Backup_Operator"] == "mean_op") {
         searchSettings.backupOperator = BACKUP_MEAN;

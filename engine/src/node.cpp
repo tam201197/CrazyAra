@@ -807,9 +807,6 @@ Node* Node::add_new_node_to_tree(MapWithMutex* mapWithMutex, StateObj* newState,
 
     // connect the Node to the parent
     shared_ptr<Node> newNode = make_shared<Node>(newState, searchSettings);
-    if (searchSettings->mctsIpM) {
-        newNode->store_minimax_value(newState, searchSettings);
-    }
     atomic_store(&d->childNodes[childIdx], newNode);
     if (searchSettings->useMCGS) {
         mapWithMutex->mtx.lock();
@@ -1266,10 +1263,10 @@ void Node::update_qValue_after_minimax_search(Node* parentNode, ChildIdx childId
     parentNode->lock();
 }
 
-void Node::store_minimax_value(StateObj* state, const SearchSettings* searchSettings)
+void Node::store_minimax_value(StateObj* state, const SearchSettings* searchSettings, float maxValue)
 {   
     lock();
-    minimaxValue = negamax(state, searchSettings->minimaxDepth, -2.0, 2.0, true);
+    minimaxValue = maxValue;
     unlock();
 }
 

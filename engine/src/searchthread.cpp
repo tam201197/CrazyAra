@@ -91,6 +91,10 @@ Node* SearchThread::add_new_node_to_tree(StateObj* newState, Node* parentNode, C
 {
     bool transposition;
     Node* newNode = parentNode->add_new_node_to_tree(mapWithMutex, newState, childIdx, searchSettings, transposition);
+    if (searchSettings->mctsIc) {
+        float maxValue = negamax(newState, searchSettings->minimaxDepth, -2.0, 2.0, true);
+        newNode->store_minimax_value(newState, searchSettings, maxValue);
+    }
     if (transposition) {
         const float qValue =  parentNode->get_child_node(childIdx)->get_value();
         transpositionValues->add_element(qValue);
@@ -404,7 +408,11 @@ void SearchThread::create_mini_batch()
         depthMax = max(depthMax, description.depth);
         if(description.type == NODE_TERMINAL) {
             ++numTerminalNodes;
-            backup_value<true>(newNode->get_value(), searchSettings, trajectoryBuffer, searchSettings->mctsSolver);
+            float value = newNode->get_value();
+            if (searchSettings->mctsIc) {
+                value = newNode->get_combine_value();
+            }
+            backup_value<true>(value, searchSettings, trajectoryBuffer, searchSettings->mctsSolver);
         }
         else if (description.type == NODE_COLLISION) {
             // store a pointer to the collision node in order to revert the virtual loss of the forward propagation
@@ -446,11 +454,15 @@ void run_search_thread(SearchThread *t)
 void SearchThread::backup_values(FixedVector<Node*>& nodes, vector<Trajectory>& trajectories) {
     for (size_t idx = 0; idx < nodes.size(); ++idx) {
         Node* node = nodes.get_element(idx);
+        float value = node->get_value();
+        if (searchSettings->mctsIc) {
+            value = node->get_combine_value();
+        }
 #ifdef MCTS_TB_SUPPORT
         const bool solveForTerminal = searchSettings->mctsSolver && node->is_tablebase();
-        backup_value<false>(node->get_value(), searchSettings, trajectories[idx], solveForTerminal);
+        backup_value<false>(value, searchSettings, trajectories[idx], solveForTerminal);
 #else   
-        backup_value<false>(node->get_value(), searchSettings, trajectories[idx], false);
+        backup_value<false>(value, searchSettings, trajectories[idx], false);
 #endif
     }
     nodes.reset_idx();
