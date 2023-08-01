@@ -288,12 +288,12 @@ float SearchThread::evaluate(StateObj* newState)
 float SearchThread::negamax(StateObj* state, uint8_t depth, float alpha, float beta, bool isMax)
 {
     if (state->is_board_terminal())
-        return isMax * evaluate(state);
+        return evaluate(state);
     if (depth == 0) {
         if (!state->is_board_ok())
             return -negamax(state, 1, -beta, -alpha, !isMax);
         else
-            return isMax * evaluate(state);
+            return evaluate(state);
     }
     float bestVal = -2.0;
     for (const Action& action : state->legal_actions()) {
