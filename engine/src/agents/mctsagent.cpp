@@ -53,7 +53,7 @@ MCTSAgent::MCTSAgent(NeuralNetAPI *netSingle, vector<unique_ptr<NeuralNetAPI>>& 
     mapWithMutex.hashTable.reserve(1e6);
 
     for (auto i = 0; i < searchSettings->threads; ++i) {
-        searchThreads.emplace_back(new SearchThread(netBatches[i].get(), searchSettings, &mapWithMutex));
+        searchThreads.emplace_back(new SearchThread(netBatches[i].get(), searchSettings, &mapWithMutex, this));
     }
     timeManager = make_unique<TimeManager>(searchSettings->randomMoveFactor);
     generator = default_random_engine(r());
@@ -171,6 +171,13 @@ void MCTSAgent::set_root_node_predictions()
     size_t tbHits = 0;
     fill_nn_results(0, net->is_policy_map(), valueOutputs, probOutputs, auxiliaryOutputs, rootNode.get(), tbHits,
                     rootState->mirror_policy(state->side_to_move()), searchSettings, rootNode->is_tablebase());
+}
+
+float MCTSAgent::evaluate(StateObj* newState) {
+    newState->get_state_planes(true, inputPlanes, net->get_version());
+    net->predict(inputPlanes, valueOutputs, probOutputs, auxiliaryOutputs);
+    float result = valueOutputs[0];
+    return result;
 }
 
 void MCTSAgent::create_new_root_node(StateObj* state)

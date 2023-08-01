@@ -35,7 +35,7 @@
 #include "util/fixedvector.h"
 #include "nn/neuralnetapiuser.h"
 #include "thread.h"
-
+#include "agents/mctsagent.h"
 
 enum NodeBackup : uint8_t {
     NODE_COLLISION,
@@ -58,6 +58,7 @@ private:
     Node* rootNode;
     StateObj* rootState;
     unique_ptr<StateObj> newState;
+    MCTSAgent* mctsAgent;
 
     // list of all node objects which have been selected for expansion
     unique_ptr<FixedVector<Node*>> newNodes;
@@ -90,7 +91,7 @@ public:
      * @param searchSettings Given settings for this search run
      * @param MapWithMutex Handle to the hash table
      */
-    SearchThread(NeuralNetAPI* netBatch, const SearchSettings* searchSettings, MapWithMutex* mapWithMutex);
+    SearchThread(NeuralNetAPI* netBatch, const SearchSettings* searchSettings, MapWithMutex* mapWithMutex, MCTSAgent* mctsAgent);
 
     /**
      * @brief create_mini_batch Creates a mini-batch of new unexplored nodes.
@@ -179,7 +180,7 @@ private:
      */
     Node* get_new_child_to_evaluate(NodeDescription& description);
 
-    float evaluate(StateObj* newState);
+    //float evaluate(StateObj* newState);
 
     float negamax(StateObj* state, uint8_t depth, float alpha, float beta, bool isMax);
 

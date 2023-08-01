@@ -40,7 +40,7 @@ size_t SearchThread::get_max_depth() const
     return depthMax;
 }
 
-SearchThread::SearchThread(NeuralNetAPI *netBatch, const SearchSettings* searchSettings, MapWithMutex* mapWithMutex):
+SearchThread::SearchThread(NeuralNetAPI *netBatch, const SearchSettings* searchSettings, MapWithMutex* mapWithMutex, MCTSAgent* mctsAgent):
     NeuralNetAPIUser(netBatch),
     rootNode(nullptr), rootState(nullptr), newState(nullptr),  // will be be set via setter methods
     newNodes(make_unique<FixedVector<Node*>>(searchSettings->batchSize)),
@@ -49,7 +49,8 @@ SearchThread::SearchThread(NeuralNetAPI *netBatch, const SearchSettings* searchS
     isRunning(true), mapWithMutex(mapWithMutex), searchSettings(searchSettings),
     tbHits(0), depthSum(0), depthMax(0), visitsPreSearch(0),
     terminalNodeCache(searchSettings->batchSize*2),
-    reachedTablebases(false)
+    reachedTablebases(false),
+    mctsAgent(mctsAgent)
 {
     switch (searchSettings->searchPlayerMode) {
     case MODE_SINGLE_PLAYER:
@@ -274,43 +275,43 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
     }
 }
 
-float SearchThread::evaluate(StateObj* newState)
-{
-    float* newInputPlanes;
-    float* newValueOutputs;
-#ifdef TENSORRT
-#ifdef DYNAMIC_NN_ARCH
-    CHECK(cudaMallocHost((void**)&newInputPlanes, net->get_nb_input_values_total() * sizeof(float)));
-#else
-    CHECK(cudaMallocHost((void**)&newInputPlanes, StateConstants::NB_VALUES_TOTAL() * sizeof(float)));
-#endif
-    CHECK(cudaMallocHost((void**)&newValueOutputs, sizeof(float)));
-#else
-    newInputPlanes = new float[net->get_nb_input_values_total()];
-    newValueOutputs = new float[1];
-#endif 
-    newState->get_state_planes(true, newInputPlanes, net->get_version());
-    net->predict(newInputPlanes, newValueOutputs, probOutputs, auxiliaryOutputs);
-    float result = newValueOutputs[0];
-#ifdef TENSORRT
-    CHECK(cudaFreeHost(newInputPlanes));
-    CHECK(cudaFreeHost(newValueOutputs));
-#else
-    delete[] newInputPlanes;
-    delete[] newValueOutputs;
-#endif
-    return result;
-}
+//float SearchThread::evaluate(StateObj* newState)
+//{
+//    float* newInputPlanes;
+//    float* newValueOutputs;
+//#ifdef TENSORRT
+//#ifdef DYNAMIC_NN_ARCH
+//    CHECK(cudaMallocHost((void**)&newInputPlanes, net->get_nb_input_values_total() * sizeof(float)));
+//#else
+//    CHECK(cudaMallocHost((void**)&newInputPlanes, StateConstants::NB_VALUES_TOTAL() * sizeof(float)));
+//#endif
+//    CHECK(cudaMallocHost((void**)&newValueOutputs, sizeof(float)));
+//#else
+//    newInputPlanes = new float[net->get_nb_input_values_total()];
+//    newValueOutputs = new float[1];
+//#endif 
+//    newState->get_state_planes(true, newInputPlanes, net->get_version());
+//    net->predict(newInputPlanes, newValueOutputs, probOutputs, auxiliaryOutputs);
+//    float result = newValueOutputs[0];
+//#ifdef TENSORRT
+//    CHECK(cudaFreeHost(newInputPlanes));
+//    CHECK(cudaFreeHost(newValueOutputs));
+//#else
+//    delete[] newInputPlanes;
+//    delete[] newValueOutputs;
+//#endif
+//    return result;
+//}
 
 float SearchThread::negamax(StateObj* state, uint8_t depth, float alpha, float beta, bool isMax)
 {
     if (state->is_board_terminal())
-        return isMax * evaluate(state);
+        return isMax * mctsAgent->evaluate(state);
     if (depth == 0) {
         if (!state->is_board_ok())
             return -negamax(state, 1, -beta, -alpha, !isMax);
         else
-            return isMax * evaluate(state);
+            return isMax * mctsAgent->evaluate(state);
     }
     float bestVal = -2.0;
     for (const Action& action : state->legal_actions()) {
