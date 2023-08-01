@@ -1200,53 +1200,11 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings)
     return argmax(d->qValues + get_current_u_values(searchSettings));
 }
 
-float Node::negamax_for_select_phase(StateObj* state, uint8_t depth, float alpha, float beta, bool isMax, ChildIdx& childIdx) {
-    if (depth == 0 || state->is_board_terminal()) {
-        return state->get_stockfish_value();
-    }
-    float bestVal = -2.0;
-    int idx = 0;
-    for (const Action& action : state->legal_actions()) {
-        state->do_action(action);
-        if (!state->is_board_ok() || state->is_board_terminal()) {
-            state->undo_action(action);
-            idx += 1;
-            continue;
-        }
-        float value = - negamax_for_select_phase(state, depth - 1, -beta, -alpha, !isMax, childIdx);
-        state->undo_action(action);
-        if (bestVal < value) {
-            childIdx = idx;
-            bestVal = value;
-        }
-        alpha = max(alpha, bestVal);
-        if (alpha >= beta)
-            break;
-        idx += 1;
-    }
-    return bestVal;
-}
-
-float Node::negamax(StateObj* state, uint8_t depth, float alpha, float beta, bool isMax) {
-    if (state->is_board_terminal())
-        return isMax * state->get_stockfish_value();
-    if (depth == 0 ) {
-        if (!state->is_board_ok())
-            return -negamax(state, 1, -beta, -alpha, !isMax);
-        else
-            return isMax * state->get_stockfish_value();
-    }
-    float bestVal = -2.0;
-    for (const Action& action : state->legal_actions()) {
-        state->do_action(action);
-        float value = - negamax(state, depth - 1, -beta, -alpha, !isMax);
-        state->undo_action(action);
-        bestVal = max(bestVal, value);
-        alpha = max(alpha, bestVal);
-        if (alpha >= beta)
-            break;
-    }
-    return bestVal;
+void Node::store_minimax_value(StateObj* state, const SearchSettings* searchSettings, float maxValue)
+{   
+    lock();
+    minimaxValue = maxValue;
+    unlock();
 }
 
 void Node::update_qValue_after_minimax_search(Node* parentNode, ChildIdx childIdx, float value, const SearchSettings* searchSettings)
@@ -1261,13 +1219,6 @@ void Node::update_qValue_after_minimax_search(Node* parentNode, ChildIdx childId
     realVisitsSum += searchSettings->priorWeight;
     unlock();
     parentNode->lock();
-}
-
-void Node::store_minimax_value(StateObj* state, const SearchSettings* searchSettings, float maxValue)
-{   
-    lock();
-    minimaxValue = maxValue;
-    unlock();
 }
 
 NodeSplit Node::select_child_nodes(const SearchSettings* searchSettings, uint_fast16_t budget)

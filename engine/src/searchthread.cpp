@@ -96,7 +96,14 @@ Node* SearchThread::add_new_node_to_tree(StateObj* newState, Node* parentNode, C
         newNode->store_minimax_value(newState, searchSettings, maxValue);
     }
     if (transposition) {
-        const float qValue =  parentNode->get_child_node(childIdx)->get_value();
+        //const float qValue =  parentNode->get_child_node(childIdx)->get_value();
+        float qValue; 
+        if (searchSettings->mctsIc) {
+            qValue = parentNode->get_child_node(childIdx)->get_combine_value();
+        }
+        else {
+            qValue = parentNode->get_child_node(childIdx)->get_value();
+        }
         transpositionValues->add_element(qValue);
         nodeBackup = NODE_TRANSPOSITION;
         return newNode;
@@ -432,9 +439,11 @@ void SearchThread::thread_iteration()
 {
     create_mini_batch();
 #ifndef SEARCH_UCT
-    if (newNodes->size() != 0) {
-        net->predict(inputPlanes, valueOutputs, probOutputs, auxiliaryOutputs);
-        set_nn_results_to_child_nodes();
+    if (!searchSettings->mctsIc) {
+        if (newNodes->size() != 0) {
+            net->predict(inputPlanes, valueOutputs, probOutputs, auxiliaryOutputs);
+            set_nn_results_to_child_nodes();
+        }
     }
 #endif
     backup_value_outputs();

@@ -148,10 +148,6 @@ public:
 
     ChildIdx select_child_node(const SearchSettings* searchSettings);
 
-    float negamax_for_select_phase(StateObj* state, uint8_t depth, float alpha, float beta, bool isMax, ChildIdx& childIdx);
-
-    float negamax(StateObj* state, uint8_t depth, float alpha, float beta, bool isMax);
-
     void update_qValue_after_minimax_search(Node* parentNode, ChildIdx childIdx, float value, const SearchSettings* searchSettings);
 
     void store_minimax_value(StateObj* state, const SearchSettings* searchSettings, float maxValue);
