@@ -299,8 +299,20 @@ float SearchThread::evaluate(StateObj* newState)
 
 float SearchThread::negamax(StateObj* state, uint8_t depth, float alpha, float beta, bool isMax)
 {
-    if (state->is_board_terminal())
-        return evaluate(state);
+    if (state->is_board_terminal()) {
+        float dummy;
+        switch (state->is_terminal(0, dummy))
+        {
+        case TERMINAL_WIN:
+            return WIN_VALUE;
+        case TERMINAL_DRAW:
+            return DRAW_VALUE;
+        case TERMINAL_LOSS:
+            return LOSS_VALUE;
+        default:
+            break;
+        }
+    }
     if (depth == 0) {
         //if (!state->is_board_ok())
         //    return -negamax(state, 1, -beta, -alpha, !isMax);
