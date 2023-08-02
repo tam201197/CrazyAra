@@ -439,11 +439,11 @@ void SearchThread::thread_iteration()
 {
     create_mini_batch();
 #ifndef SEARCH_UCT
-    if (!searchSettings->mctsIc) {
-        if (newNodes->size() != 0) {
+    if (newNodes->size() != 0) {
+        if (!searchSettings->mctsIc) {
             net->predict(inputPlanes, valueOutputs, probOutputs, auxiliaryOutputs);
-            set_nn_results_to_child_nodes();
         }
+        set_nn_results_to_child_nodes();
     }
 #endif
     backup_value_outputs();
