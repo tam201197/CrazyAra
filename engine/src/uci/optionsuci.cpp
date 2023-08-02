@@ -76,6 +76,7 @@ void OptionsUCI::init(OptionsMap& o)
     o["Prior_Weight"] << Option(1, 0, 99999999);
     o["MCTS_IP_M"] << Option(false);
     o["MCTS_IC"] << Option(false);
+    o["Evaluation_Type"] << Option("sf", { "sf", "nn" });
 #ifdef USE_RL
     o["Batch_Size"] << Option(8, 1, 8192);
 #else

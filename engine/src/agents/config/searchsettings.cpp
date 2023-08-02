@@ -59,7 +59,8 @@ SearchSettings::SearchSettings() :
     powerMean(2.2),
     minimaxDepth(2),
     priorWeight(100),
-    mctsIc(false)
+    mctsIc(false),
+    evaluationType(EVAL_SF)
 {
 
 }

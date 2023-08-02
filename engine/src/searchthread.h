@@ -180,7 +180,7 @@ private:
 
     float evaluate(StateObj* newState);
 
-    float negamax(StateObj* state, uint8_t depth, float alpha, float beta, bool isMax);
+    float negamax(StateObj* state, uint8_t depth, float alpha, float beta, const SearchSettings* searchSettings);
 
     void backup_values(FixedVector<Node*>& nodes, vector<Trajectory>& trajectories);
     void backup_values(FixedVector<float>* values, vector<Trajectory>& trajectories);

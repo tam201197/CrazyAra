@@ -45,6 +45,11 @@ enum BackupOperatorType {
     BACKUP_POWER_MEAN_MAX
 };
 
+enum EvaluationType {
+    EVAL_SF,
+    EVAL_NN
+};
+
 struct SearchSettings
 {
     uint16_t multiPV;
@@ -95,6 +100,7 @@ struct SearchSettings
     bool mctsIc;
     uint32_t priorWeight;
     uint8_t minimaxDepth;
+    EvaluationType evaluationType;
     SearchSettings();
 
 };

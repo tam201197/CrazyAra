@@ -112,10 +112,6 @@ sgn(T v)
 float BoardState::get_stockfish_value()
 {
     Value v = board.evaluate();
-    if (v == VALUE_KNOWN_WIN)
-        return 1.0;
-    if (v == VALUE_DRAW)
-        return 0;
     float result = (sgn(v) * abs(1 - pow(exp(1.0), -abs(v) * log(VALUE_TO_CENTI_PARAM) / 100.0f)));
     //float result = sgn(v) * -(pow(2.71, -abs(v) * log(VALUE_TO_CENTI_PARAM) / 100.0f) - 1);
     if (abs(result) >= 1.0f)

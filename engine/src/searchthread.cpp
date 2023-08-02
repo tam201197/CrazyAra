@@ -96,7 +96,7 @@ Node* SearchThread::add_new_node_to_tree(StateObj* newState, Node* parentNode, C
         return newNode;
     }
     if (searchSettings->mctsIc) {
-        float maxValue = negamax(newState, searchSettings->minimaxDepth, -2.0, 2.0, true);
+        float maxValue = negamax(newState, searchSettings->minimaxDepth, -2.0, 2.0, searchSettings);
         newNode->store_minimax_value(newState, searchSettings, maxValue);
     }
     if (transposition) {
@@ -212,7 +212,7 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                 for (Action action : actionsBuffer) {
                     evalState->do_action(action);
                 }
-                float minimaxValue = negamax(evalState.get(), searchSettings->minimaxDepth, -2.0, 2.0, true);
+                float minimaxValue = negamax(evalState.get(), searchSettings->minimaxDepth, -2.0, 2.0, searchSettings);
                 nextNode->update_qValue_after_minimax_search(currentNode, childIdx, minimaxValue, searchSettings);
             }
         }                    
@@ -297,7 +297,7 @@ float SearchThread::evaluate(StateObj* newState)
     return result;
 }
 
-float SearchThread::negamax(StateObj* state, uint8_t depth, float alpha, float beta, bool isMax)
+float SearchThread::negamax(StateObj* state, uint8_t depth, float alpha, float beta, const SearchSettings* searchSettings)
 {
     if (state->is_board_terminal()) {
         float dummy;
@@ -314,15 +314,23 @@ float SearchThread::negamax(StateObj* state, uint8_t depth, float alpha, float b
         }
     }
     if (depth == 0) {
-        //if (!state->is_board_ok())
-        //    return -negamax(state, 1, -beta, -alpha, !isMax);
-        //else
-        return evaluate(state);
+        if (searchSettings->evaluationType == EVAL_NN) {
+            return evaluate(state);
+        }
+        else {
+            if (!state->is_board_ok()) {
+                return -negamax(state, 1, -beta, -alpha, searchSettings);
+            }
+            else {
+                return state->get_stockfish_value();
+            }
+        }
+
     }
     float bestVal = -2.0;
     for (const Action& action : state->legal_actions()) {
         state->do_action(action);
-        float value = -negamax(state, depth - 1, -beta, -alpha, !isMax);
+        float value = -negamax(state, depth - 1, -beta, -alpha, searchSettings);
         state->undo_action(action);
         bestVal = max(bestVal, value);
         alpha = max(alpha, bestVal);

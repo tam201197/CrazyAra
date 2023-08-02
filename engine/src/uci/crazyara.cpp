@@ -778,6 +778,12 @@ void CrazyAra::init_search_settings()
     searchSettings.powerMean = Options["Deci_Power_Mean"] / 10.0f;
     searchSettings.minimaxDepth = Options["Minimax_Depth"];
     searchSettings.priorWeight = Options["Prior_Weight"];
+    if (Options["Evaluation_Type"] == "sf") {
+        searchSettings.evaluationType = EVAL_SF;
+    } 
+    else{
+        searchSettings.evaluationType = EVAL_NN;
+    }
 }
 
 void CrazyAra::init_play_settings()
