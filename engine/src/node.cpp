@@ -600,8 +600,6 @@ float Node::get_value() const
 
 float Node::get_combine_value() const
 {   
-    info_string("minimax value: ", minimaxValue, get_value());
-
     return minimaxValue;
     //return 0.7 * (valueSum / realVisitsSum) + 0.3 * minimaxValue;
 }

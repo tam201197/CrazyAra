@@ -416,11 +416,7 @@ void SearchThread::create_mini_batch()
         depthMax = max(depthMax, description.depth);
         if(description.type == NODE_TERMINAL) {
             ++numTerminalNodes;
-            float value = newNode->get_value();
-            if (searchSettings->mctsIc) {
-                value = newNode->get_combine_value();
-            }
-            backup_value<true>(value, searchSettings, trajectoryBuffer, searchSettings->mctsSolver);
+            backup_value<true>(newNode->get_value(), searchSettings, trajectoryBuffer, searchSettings->mctsSolver);
         }
         else if (description.type == NODE_COLLISION) {
             // store a pointer to the collision node in order to revert the virtual loss of the forward propagation
