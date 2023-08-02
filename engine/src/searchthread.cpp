@@ -91,6 +91,10 @@ Node* SearchThread::add_new_node_to_tree(StateObj* newState, Node* parentNode, C
 {
     bool transposition;
     Node* newNode = parentNode->add_new_node_to_tree(mapWithMutex, newState, childIdx, searchSettings, transposition);
+    if (newNode->is_terminal()) {
+        nodeBackup = NODE_TERMINAL;
+        return newNode;
+    }
     if (searchSettings->mctsIc) {
         float maxValue = negamax(newState, searchSettings->minimaxDepth, -2.0, 2.0, true);
         newNode->store_minimax_value(newState, searchSettings, maxValue);
@@ -298,10 +302,10 @@ float SearchThread::negamax(StateObj* state, uint8_t depth, float alpha, float b
     if (state->is_board_terminal())
         return evaluate(state);
     if (depth == 0) {
-        if (!state->is_board_ok())
-            return -negamax(state, 1, -beta, -alpha, !isMax);
-        else
-            return evaluate(state);
+        //if (!state->is_board_ok())
+        //    return -negamax(state, 1, -beta, -alpha, !isMax);
+        //else
+        return evaluate(state);
     }
     float bestVal = -2.0;
     for (const Action& action : state->legal_actions()) {
