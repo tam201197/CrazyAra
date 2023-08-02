@@ -287,6 +287,7 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
 
 float SearchThread::evaluate(StateObj* newState)
 {
+    newState->get_state_planes(true, inputPlanes, net->get_version());
     net->predict(inputPlanes, valueOutputs, probOutputs, auxiliaryOutputs);
     float result = valueOutputs[0];
     return result;
