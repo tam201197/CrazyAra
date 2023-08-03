@@ -101,7 +101,7 @@ private:
     long double vValue;
     double initValue;
     float minimaxValue;
-
+    bool isVirtualWeightIncremented;
     unique_ptr<NodeData> d;
 #ifdef MCTS_STORE_STATES
     unique_ptr<StateObj> state;
@@ -485,6 +485,10 @@ public:
     uint32_t get_real_visits() const;
 
     void apply_virtual_loss_to_child(ChildIdx childIdx, const SearchSettings* searchSettings);
+
+    void set_virtual_visit_incremented();
+
+    bool is_virtual_visit_incremented();
 
     void increment_no_visit_idx();
     void fully_expand_node();

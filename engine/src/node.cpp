@@ -96,7 +96,8 @@ Node::Node(StateObj* state, const SearchSettings* searchSettings) :
     sorted(false),
     vValue(0),
     initValue(0),
-    minimaxValue(-2.0)
+    minimaxValue(-2.0),
+    isVirtualWeightIncremented(false)
 {
     // specify the number of direct child nodes of this node
     check_for_terminal(state);
@@ -515,12 +516,51 @@ void Node::apply_virtual_loss_to_child(ChildIdx childIdx, const SearchSettings* 
     // the effect of virtual loss will be undone if the playout is over
     if (searchSettings->useVirtualLoss) {
         d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] - searchSettings->virtualLoss) / double(d->childNumberVisits[childIdx] + searchSettings->virtualLoss);
+        // virtual increase the number of visits
+        d->childNumberVisits[childIdx] += searchSettings->virtualLoss;
+        d->visitSum += searchSettings->virtualLoss;
     }
-    // virtual increase the number of visits
-    d->childNumberVisits[childIdx] += searchSettings->virtualLoss;
-    d->visitSum += searchSettings->virtualLoss;
+    else {
+        if (d->childNodes[childIdx] != nullptr) {
+            bool isInCremented = d->childNodes[childIdx]->is_virtual_visit_incremented();
+            if (isInCremented) {
+                d->childNumberVisits[childIdx] += 2;
+                d->visitSum += 2;
+            }
+            else {
+                if (d->childNumberVisits[childIdx] >= searchSettings->switchingAtVisits) {
+                    d->childNumberVisits[childIdx] += d->virtualLossCounter[childIdx] + 2;
+                    d->visitSum += d->virtualLossCounter[childIdx] + 2;
+                    d->childNodes[childIdx]->set_virtual_visit_incremented();
+                }
+                else {
+                    d->childNumberVisits[childIdx] += 1;
+                    d->visitSum += 1;
+                }
+            }
+        }
+        else {
+            d->childNumberVisits[childIdx] += 1;
+            d->visitSum += 1;
+        }
+    }
     // increment virtual loss counter
     update_virtual_loss_counter<true>(childIdx, searchSettings->virtualLoss);
+}
+
+void Node::set_virtual_visit_incremented()
+{
+    lock();
+    isVirtualWeightIncremented = true;
+    unlock();
+}
+
+bool Node::is_virtual_visit_incremented()
+{   
+    lock();
+    bool result = isVirtualWeightIncremented;
+    unlock();
+    return result;
 }
 
 float Node::get_q_value(ChildIdx childIdx) const
@@ -655,8 +695,13 @@ uint32_t Node::get_visits() const
 }
 
 uint32_t Node::get_real_visits(ChildIdx childIdx,const SearchSettings* searchSettings) const
-{
-    return d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx] * searchSettings->virtualLoss;
+{   
+    uint16_t virtualWeight = 1;
+    if (d->childNodes[childIdx]->is_virtual_visit_incremented()) {
+        virtualWeight = 2;
+    }
+    return d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx] * virtualWeight;
+    
 }
 
 void backup_collision(const SearchSettings* searchSettings, const Trajectory& trajectory) {
@@ -670,10 +715,20 @@ void Node::revert_virtual_loss(ChildIdx childIdx, const SearchSettings* searchSe
     lock();
     if (searchSettings->useVirtualLoss) {
         d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] + searchSettings->virtualLoss) / (d->childNumberVisits[childIdx] - searchSettings->virtualLoss);
-
+        d->childNumberVisits[childIdx] -= searchSettings->virtualLoss;
+        d->visitSum -= searchSettings->virtualLoss;
     }
-    d->childNumberVisits[childIdx] -= searchSettings->virtualLoss;
-    d->visitSum -= searchSettings->virtualLoss;
+    else {
+        if (d->childNodes[childIdx]->is_virtual_visit_incremented()){
+            d->childNumberVisits[childIdx] -= 2;
+            d->visitSum -= 2;
+        }
+        else {
+            d->childNumberVisits[childIdx] -= 1;
+            d->visitSum -= 1;
+        }
+    }
+    
     // decrement virtual loss counter
     update_virtual_loss_counter<false>(childIdx, searchSettings->virtualLoss);
     unlock();
@@ -1209,7 +1264,7 @@ void Node::store_minimax_value(StateObj* state, const SearchSettings* searchSett
 
 void Node::update_qValue_after_minimax_search(Node* parentNode, ChildIdx childIdx, float value, const SearchSettings* searchSettings)
 {
-    uint32_t oldChildNumberVisits = parentNode->d->childNumberVisits[childIdx] - parentNode->d->virtualLossCounter[childIdx] * searchSettings->virtualLoss;
+    uint32_t oldChildNumberVisits = parentNode->get_real_visits(childIdx, searchSettings);
     parentNode->d->childNumberVisits[childIdx] += searchSettings->priorWeight;
     parentNode->d->visitSum += searchSettings->priorWeight;
     parentNode->d->qValues[childIdx] = (double(parentNode->d->qValues[childIdx]) * oldChildNumberVisits + value * searchSettings->priorWeight) / (oldChildNumberVisits + searchSettings->priorWeight);
