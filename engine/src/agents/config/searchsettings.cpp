@@ -55,12 +55,12 @@ SearchSettings::SearchSettings() :
     maxAtVisit(20),
     switchingAtVisits(800),
     minimaxWeight(0.0),
-    useVirtualLoss(false),
     powerMean(2.2),
     minimaxDepth(2),
     priorWeight(100),
     mctsIc(false),
-    evaluationType(EVAL_SF)
+    evaluationType(EVAL_SF),
+    virtualType(VIRTUAL_VISIT)
 {
 
 }

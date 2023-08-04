@@ -514,13 +514,21 @@ void Node::apply_virtual_loss_to_child(ChildIdx childIdx, const SearchSettings* 
     // make it look like if one has lost X games from this node forward where X is the virtual loss value
     // temporarily reduce the attraction of this node by applying a virtual loss /
     // the effect of virtual loss will be undone if the playout is over
-    if (searchSettings->useVirtualLoss) {
+    switch (searchSettings->virtualType) {
+    case VIRTUAL_LOSS: 
         d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] - searchSettings->virtualLoss) / double(d->childNumberVisits[childIdx] + searchSettings->virtualLoss);
         // virtual increase the number of visits
         d->childNumberVisits[childIdx] += searchSettings->virtualLoss;
         d->visitSum += searchSettings->virtualLoss;
-    }
-    else {
+        break;
+    case VIRTUAL_MIX:
+        if (d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx] >= searchSettings->switchingAtVisits) {
+            d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] - searchSettings->virtualLoss) / double(d->childNumberVisits[childIdx] + searchSettings->virtualLoss);
+        }
+        d->childNumberVisits[childIdx] += searchSettings->virtualLoss;
+        d->visitSum += searchSettings->virtualLoss;
+        break;
+    case VIRTUAL_VISIT_INCREMENT:
         if (d->childNodes[childIdx] != nullptr) {
             bool isInCremented = d->childNodes[childIdx]->is_virtual_visit_incremented();
             if (isInCremented) {
@@ -543,6 +551,11 @@ void Node::apply_virtual_loss_to_child(ChildIdx childIdx, const SearchSettings* 
             d->childNumberVisits[childIdx] += 1;
             d->visitSum += 1;
         }
+        break;
+    default:
+        d->childNumberVisits[childIdx] += searchSettings->virtualLoss;
+        d->visitSum += searchSettings->virtualLoss;
+        break;
     }
     // increment virtual loss counter
     update_virtual_loss_counter<true>(childIdx, searchSettings->virtualLoss);
@@ -713,13 +726,26 @@ void backup_collision(const SearchSettings* searchSettings, const Trajectory& tr
 void Node::revert_virtual_loss(ChildIdx childIdx, const SearchSettings* searchSettings)
 {
     lock();
-    if (searchSettings->useVirtualLoss) {
+    switch (searchSettings->virtualType)
+    {
+    case VIRTUAL_LOSS:
         d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] + searchSettings->virtualLoss) / (d->childNumberVisits[childIdx] - searchSettings->virtualLoss);
         d->childNumberVisits[childIdx] -= searchSettings->virtualLoss;
         d->visitSum -= searchSettings->virtualLoss;
-    }
-    else {
-        if (d->childNodes[childIdx]->is_virtual_visit_incremented()){
+        break;
+    case VIRTUAL_VISIT:
+        d->childNumberVisits[childIdx] -= searchSettings->virtualLoss;
+        d->visitSum -= searchSettings->virtualLoss;
+        break;
+    case VIRTUAL_MIX:
+        if (d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx] + 1 >= searchSettings->switchingAtVisits) {
+            d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] + searchSettings->virtualLoss) / (d->childNumberVisits[childIdx] - searchSettings->virtualLoss);
+        }
+        d->childNumberVisits[childIdx] -= searchSettings->virtualLoss;
+        d->visitSum -= searchSettings->virtualLoss;
+        break;
+    case VIRTUAL_VISIT_INCREMENT:
+        if (d->childNodes[childIdx]->is_virtual_visit_incremented()) {
             d->childNumberVisits[childIdx] -= 2;
             d->visitSum -= 2;
         }
@@ -727,8 +753,10 @@ void Node::revert_virtual_loss(ChildIdx childIdx, const SearchSettings* searchSe
             d->childNumberVisits[childIdx] -= 1;
             d->visitSum -= 1;
         }
-    }
-    
+        break;
+    default:
+        break;
+    }    
     // decrement virtual loss counter
     update_virtual_loss_counter<false>(childIdx, searchSettings->virtualLoss);
     unlock();

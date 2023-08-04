@@ -50,6 +50,13 @@ enum EvaluationType {
     EVAL_NN
 };
 
+enum VirtualType {
+    VIRTUAL_VISIT,
+    VIRTUAL_LOSS,
+    VIRTUAL_MIX,
+    VIRTUAL_VISIT_INCREMENT
+};
+
 struct SearchSettings
 {
     uint16_t multiPV;
@@ -63,7 +70,6 @@ struct SearchSettings
     // describes how much better the highest Q-Value has to be to replace the candidate move with the highest visit count
     float qVetoDelta;
     uint_fast32_t virtualLoss;
-    bool useVirtualLoss;
     bool verbose;
     uint_fast8_t epsilonChecksCounter;
     //    bool enhanceCaptures;   currently not support
@@ -101,6 +107,7 @@ struct SearchSettings
     uint32_t priorWeight;
     uint8_t minimaxDepth;
     EvaluationType evaluationType;
+    VirtualType virtualType;
     SearchSettings();
 
 };

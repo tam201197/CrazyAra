@@ -210,15 +210,32 @@ public:
         else {
             // revert virtual loss and update the Q-value
             assert(d->childNumberVisits[childIdx] != 0);
-            if (searchSettings->useVirtualLoss) {
+            uint_fast32_t childRealVisits = 0;
+            switch (searchSettings->virtualType)
+            {
+            case VIRTUAL_LOSS:
                 d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] + searchSettings->virtualLoss + value) / d->childNumberVisits[childIdx];
-            }
-            else {
-                const uint_fast32_t childRealVisits = get_real_visits(childIdx, searchSettings);
+                break;
+            case VIRTUAL_VISIT:
+                childRealVisits = get_real_visits(childIdx, searchSettings);
                 d->qValues[childIdx] = (double(d->qValues[childIdx]) * childRealVisits + value) / (childRealVisits + 1);
-                
-            }
-            
+                break;
+            case VIRTUAL_VISIT_INCREMENT:
+                childRealVisits = get_real_visits(childIdx, searchSettings);
+                d->qValues[childIdx] = (double(d->qValues[childIdx]) * childRealVisits + value) / (childRealVisits + 1);
+                break;
+            case VIRTUAL_MIX:
+                if (d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx] >= searchSettings->switchingAtVisits) {
+                    d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] + searchSettings->virtualLoss + value) / d->childNumberVisits[childIdx];
+                }
+                else {
+                    childRealVisits = get_real_visits(childIdx, searchSettings);
+                    d->qValues[childIdx] = (double(d->qValues[childIdx]) * childRealVisits + value) / (childRealVisits + 1);
+                }
+                break;
+            default:
+                break;
+            }            
             assert(!isnan(d->qValues[childIdx]));
         }
         // decrement virtual loss counter

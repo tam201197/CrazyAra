@@ -753,7 +753,6 @@ void CrazyAra::init_search_settings()
     searchSettings.mctsSolver = Options["MCTS_Solver"];
     searchSettings.mctsIpM = Options["MCTS_IP_M"];
     searchSettings.mctsIc = Options["MCTS_IC"];
-    searchSettings.useVirtualLoss = Options["Virtual_Style"] == "virtual_loss";
     if (Options["Backup_Operator"] == "mean_op") {
         searchSettings.backupOperator = BACKUP_MEAN;
     }
@@ -771,6 +770,18 @@ void CrazyAra::init_search_settings()
     }
     else if (Options["Backup_Operator"] == "power_mean_max_op") {
         searchSettings.backupOperator = BACKUP_POWER_MEAN_MAX;
+    }
+    if (Options["Virtual_Style"] == "virtual_loss") {
+        searchSettings.virtualType = VIRTUAL_LOSS;
+    }
+    else if (Options["Virtual_Style"] == "virtual_visit"){
+        searchSettings.virtualType = VIRTUAL_VISIT;
+    }
+    else if (Options["Virtual_Style"] == "virtual_visit_increment") {
+        searchSettings.virtualType = VIRTUAL_VISIT_INCREMENT;
+    }
+    else {
+        searchSettings.virtualType = VIRTUAL_MIX;
     }
     searchSettings.maxAtVisit = Options["Max_At_Visits"];
     searchSettings.switchingAtVisits = Options["Switching_At_Visits"];
