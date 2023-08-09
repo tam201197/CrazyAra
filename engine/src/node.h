@@ -1032,7 +1032,7 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
             childvValue = pow(1 + double(value), searchSettings->powerMean);
         }
     }
-    else if (searchSettings->backupOperator == BACKUP_IMPLICIT_MAX) {
+    else if (searchSettings->backupOperator == BACKUP_IMPLICIT_MAX || searchSettings->backupOperator == BACKUP_IMPLICIT_MAX_MEAN) {
         if (searchSettings->searchPlayerMode == MODE_TWO_PLAYER) {
             implicit_max_value = -value;
         }
@@ -1081,18 +1081,22 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
                     it->node->revert_virtual_loss_and_update<false>(it->childIdx, value, searchSettings, solveForTerminal);
             }
             break;
-            /*if (it->node->get_real_visits(it->childIdx, searchSettings) >= searchSettings->switchingAtVisits) {
-                freeBackup ? it->node->revert_virtual_loss_and_update_max_operator<true>(it->childIdx, value, searchSettings, solveForTerminal, true) :
-                    it->node->revert_virtual_loss_and_update_max_operator<false>(it->childIdx, value, searchSettings, solveForTerminal, true);
-            }
-            else {
-                freeBackup ? it->node->revert_virtual_loss_and_update_max_operator<true>(it->childIdx, value, searchSettings, solveForTerminal, false) :
-                    it->node->revert_virtual_loss_and_update_max_operator<false>(it->childIdx, value, searchSettings, solveForTerminal, false);
-            }
-            break; */
         case BACKUP_IMPLICIT_MAX:
             freeBackup ? it->node->revert_virtual_loss_with_implicit_minimax<true>(it->childIdx, value, searchSettings, solveForTerminal, implicit_max_value) :
                 it->node->revert_virtual_loss_with_implicit_minimax<false>(it->childIdx, value, searchSettings, solveForTerminal, implicit_max_value);
+            break;
+        case BACKUP_IMPLICIT_MAX_MEAN:
+            it->node->lock();
+            canSwitch = it->node->get_real_visits(it->childIdx, searchSettings) >= searchSettings->switchingAtVisits;
+            it->node->unlock();
+            if (canSwitch) {
+                freeBackup ? it->node->revert_virtual_loss_and_update<true>(it->childIdx, value, searchSettings, solveForTerminal) :
+                    it->node->revert_virtual_loss_and_update<false>(it->childIdx, value, searchSettings, solveForTerminal);
+            }
+            else {
+                freeBackup ? it->node->revert_virtual_loss_with_implicit_minimax<true>(it->childIdx, value, searchSettings, solveForTerminal, implicit_max_value) :
+                    it->node->revert_virtual_loss_with_implicit_minimax<false>(it->childIdx, value, searchSettings, solveForTerminal, implicit_max_value);
+            }
             break;
         case BACKUP_POWER_MEAN:
             freeBackup ? it->node->revert_virtual_loss_with_power_UCT_optimal<true>(it->childIdx, value, searchSettings, solveForTerminal, childvValue) :

@@ -763,6 +763,9 @@ void CrazyAra::init_search_settings()
     else if (Options["Backup_Operator"] == "implicit_max_op") {
         searchSettings.backupOperator = BACKUP_IMPLICIT_MAX;
     }
+    else if (Options["Backup_Operator"] == "implicit_max_mean_op") {
+        searchSettings.backupOperator = BACKUP_IMPLICIT_MAX_MEAN;
+    }
     else if (Options["Backup_Operator"] == "power_mean_op") {
         searchSettings.backupOperator = BACKUP_POWER_MEAN;
     }
