@@ -197,9 +197,9 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
     while (true) {
         currentNode->lock();
         if (childIdx == uint16_t(-1)) {
-            uint32_t childNumberVisits = currentNode->get_child_number_visits(childIdx) - currentNode->get_virtual_loss_counter(childIdx) * searchSettings->virtualLoss;
+            uint32_t numberVisits = currentNode->get_real_visits() ;
             if (searchSettings->mctsIpM) {
-                if (childNumberVisits == searchSettings->switchingAtVisits) {
+                if (numberVisits == searchSettings->switchingAtVisits) {
                     unique_ptr<StateObj> evalState = unique_ptr<StateObj>(rootState->clone());
                     assert(actionsBuffer.size() == description.depth - 1);
                     for (Action action : actionsBuffer) {
