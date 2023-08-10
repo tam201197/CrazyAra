@@ -197,25 +197,29 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
     while (true) {
         currentNode->lock();
         if (childIdx == uint16_t(-1)) {
-            childIdx = currentNode->select_child_node(searchSettings);
+            uint32_t childNumberVisits = currentNode->get_child_number_visits(childIdx) - currentNode->get_virtual_loss_counter(childIdx) * searchSettings->virtualLoss;
+            if (searchSettings->mctsIpM) {
+                if (childNumberVisits == searchSettings->switchingAtVisits) {
+                    unique_ptr<StateObj> evalState = unique_ptr<StateObj>(rootState->clone());
+                    assert(actionsBuffer.size() == description.depth - 1);
+                    for (Action action : actionsBuffer) {
+                        evalState->do_action(action);
+                    }
+                    pvs(evalState.get(), searchSettings->minimaxDepth, -2.0, 2.0, searchSettings, childIdx);
+                }
+                else {
+                    childIdx = currentNode->select_child_node(searchSettings);
+                }
+            }
+            else {
+                childIdx = currentNode->select_child_node(searchSettings);
+            }
+            
         }
         currentNode->apply_virtual_loss_to_child(childIdx, searchSettings);
         trajectoryBuffer.emplace_back(NodeAndIdx(currentNode, childIdx));
         nextNode = currentNode->get_child_node(childIdx);
-        description.depth++;
-        //MCTS_IP
-        uint32_t childNumberVisits = currentNode->get_child_number_visits(childIdx) - currentNode->get_virtual_loss_counter(childIdx) * searchSettings->virtualLoss;
-        if (searchSettings->mctsIpM){
-            if (nextNode != nullptr && nextNode->get_real_visits() == searchSettings->switchingAtVisits) {
-                unique_ptr<StateObj> evalState = unique_ptr<StateObj>(rootState->clone());
-                assert(actionsBuffer.size() == description.depth - 1);
-                for (Action action : actionsBuffer) {
-                    evalState->do_action(action);
-                }
-                float minimaxValue = negamax(evalState.get(), searchSettings->minimaxDepth, -2.0, 2.0, searchSettings);
-                nextNode->update_qValue_after_minimax_search(currentNode, childIdx, minimaxValue, searchSettings);
-            }
-        }                    
+        description.depth++;             
         if (nextNode == nullptr) {
 #ifdef MCTS_STORE_STATES
             StateObj* newState = currentNode->get_state()->clone();
@@ -287,6 +291,69 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
         currentNode = nextNode;
         childIdx = uint16_t(-1);
     }
+}
+
+ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node) {
+    if (!node->is_sorted()) {
+        node->prepare_node_for_visits();
+    }
+    if (node->get_no_visit_idx() == 1) {
+        return 0;
+    }
+    if (node->has_forced_win()) {
+        return node->get_checkmate_idx();
+    }
+    assert(sum(node->get_child_number_visits()) == node->get_visits());
+
+}
+
+float SearchThread::pvs(StateObj* state, uint8_t depth, float alpha, float beta, const SearchSettings* searchSettings, ChildIdx& idx)
+{
+    if (state->is_board_terminal()) {
+        float dummy;
+        switch (state->is_terminal(0, dummy))
+        {
+        case TERMINAL_WIN:
+            return WIN_VALUE;
+        case TERMINAL_DRAW:
+            return DRAW_VALUE;
+        case TERMINAL_LOSS:
+            return LOSS_VALUE;
+        default:
+            break;
+        }
+    }
+    if (depth == 0) {
+        if (!state->is_board_ok()) {
+            return -pvs(state, 1, -beta, -alpha, searchSettings, idx);
+        }
+        else {
+            return state->get_stockfish_value();
+        }
+    }
+    ChildIdx childIdx = 0;
+    for (const Action& action : state->legal_actions()) {
+        state->do_action(action);
+        float value;
+        if (childIdx == 0) {
+            value = -pvs(state, depth - 1, -beta, -alpha, searchSettings, idx);
+        }
+        else {
+            value = -pvs(state, depth - 1, -alpha - 1, -alpha, searchSettings, idx);
+            if (alpha < value && value < beta) {
+                value = -pvs(state, depth - 1, -beta, -value, searchSettings, idx);
+            }
+        }
+        state->undo_action(action);
+        if (alpha > value) {
+            alpha = value;
+            idx = childIdx;
+        }
+        childIdx += 1;
+        if (alpha >= beta)
+            break;
+    }
+    return alpha;
 }
 
 float SearchThread::evaluate(StateObj* newState)

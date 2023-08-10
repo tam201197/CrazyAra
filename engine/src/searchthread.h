@@ -178,6 +178,10 @@ private:
      */
     Node* get_new_child_to_evaluate(NodeDescription& description);
 
+    ChildIdx minimax_select_child_node(StateObj* state, Node* currentNode);
+
+    float pvs(StateObj* state, uint8_t depth, float alpha, float beta, const SearchSettings* searchSettings, ChildIdx& idx);
+
     float evaluate(StateObj* newState);
 
     float negamax(StateObj* state, uint8_t depth, float alpha, float beta, const SearchSettings* searchSettings);
