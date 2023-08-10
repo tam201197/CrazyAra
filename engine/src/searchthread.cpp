@@ -333,9 +333,10 @@ float SearchThread::pvs(StateObj* state, uint8_t depth, float alpha, float beta,
             return state->get_stockfish_value();
         }
     }
-    ChildIdx childIdx = 0;
+    int8_t childIdx = -1;
     ChildIdx idxDummy;
     for (const Action& action : state->legal_actions()) {
+        childIdx += 1;
         state->do_action(action);
         state->do_action(action);
         float value = -pvs(state, depth - 1, -beta, -alpha, searchSettings, idxDummy);
@@ -344,7 +345,6 @@ float SearchThread::pvs(StateObj* state, uint8_t depth, float alpha, float beta,
             alpha = value;
             idx = childIdx;
         }
-        childIdx += 1;
         if (alpha >= beta)
             break;
     }
