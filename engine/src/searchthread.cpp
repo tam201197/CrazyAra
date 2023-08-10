@@ -336,21 +336,19 @@ float SearchThread::pvs(StateObj* state, uint8_t depth, float alpha, float beta,
     }
     int8_t childIdx = -1;
     ChildIdx idxDummy;
-    float bestVal = -2.0;
     for (const Action& action : state->legal_actions()) {
         childIdx += 1;
         state->do_action(action);
         float value = -pvs(state, depth - 1, -beta, -alpha, searchSettings, idxDummy);
         state->undo_action(action);
-        if (bestVal < value) {
-            bestVal = value;
+        if (alpha < value) {
+            alpha = value;
             idx = childIdx;
         }
-        alpha = max(alpha, bestVal);
         if (alpha >= beta)
             break;
     }
-    return bestVal;
+    return alpha;
 }
 
 float SearchThread::evaluate(StateObj* newState)
@@ -391,17 +389,15 @@ float SearchThread::negamax(StateObj* state, uint8_t depth, float alpha, float b
         }
 
     }
-    float bestVal = -2.0;
     for (const Action& action : state->legal_actions()) {
         state->do_action(action);
         float value = -negamax(state, depth - 1, -beta, -alpha, searchSettings);
         state->undo_action(action);
-        bestVal = max(bestVal, value);
-        alpha = max(alpha, bestVal);
+        alpha = max(alpha, value);
         if (alpha >= beta)
             break;
     }
-    return bestVal;
+    return alpha;
 }
 
 void SearchThread::set_root_state(StateObj* value)
