@@ -205,7 +205,7 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                     for (Action action : actionsBuffer) {
                         evalState->do_action(action);
                     }
-                    pvs(evalState.get(), searchSettings->minimaxDepth, -2.0, 2.0, searchSettings, childIdx);
+                    childIdx = minimax_select_child_node(evalState.get(), currentNode);
                 }
                 else {
                     childIdx = currentNode->select_child_node(searchSettings);
@@ -304,7 +304,9 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node) {
         return node->get_checkmate_idx();
     }
     assert(sum(node->get_child_number_visits()) == node->get_visits());
-
+    ChildIdx childIdx = 0;
+    pvs(state, searchSettings->minimaxDepth, -2.0, 2.0, searchSettings, childIdx);
+    return childIdx;
 }
 
 float SearchThread::pvs(StateObj* state, uint8_t depth, float alpha, float beta, const SearchSettings* searchSettings, ChildIdx& idx)
