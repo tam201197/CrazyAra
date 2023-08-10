@@ -334,18 +334,11 @@ float SearchThread::pvs(StateObj* state, uint8_t depth, float alpha, float beta,
         }
     }
     ChildIdx childIdx = 0;
+    ChildIdx idxDummy;
     for (const Action& action : state->legal_actions()) {
         state->do_action(action);
-        float value;
-        if (childIdx == 0) {
-            value = -pvs(state, depth - 1, -beta, -alpha, searchSettings, idx);
-        }
-        else {
-            value = -pvs(state, depth - 1, -alpha - 1, -alpha, searchSettings, idx);
-            if (alpha < value && value < beta) {
-                value = -pvs(state, depth - 1, -beta, -value, searchSettings, idx);
-            }
-        }
+        state->do_action(action);
+        float value = -pvs(state, depth - 1, -beta, -alpha, searchSettings, idxDummy);
         state->undo_action(action);
         if (alpha > value) {
             alpha = value;
