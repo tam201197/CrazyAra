@@ -304,6 +304,7 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node) {
         return node->get_checkmate_idx();
     }
     assert(sum(node->get_child_number_visits()) == node->get_visits());
+    node->fully_expand_node();
     ChildIdx childIdx = 0;
     pvs(state, searchSettings->minimaxDepth, -2.0, 2.0, searchSettings, childIdx);
     return childIdx;
