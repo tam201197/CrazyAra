@@ -306,11 +306,7 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node) {
     assert(sum(node->get_child_number_visits()) == node->get_visits());
     node->fully_expand_node();
     ChildIdx childIdx = 0;
-    float minimaxValue = pvs(state, searchSettings->minimaxDepth, -2.0, 2.0, searchSettings, childIdx);
-    Node* nextNode = node->get_child_node(childIdx);
-    if (nextNode != nullptr) {
-        nextNode->update_qValue_after_minimax_search(node, childIdx, minimaxValue, searchSettings);
-    }
+    pvs(state, searchSettings->minimaxDepth, -2.0, 2.0, searchSettings, childIdx);
     return childIdx;
 }
 
