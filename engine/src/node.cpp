@@ -1182,7 +1182,7 @@ size_t get_best_action_index(const Node* curNode, bool fast, const SearchSetting
     return bestMoveIdx;
 }
 
-ChildIdx Node::select_child_node(const SearchSettings* searchSettings)
+ChildIdx Node::select_child_node(const SearchSettings* searchSettings, Action action)
 {
     if (!sorted) {
         prepare_node_for_visits();
@@ -1194,6 +1194,13 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings)
         return d->checkmateIdx;
     }
     assert(sum(d->childNumberVisits) == d->visitSum);
+    if (action != NULL) {
+        auto itr = find(legalActions.begin(), legalActions.end(), action);
+        if (itr != legalActions.end())
+            return (itr - legalActions.begin());
+        else
+            return argmax(d->qValues + get_current_u_values(searchSettings));
+    }
     // find the move according to the q- and u-values for each move
     // calculate the current u values
     // it's not worth to save the u values as a node attribute because u is updated every time n_sum changes

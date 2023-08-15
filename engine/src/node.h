@@ -146,7 +146,7 @@ public:
      */
     Node* get_child_node(ChildIdx childIdx);
 
-    ChildIdx select_child_node(const SearchSettings* searchSettings);
+    ChildIdx select_child_node(const SearchSettings* searchSettings, Action action = NULL);
 
     void update_qValue_after_minimax_search(Node* parentNode, ChildIdx childIdx, float value, const SearchSettings* searchSettings);
 

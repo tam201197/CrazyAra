@@ -49,7 +49,8 @@ SearchThread::SearchThread(NeuralNetAPI *netBatch, const SearchSettings* searchS
     isRunning(true), mapWithMutex(mapWithMutex), searchSettings(searchSettings),
     tbHits(0), depthSum(0), depthMax(0), visitsPreSearch(0),
     terminalNodeCache(searchSettings->batchSize*2),
-    reachedTablebases(false)
+    reachedTablebases(false),
+    pLineIndex(0)
 {
     switch (searchSettings->searchPlayerMode) {
     case MODE_SINGLE_PLAYER:
@@ -59,6 +60,7 @@ SearchThread::SearchThread(NeuralNetAPI *netBatch, const SearchSettings* searchS
     searchLimits = nullptr;  // will be set by set_search_limits() every time before go()
     trajectoryBuffer.reserve(DEPTH_INIT);
     actionsBuffer.reserve(DEPTH_INIT);
+    pLine.reserve(searchSettings->minimaxDepth);
 }
 
 void SearchThread::set_root_node(Node *value)
@@ -208,7 +210,14 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                     childIdx = minimax_select_child_node(evalState.get(), currentNode);
                 }
                 else {
-                    childIdx = currentNode->select_child_node(searchSettings);
+                    if (pLineIndex > 0 && pLineIndex <= searchSettings->minimaxDepth) {
+                        childIdx = currentNode->select_child_node(searchSettings, pLine[pLineIndex]);
+                        pLineIndex += 1;
+                    }
+                    else {
+                        childIdx = currentNode->select_child_node(searchSettings);
+                        pLineIndex = 0;
+                    }
                 }
             }
             else {
@@ -306,11 +315,12 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node) {
     assert(sum(node->get_child_number_visits()) == node->get_visits());
     node->fully_expand_node();
     ChildIdx childIdx = 0;
-    pvs(state, searchSettings->minimaxDepth, -2.0, 2.0, searchSettings, childIdx);
+    pvs(state, searchSettings->minimaxDepth, -2.0, 2.0, searchSettings, childIdx, pLine);
+    pLineIndex = 1;
     return childIdx;
 }
 
-float SearchThread::pvs(StateObj* state, uint8_t depth, float alpha, float beta, const SearchSettings* searchSettings, ChildIdx& idx)
+float SearchThread::pvs(StateObj* state, uint8_t depth, float alpha, float beta, const SearchSettings* searchSettings, ChildIdx& idx, vector<Action>& pLine)
 {
     if (state->is_board_terminal()) {
         float dummy;
@@ -328,7 +338,7 @@ float SearchThread::pvs(StateObj* state, uint8_t depth, float alpha, float beta,
     }
     if (depth == 0) {
         if (!state->is_board_ok()) {
-            return -pvs(state, 1, -beta, -alpha, searchSettings, idx);
+            return -pvs(state, 1, -beta, -alpha, searchSettings, idx, pLine);
         }
         else {
             return state->get_stockfish_value();
@@ -339,9 +349,10 @@ float SearchThread::pvs(StateObj* state, uint8_t depth, float alpha, float beta,
     for (const Action& action : state->legal_actions()) {
         childIdx += 1;
         state->do_action(action);
-        float value = -pvs(state, depth - 1, -beta, -alpha, searchSettings, idxDummy);
+        float value = -pvs(state, depth - 1, -beta, -alpha, searchSettings, idxDummy, pLine);
         state->undo_action(action);
         if (alpha < value) {
+            pLine[searchSettings->minimaxDepth - depth] = action;
             alpha = value;
             idx = childIdx;
         }
