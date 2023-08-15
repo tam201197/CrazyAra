@@ -199,7 +199,10 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
     while (true) {
         currentNode->lock();
         if (childIdx == uint16_t(-1)) {
-            uint32_t numberVisits = currentNode->get_visits();
+            uint32_t numberVisits = 0;
+            if (currentNode->is_playout_node()) {
+                numberVisits = currentNode->get_visits();
+            }
             if (searchSettings->mctsIpM) {
                 if (numberVisits == searchSettings->switchingAtVisits) {
                     unique_ptr<StateObj> evalState = unique_ptr<StateObj>(rootState->clone());
@@ -315,12 +318,12 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node) {
     assert(sum(node->get_child_number_visits()) == node->get_visits());
     node->fully_expand_node();
     ChildIdx childIdx = 0;
-    pvs(state, searchSettings->minimaxDepth, -2.0, 2.0, searchSettings, childIdx, pLine);
+    pvs(state, searchSettings->minimaxDepth, -2.0, 2.0, searchSettings, childIdx, pLine, true);
     pLineIndex = 1;
     return childIdx;
 }
 
-float SearchThread::pvs(StateObj* state, uint8_t depth, float alpha, float beta, const SearchSettings* searchSettings, ChildIdx& idx, vector<Action>& pLine)
+float SearchThread::pvs(StateObj* state, uint8_t depth, float alpha, float beta, const SearchSettings* searchSettings, ChildIdx& idx, vector<Action>& pLine, bool canUpdate)
 {
     if (state->is_board_terminal()) {
         float dummy;
@@ -338,7 +341,7 @@ float SearchThread::pvs(StateObj* state, uint8_t depth, float alpha, float beta,
     }
     if (depth == 0) {
         if (!state->is_board_ok()) {
-            return -pvs(state, 1, -beta, -alpha, searchSettings, idx, pLine);
+            return -pvs(state, 1, -beta, -alpha, searchSettings, idx, pLine, false);
         }
         else {
             return state->get_stockfish_value();
@@ -349,7 +352,7 @@ float SearchThread::pvs(StateObj* state, uint8_t depth, float alpha, float beta,
     for (const Action& action : state->legal_actions()) {
         childIdx += 1;
         state->do_action(action);
-        float value = -pvs(state, depth - 1, -beta, -alpha, searchSettings, idxDummy, pLine);
+        float value = -pvs(state, depth - 1, -beta, -alpha, searchSettings, idxDummy, pLine, true);
         state->undo_action(action);
         if (alpha < value) {
             pLine[searchSettings->minimaxDepth - depth] = action;
