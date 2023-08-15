@@ -182,7 +182,7 @@ private:
 
     ChildIdx minimax_select_child_node(StateObj* state, Node* currentNode);
 
-    float pvs(StateObj* state, uint8_t depth, float alpha, float beta, const SearchSettings* searchSettings, ChildIdx& idx, vector<Action>& pLine);
+    float pvs(StateObj* state, uint8_t depth, float alpha, float beta, const SearchSettings* searchSettings, ChildIdx& idx, vector<Action>& pLine, bool canUpdate);
 
     float evaluate(StateObj* newState);
 
