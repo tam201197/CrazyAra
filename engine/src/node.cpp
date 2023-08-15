@@ -96,7 +96,8 @@ Node::Node(StateObj* state, const SearchSettings* searchSettings) :
     sorted(false),
     vValue(0),
     initValue(0),
-    minimaxValue(-2.0)
+    minimaxValue(-2.0),
+    isMinimaxSearchCalled(false)
 {
     // specify the number of direct child nodes of this node
     check_for_terminal(state);
@@ -1206,6 +1207,14 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings, Action ac
     // calculate the current u values
     // it's not worth to save the u values as a node attribute because u is updated every time n_sum changes
     return argmax(d->qValues + get_current_u_values(searchSettings));
+}
+
+void Node::setIsMinimaxCalled(bool value)
+{
+    isMinimaxSearchCalled = true;
+}
+bool Node::isMinimaxCalled() {
+    return isMinimaxSearchCalled;
 }
 
 void Node::store_minimax_value(StateObj* state, const SearchSettings* searchSettings, float maxValue)

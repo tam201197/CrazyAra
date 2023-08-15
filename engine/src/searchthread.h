@@ -69,7 +69,7 @@ private:
 
     Trajectory trajectoryBuffer;
     vector<Action> actionsBuffer;
-    vector<Action> pLine;
+    deque<Action> pLine;
     uint8_t pLineIndex;
 
     bool isRunning;
@@ -182,7 +182,7 @@ private:
 
     ChildIdx minimax_select_child_node(StateObj* state, Node* currentNode);
 
-    float pvs(StateObj* state, uint8_t depth, float alpha, float beta, const SearchSettings* searchSettings, ChildIdx& idx, vector<Action>& pLine, bool canUpdate);
+    float pvs(StateObj* state, uint8_t depth, float alpha, float beta, const SearchSettings* searchSettings, ChildIdx& idx, deque<Action>& pLine, int_fast8_t pLineIdx);
 
     float evaluate(StateObj* newState);
 
