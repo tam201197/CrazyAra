@@ -356,7 +356,7 @@ float SearchThread::pvs(StateObj* state, uint8_t depth, float alpha, float beta,
         float value = -pvs(state, depth - 1, -beta, -alpha, searchSettings, idxDummy, pLine, pLineIdx + 1);
         state->undo_action(action);
         if (alpha < value) {
-            if (pLine.empty() || pLine.size() > saveIndex) {
+            if (pLine.empty() || pLine.size() < saveIndex) {
                 pLine.push_back(action);
             }
             else {
