@@ -1093,19 +1093,19 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
             break;
         case BACKUP_IMPLICIT_MAX_MEAN:
             n = it->node->get_real_visits(it->childIdx, searchSettings) >= searchSettings->switchingAtVisits;
-            if (n <= 100) {
+            if (n <= 50) {
                 minimaxWeight = 0.9;
             }
-            else if (n <= 200) {
+            else if (n <= 100) {
                 minimaxWeight = 0.8;
             }
-            else if (n <= 300) {
+            else if (n <= 150) {
                 minimaxWeight = 0.7;
             } 
-            else if (n <= 400) {
+            else if (n <= 200) {
                 minimaxWeight = 0.6;
             }
-            else if (n <= 500) {
+            else if (n <= 250) {
                 minimaxWeight = 0.5;
             }
             else {
