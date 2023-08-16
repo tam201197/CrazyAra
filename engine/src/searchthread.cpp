@@ -320,28 +320,28 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node) {
     node->fully_expand_node();
     ChildIdx childIdx = 0;
     uint_fast8_t pLineIndex = 0;
-    pvs(state, searchSettings->minimaxDepth, -2.0, 2.0, searchSettings, childIdx, pLine, pLineIndex);
+    pvs(state, searchSettings->minimaxDepth, INT_MIN, INT_MAX, searchSettings, childIdx, pLine, pLineIndex);
     pLine.pop_front();
     return childIdx;
 }
 
-float SearchThread::pvs(StateObj* state, uint8_t depth, float alpha, float beta, const SearchSettings* searchSettings, ChildIdx& idx, deque<Action>& pLine, int_fast8_t pLineIdx)
+int SearchThread::pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSettings* searchSettings, ChildIdx& idx, deque<Action>& pLine, int_fast8_t pLineIdx)
 {
     uint_fast8_t saveIndex = pLineIdx;
-    /*if (state->is_board_terminal()) {
+    if (state->is_board_terminal()) {
         float dummy;
         switch (state->is_terminal(0, dummy))
         {
         case TERMINAL_WIN:
-            return WIN_VALUE;
+            return INT_MAX;
         case TERMINAL_DRAW:
-            return DRAW_VALUE;
+            return 0;
         case TERMINAL_LOSS:
-            return LOSS_VALUE;
+            return INT_MIN;
         default:
             break;
         }
-    }*/
+    }
     if (depth == 0) {
         if (!state->is_board_ok()) {
             return -pvs(state, 1, -beta, -alpha, searchSettings, idx, pLine, pLineIdx + 1);
@@ -355,7 +355,7 @@ float SearchThread::pvs(StateObj* state, uint8_t depth, float alpha, float beta,
     for (const Action& action : state->legal_actions()) {
         childIdx += 1;
         state->do_action(action);
-        float value = -pvs(state, depth - 1, -beta, -alpha, searchSettings, idxDummy, pLine, pLineIdx + 1);
+        int value = -pvs(state, depth - 1, -beta, -alpha, searchSettings, idxDummy, pLine, pLineIdx + 1);
         state->undo_action(action);
         if (alpha < value) {
             if (pLine.empty() || pLine.size() < saveIndex) {
