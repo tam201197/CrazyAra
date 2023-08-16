@@ -212,6 +212,10 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                     childIdx = minimax_select_child_node(evalState.get(), currentNode);
                     currentNode->setIsMinimaxCalled(true);
                     currentMinimaxSearchNode = currentNode->get_child_node(childIdx);
+                    if (currentMinimaxSearchNode != nullptr) {
+                        childIdx = currentNode->select_child_node(searchSettings);
+                        pLine.clear();
+                    }
                 }
                 else {
                     if (!pLine.empty() && currentNode == currentMinimaxSearchNode) {

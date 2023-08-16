@@ -1198,10 +1198,11 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings, Action ac
     if (action != NULL) {
         fully_expand_node();
         auto itr = find(legalActions.begin(), legalActions.end(), action);
-        if (itr != legalActions.end())
-            return (itr - legalActions.begin());
-        else
-            return argmax(d->qValues + get_current_u_values(searchSettings));
+        if (itr != legalActions.end()) {
+            ChildIdx result = (itr - legalActions.begin());
+            if (get_child_node(result) == nullptr)
+                return result;
+        }
     }
     // find the move according to the q- and u-values for each move
     // calculate the current u values
