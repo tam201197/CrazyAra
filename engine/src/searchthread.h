@@ -70,7 +70,8 @@ private:
     Trajectory trajectoryBuffer;
     vector<Action> actionsBuffer;
     deque<Action> pLine;
-    uint8_t pLineIndex;
+    Node* currentMinimaxSearchNode;
+
 
     bool isRunning;
 
