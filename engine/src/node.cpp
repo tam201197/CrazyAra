@@ -1199,9 +1199,7 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings, Action ac
         fully_expand_node();
         auto itr = find(legalActions.begin(), legalActions.end(), action);
         if (itr != legalActions.end()) {
-            ChildIdx result = (itr - legalActions.begin());
-            if (get_child_node(result) == nullptr)
-                return result;
+            return (itr - legalActions.begin());
         }
     }
     // find the move according to the q- and u-values for each move
