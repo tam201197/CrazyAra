@@ -214,7 +214,6 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                     currentMinimaxSearchNode = currentNode->get_child_node(childIdx);
                     if (currentMinimaxSearchNode != nullptr) {
                         childIdx = currentNode->select_child_node(searchSettings);
-                        pLine.clear();
                     }
                 }
                 else {
