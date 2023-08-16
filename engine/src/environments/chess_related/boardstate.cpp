@@ -109,14 +109,15 @@ sgn(T v)
     return (v > T(0)) - (v < T(0));
 }
 
-float BoardState::get_stockfish_value()
+int BoardState::get_stockfish_value()
 {
     Value v = board.evaluate();
-    float result = (sgn(v) * abs(1 - pow(exp(1.0), -abs(v) * log(VALUE_TO_CENTI_PARAM) / 100.0f)));
+    return v;
+    //float result = (sgn(v) * abs(1 - pow(exp(1.0), -abs(v) * log(VALUE_TO_CENTI_PARAM) / 100.0f)));
     //float result = sgn(v) * -(pow(2.71, -abs(v) * log(VALUE_TO_CENTI_PARAM) / 100.0f) - 1);
-    if (abs(result) >= 1.0f)
-        return sgn(result) * 1.0f;
-    return result;
+    //if (abs(result) >= 1.0f)
+    //    return sgn(result) * 1.0f;
+    //return result;
 
 }
 
