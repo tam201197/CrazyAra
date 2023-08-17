@@ -353,9 +353,9 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node) {
     return childIdx;
 }
 
-int SearchThread::pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSettings* searchSettings, ChildIdx& idx, deque<Action>& pLine, int_fast8_t pLineIdx)
+int SearchThread::pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSettings* searchSettings, ChildIdx& idx, deque<Action>& pLine, uint8_t pLineIdx)
 {
-    uint_fast8_t saveIndex = pLineIdx;
+    uint8_t saveIndex = pLineIdx;
     if (state->is_board_terminal()) {
         float dummy;
         switch (state->is_terminal(0, dummy))
