@@ -373,7 +373,7 @@ int SearchThread::pvs(StateObj* state, uint8_t depth, int alpha, int beta, const
     if (depth == 0) {
         if (!state->is_board_ok()) {
             info_string("board is not ok");
-            info_string("pLineIdx");
+            info_string("pLineIdx: ", pLineIdx);
             return -pvs(state, 1, -beta, -alpha, searchSettings, idx, pLine, pLineIdx + 1);
         }
         else {
