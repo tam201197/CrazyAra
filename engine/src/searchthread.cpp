@@ -61,7 +61,6 @@ SearchThread::SearchThread(NeuralNetAPI *netBatch, const SearchSettings* searchS
     searchLimits = nullptr;  // will be set by set_search_limits() every time before go()
     trajectoryBuffer.reserve(DEPTH_INIT);
     actionsBuffer.reserve(DEPTH_INIT);
-    pLine.reserve(0);
 }
 
 void SearchThread::set_root_node(Node *value)
@@ -217,12 +216,8 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                 }
                 else {
                     if (!pLine.empty() && currentNode == currentMinimaxSearchNode) {
-                        childIdx = currentNode->select_child_node(searchSettings, pLine[pLineIndex]);
-                        pLineIndex += 1;
-                        if (pLineIndex == searchSettings->minimaxDepth) {
-                            pLine.clear();
-                            pLineIndex = 0;
-                        }
+                        childIdx = currentNode->select_child_node(searchSettings, pLine[0]);
+                        pLine.pop_front();
                         currentMinimaxSearchNode = currentNode->get_child_node(childIdx);
                     }
                     else {
@@ -325,13 +320,16 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node) {
     assert(sum(node->get_child_number_visits()) == node->get_visits());
     node->fully_expand_node();
     ChildIdx childIdx = 0;
-    pLine.reserve(searchSettings->minimaxDepth);
+    for (uint8_t i = 0; i < searchSettings->minimaxDepth; i++) {
+        pLine.push_back(NULL);
+    }
     pvs(state, searchSettings->minimaxDepth, INT_MIN, INT_MAX, searchSettings, childIdx, pLine, 0);
-    pLineIndex = 1;
+    info_string("pLine size: ", pLine.size());
+    pLine.pop_front();
     return childIdx;
 }
 
-int SearchThread::pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSettings* searchSettings, ChildIdx& idx, vector<Action>& pLine, uint8_t pLineIdx)
+int SearchThread::pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSettings* searchSettings, ChildIdx& idx, deque<Action>& pLine, uint8_t pLineIdx)
 {
     uint8_t saveIndex = pLineIdx;
     if (state->is_board_terminal()) {
@@ -350,6 +348,8 @@ int SearchThread::pvs(StateObj* state, uint8_t depth, int alpha, int beta, const
     }
     if (depth == 0) {
         if (!state->is_board_ok()) {
+            pLine.push_back(NULL);
+            info_string("pLine index: ", int(pLineIdx));
             return -pvs(state, 1, -beta, -alpha, searchSettings, idx, pLine, pLineIdx + 1);
         }
         else {
@@ -358,31 +358,21 @@ int SearchThread::pvs(StateObj* state, uint8_t depth, int alpha, int beta, const
     }
     ChildIdx childIdx = -1;
     ChildIdx idxDummy; 
-    bool isNotInserted = true;
+    bool isBoardOk = true;
     for (const Action& action : state->legal_actions()) {
         childIdx += 1;
         state->do_action(action);
+        isBoardOk = state->is_board_ok();
         int value = -pvs(state, depth - 1, -beta, -alpha, searchSettings, idxDummy, pLine, pLineIdx + 1);
         state->undo_action(action);
         if (alpha < value) {
-            /*if (saveIndex >= pLine.size()) {
-                if (isNotInserted) {
-                    pLine.push_back(action);
-                    isNotInserted = false;
-                }
-                else {
-                    if (pLineIdx == 2)
-                    pLine[saveIndex] = action;
-                }
-            }
-            else {
-                pLine[saveIndex] = action;
-            }*/
-            if (saveIndex < pLine.size()) {
-                pLine[saveIndex] = action;
-            }
+            pLine[saveIndex] = action;
             alpha = value;
             idx = childIdx;
+            if (saveIndex == 1 && pLine.size() == searchSettings->minimaxDepth + 1 && isBoardOk) {
+                pLine.pop_back();
+               
+            }
         }
         if (alpha >= beta)
             break;
