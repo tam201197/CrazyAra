@@ -388,7 +388,7 @@ int SearchThread::pvs(StateObj* state, uint8_t depth, int alpha, int beta, const
             return state->get_stockfish_value();
         }
     }
-    int8_t childIdx = -1;
+    ChildIdx childIdx = -1;
     ChildIdx idxDummy; 
     bool isNotInserted = true;
     for (const Action& action : state->legal_actions()) {
