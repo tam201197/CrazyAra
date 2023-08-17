@@ -376,7 +376,7 @@ int SearchThread::pvs(StateObj* state, uint8_t depth, int alpha, int beta, const
     }
     if (depth == 0) {
         if (!state->is_board_ok()) {
-            return -pvs(state, 1, -beta, -alpha, searchSettings, idx, pLine, pLineIdx);
+            return -pvs(state, 1, -beta, -alpha, searchSettings, idx, pLine, pLineIdx + 1);
         }
         else {
             return state->get_stockfish_value();
@@ -388,7 +388,7 @@ int SearchThread::pvs(StateObj* state, uint8_t depth, int alpha, int beta, const
     for (const Action& action : state->legal_actions()) {
         childIdx += 1;
         state->do_action(action);
-        int value = -pvs(state, depth - 1, -beta, -alpha, searchSettings, idxDummy, pLine, pLineIdx);
+        int value = -pvs(state, depth - 1, -beta, -alpha, searchSettings, idxDummy, pLine, pLineIdx + 1);
         state->undo_action(action);
         if (alpha < value) {
             /*if (saveIndex >= pLine.size()) {
