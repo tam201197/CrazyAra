@@ -373,8 +373,6 @@ int SearchThread::pvs(StateObj* state, uint8_t depth, int alpha, int beta, const
     }
     if (depth == 0) {
         if (!state->is_board_ok()) {
-            info_string("board is not ok");
-            info_string("pLineIdx: ");
             int i = pLineIdx;
             info_string(i);
             return -pvs(state, 1, -beta, -alpha, searchSettings, idx, pLine, pLineIdx + 1);
@@ -391,8 +389,8 @@ int SearchThread::pvs(StateObj* state, uint8_t depth, int alpha, int beta, const
         int value = -pvs(state, depth - 1, -beta, -alpha, searchSettings, idxDummy, pLine, pLineIdx + 1);
         state->undo_action(action);
         if (alpha < value) {
-            if (pLine.empty() || pLine.size() < saveIndex) {
-                pLine.push_back(action);
+            if (pLine.empty() || pLine.size() <= saveIndex) {
+                pLine.push_front(action);
             }
             else {
                 pLine[saveIndex] = action;
