@@ -50,7 +50,8 @@ SearchThread::SearchThread(NeuralNetAPI *netBatch, const SearchSettings* searchS
     tbHits(0), depthSum(0), depthMax(0), visitsPreSearch(0),
     terminalNodeCache(searchSettings->batchSize*2),
     reachedTablebases(false),
-    currentMinimaxSearchNode(nullptr)
+    currentMinimaxSearchNode(nullptr),
+    pLineIndex(0)
 {
     switch (searchSettings->searchPlayerMode) {
     case MODE_SINGLE_PLAYER:
@@ -176,8 +177,11 @@ Node* SearchThread::get_starting_node(Node* currentNode, NodeDescription& descri
             }
             else {
                 if (!pLine.empty() && currentNode == currentMinimaxSearchNode) {
-                    childIdx = currentNode->select_child_node(searchSettings, pLine[0]);
-                    pLine.erase(pLine.begin());
+                    childIdx = currentNode->select_child_node(searchSettings, pLine[pLineIndex]);
+                    pLineIndex += 1;
+                    if (pLineIndex == searchSettings->minimaxDepth) {
+                        pLine.clear();
+                    }
                     currentMinimaxSearchNode = currentNode->get_child_node(childIdx);
                 }
                 else {
@@ -244,8 +248,11 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                 }
                 else {
                     if (!pLine.empty() && currentNode == currentMinimaxSearchNode) {
-                        childIdx = currentNode->select_child_node(searchSettings, pLine[0]);
-                        pLine.erase(pLine.begin());
+                        childIdx = currentNode->select_child_node(searchSettings, pLine[pLineIndex]);
+                        pLineIndex += 1;
+                        if (pLineIndex == searchSettings->minimaxDepth) {
+                            pLine.clear();
+                        }
                         currentMinimaxSearchNode = currentNode->get_child_node(childIdx);
                     }
                     else {
@@ -351,9 +358,7 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node) {
     uint_fast8_t pLineIndex = 0;
     pLine.reserve(searchSettings->minimaxDepth);
     pvs(state, searchSettings->minimaxDepth, INT_MIN, INT_MAX, searchSettings, childIdx, pLine, pLineIndex);
-
-    info_string("pLine size: ", pLine.size());
-    pLine.erase(pLine.begin());
+    pLineIndex = 1;
     return childIdx;
 }
 

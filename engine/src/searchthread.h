@@ -71,6 +71,7 @@ private:
     vector<Action> actionsBuffer;
     vector<Action> pLine;
     Node* currentMinimaxSearchNode;
+    uint8_t  pLineIndex;
 
 
     bool isRunning;
