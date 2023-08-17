@@ -183,7 +183,7 @@ Node* SearchThread::get_starting_node(Node* currentNode, NodeDescription& descri
                     currentMinimaxSearchNode = currentNode->get_child_node(childIdx);
                 }
                 else {
-                    childIdx = currentNode->select_child_node(searchSettings);
+                    childIdx = get_best_action_index(currentNode, true, searchSettings);
                 }
             }
         }
