@@ -361,22 +361,23 @@ int SearchThread::pvs(StateObj* state, uint8_t depth, int alpha, int beta, const
         switch (state->is_terminal(0, dummy))
         {
         case TERMINAL_WIN:
-            return INT_MAX;
+            return INT_MAX - 1;
         case TERMINAL_DRAW:
             return 0;
         case TERMINAL_LOSS:
-            return INT_MIN;
+            return INT_MIN + 1;
         default:
             break;
         }
     }
     if (depth == 0) {
-        if (!state->is_board_ok()) {
+        return state->get_stockfish_value();
+        /*if (!state->is_board_ok()) {
             return -pvs(state, 1, -beta, -alpha, searchSettings, idx, pLine, pLineIdx + 1);
         }
         else {
             return state->get_stockfish_value();
-        }
+        }*/
     }
     int8_t childIdx = -1;
     ChildIdx idxDummy; 
