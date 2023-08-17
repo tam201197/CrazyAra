@@ -158,7 +158,38 @@ Node* SearchThread::get_starting_node(Node* currentNode, NodeDescription& descri
     size_t depth = get_random_depth();
     for (uint curDepth = 0; curDepth < depth; ++curDepth) {
         currentNode->lock();
-        childIdx = get_best_action_index(currentNode, true, searchSettings);
+        if (searchSettings->mctsIpM) {
+            uint32_t numberVisits = 0;
+            if (currentNode->is_playout_node()) {
+                numberVisits = currentNode->get_visits();
+            }
+            if (numberVisits >= searchSettings->switchingAtVisits && pLine.empty() && !currentNode->isMinimaxCalled()) {
+                unique_ptr<StateObj> evalState = unique_ptr<StateObj>(rootState->clone());
+                assert(actionsBuffer.size() == description.depth - 1);
+                for (Action action : actionsBuffer) {
+                    evalState->do_action(action);
+                }
+                childIdx = minimax_select_child_node(evalState.get(), currentNode);
+                currentNode->setIsMinimaxCalled(true);
+                currentMinimaxSearchNode = currentNode->get_child_node(childIdx);
+                if (currentMinimaxSearchNode != nullptr) {
+                    childIdx = currentNode->select_child_node(searchSettings);
+                }
+            }
+            else {
+                if (!pLine.empty() && currentNode == currentMinimaxSearchNode) {
+                    childIdx = currentNode->select_child_node(searchSettings, pLine[0]);
+                    pLine.pop_front();
+                    currentMinimaxSearchNode = currentNode->get_child_node(childIdx);
+                }
+                else {
+                    childIdx = currentNode->select_child_node(searchSettings);
+                }
+            }
+        }
+        else {
+            childIdx = get_best_action_index(currentNode, true, searchSettings);
+        }
         Node* nextNode = currentNode->get_child_node(childIdx);
         if (nextNode == nullptr || !nextNode->is_playout_node() || nextNode->get_visits() < searchSettings->epsilonGreedyCounter || nextNode->get_node_type() != UNSOLVED) {
             currentNode->unlock();
