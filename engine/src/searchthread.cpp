@@ -349,6 +349,7 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node) {
     ChildIdx childIdx = 0;
     uint_fast8_t pLineIndex = 0;
     pvs(state, searchSettings->minimaxDepth, INT_MIN, INT_MAX, searchSettings, childIdx, pLine, pLineIndex);
+    info_string("pLine size: ", pLine.size());
     pLine.pop_front();
     return childIdx;
 }
@@ -374,7 +375,8 @@ int SearchThread::pvs(StateObj* state, uint8_t depth, int alpha, int beta, const
         if (!state->is_board_ok()) {
             info_string("board is not ok");
             info_string("pLineIdx: ");
-            info_string(int(pLineIdx));
+            int i = pLineIdx;
+            info_string(i);
             return -pvs(state, 1, -beta, -alpha, searchSettings, idx, pLine, pLineIdx + 1);
         }
         else {
