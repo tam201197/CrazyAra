@@ -181,6 +181,7 @@ Node* SearchThread::get_starting_node(Node* currentNode, NodeDescription& descri
                     pLineIndex += 1;
                     if (pLineIndex == searchSettings->minimaxDepth) {
                         pLine.clear();
+                        pLineIndex = 0;
                     }
                     currentMinimaxSearchNode = currentNode->get_child_node(childIdx);
                 }
@@ -252,6 +253,7 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                         pLineIndex += 1;
                         if (pLineIndex == searchSettings->minimaxDepth) {
                             pLine.clear();
+                            pLineIndex = 0;
                         }
                         currentMinimaxSearchNode = currentNode->get_child_node(childIdx);
                     }
