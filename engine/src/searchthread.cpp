@@ -357,9 +357,8 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node) {
     assert(sum(node->get_child_number_visits()) == node->get_visits());
     node->fully_expand_node();
     ChildIdx childIdx = 0;
-    uint_fast8_t pLineIndex = 0;
     pLine.reserve(searchSettings->minimaxDepth);
-    pvs(state, searchSettings->minimaxDepth, INT_MIN, INT_MAX, searchSettings, childIdx, pLine, pLineIndex);
+    pvs(state, searchSettings->minimaxDepth, INT_MIN, INT_MAX, searchSettings, childIdx, pLine, 0);
     pLineIndex = 1;
     return childIdx;
 }
