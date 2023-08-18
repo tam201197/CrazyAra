@@ -628,12 +628,12 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
     ChildIdx childIdx = -1;
     ChildIdx idxDummy;
     bool isBoardOk = true;
-    int value;
+    int value = INT_MIN;
     for (const Action& action : state->legal_actions()) {
         childIdx += 1;
         state->do_action(action);
         isBoardOk = state->is_board_ok();
-        value = -pvs(state, depth - 1, -beta, -alpha, searchSettings, idxDummy, pLine, pLineIdx + 1);
+        value = max(value, -pvs(state, depth - 1, -beta, -alpha, searchSettings, idxDummy, pLine, pLineIdx + 1));
         state->undo_action(action);
         if (alpha < value) {
             if (saveIndex < pLine.size()) {
