@@ -598,7 +598,9 @@ size_t get_random_depth()
     return std::ceil(-std::log2(1 - randInt / 100.0) - 1);
 }
 
-int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSettings* searchSettings, ChildIdx& idx, deque<Action>& pLine, uint8_t pLineIdx)
+
+
+int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSettings* searchSettings, ChildIdx& idx, LINE * pline, uint8_t pLineIdx)
 {
     uint8_t saveIndex = pLineIdx;
     if (state->is_board_terminal()) {
@@ -642,13 +644,17 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
         }
         state->undo_action(action);
         if (alpha < value) {
-            if (saveIndex < pLine.size()) {
-                pLine[saveIndex] = action;
-            }
+            //if (saveIndex < pLine.size()) {
+            //    pLine.push_front(action);
+                //pLine[saveIndex] = action;
+            //}
             alpha = value;
             info_string("depth:", int(depth));
             info_string("update alpha to:", alpha);
             idx = childIdx;
+            pline->argmove[0] = action;
+            memcpy(pline->argmove + 1, line->argmove, line->cmove * sizeof(Action));
+            pline->cmove = line->cmove + 1;
             //if (saveIndex == 1 && pLine.size() == searchSettings->minimaxDepth + 1 && isBoardOk) {
             //    pLine.pop_back();
             //}

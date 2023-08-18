@@ -51,6 +51,11 @@ struct NodeDescription
     size_t depth;
 };
 
+typedef struct LINE {
+    int cmove;              // Number of moves in the line.
+    Action argmove[512];  // The line.
+}   LINE;
+
 class SearchThread : public NeuralNetAPIUser
 {
 private:

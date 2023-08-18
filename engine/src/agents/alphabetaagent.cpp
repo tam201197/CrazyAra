@@ -46,7 +46,8 @@ void AlphaBetaAgent::evaluate_board_state()
     }
     pLine.resize(depth);
     unique_ptr<StateObj> evalState = unique_ptr<StateObj>(state->clone());
-    evalInfo->centipawns[0] = pvs(evalState.get(), depth, INT_MIN, INT_MAX, searchSettings, childIdx, pLine, 0);
+    LINE line;
+    evalInfo->centipawns[0] = pvs(evalState.get(), depth, INT_MIN, INT_MAX, searchSettings, childIdx, line, 0);
     evalInfo->movesToMate[0] = 0;
     info_string("childIdx:", childIdx);
     evalInfo->depth = searchSettings->minimaxDepth;
@@ -55,8 +56,8 @@ void AlphaBetaAgent::evaluate_board_state()
     evalInfo->nodes = 1;
     evalInfo->isChess960 = state->is_chess960();
     evalInfo->pv[0].clear();
-    for (Action action : pLine) {
-        evalInfo->pv[0].push_back(action);
+    for (int i = 0; i < line.cmove; ++i) {
+        evalInfo->pv[0].push_back(line.argmove[i]);
     }
     unlock_and_notify();
 
