@@ -616,7 +616,7 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
             break;
         }
     }
-    info_string("depth:", depth, state->fen());
+    info_string("depth:", int(depth), state->fen());
     if (depth == 0) {
         if (!state->is_board_ok()) {
             //pLine.push_back(NULL);
@@ -656,5 +656,8 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
         if (alpha >= beta)
             break;
     }
+
+    info_string("after for loop:", int(depth), state->fen());
+
     return value;
 }
