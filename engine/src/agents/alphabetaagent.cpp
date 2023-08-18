@@ -51,8 +51,8 @@ void AlphaBetaAgent::evaluate_board_state()
     evalInfo->centipawns[0] = pvs(evalState.get(), depth, INT_MIN, INT_MAX, searchSettings, childIdx, &line, 0);
     evalInfo->movesToMate[0] = 0;
     info_string("childIdx:", childIdx);
-    evalInfo->depth = searchSettings->minimaxDepth;
-    evalInfo->selDepth = pLine.size();
+    evalInfo->depth = depth;
+    evalInfo->selDepth = line.cmove;
     evalInfo->tbHits = 0;
     evalInfo->nodes = 1;
     evalInfo->isChess960 = state->is_chess960();
