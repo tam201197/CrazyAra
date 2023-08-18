@@ -603,6 +603,7 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
     uint8_t saveIndex = pLineIdx;
     if (state->is_board_terminal()) {
         float dummy;
+        info_string("terminal state:", state->fen());
         switch (state->is_terminal(0, dummy))
         {
         case TERMINAL_WIN:
