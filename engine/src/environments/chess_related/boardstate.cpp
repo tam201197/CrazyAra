@@ -113,10 +113,10 @@ int BoardState::get_stockfish_value()
 {
     Value v = board.evaluate();
     //Threads.front()->rootPos.set(board.fen());
-    Threads.front()->rootPos.set(board.fen(), false, CHESS_VARIANT, &states->back(), Threads.front());
-    Threads.front()->search();
-    return Threads.front()->rootMoves[0].score;
-    //return v;
+    //Threads.front()->rootPos.set(board.fen(), false, CHESS_VARIANT, &states->back(), Threads.front());
+    //Threads.front()->search();
+    //return Threads.front()->rootMoves[0].score;
+    return v;
     //float result = (sgn(v) * abs(1 - pow(exp(1.0), -abs(v) * log(VALUE_TO_CENTI_PARAM) / 100.0f)));
     //float result = sgn(v) * -(pow(2.71, -abs(v) * log(VALUE_TO_CENTI_PARAM) / 100.0f) - 1);
     //if (abs(result) >= 1.0f)

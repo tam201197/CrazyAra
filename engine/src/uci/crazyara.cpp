@@ -565,6 +565,8 @@ void CrazyAra::init()
     Threads.set(1);
     Threads.front()->clear();
     Threads.front()->contempt = SCORE_ZERO;
+    Threads.front()->materialTable.table.clear();
+    Threads.front()->pawnsTable.table.clear();
     Bitbases::init();
     Search::init();
 #endif
