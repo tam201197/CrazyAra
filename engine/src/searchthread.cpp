@@ -625,6 +625,7 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
         if (!state->is_board_ok()) {
             //pLine.push_back(NULL);
             //info_string("pLine index: ", int(pLineIdx));
+            pLine->cmove = 0;
             return -pvs(state, 1, -beta, -alpha, searchSettings, idx, &line, pLineIdx + 1);
         }
         else {
