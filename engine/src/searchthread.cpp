@@ -629,7 +629,6 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
         }
         else {
             pLine->cmove = 0;
-            state->set(state->fen(), state->is_chess960(), StateConstants::variant_to_int(Options["UCI_Variant"]));
             return state->get_stockfish_value();
         }
     }
