@@ -563,6 +563,8 @@ void CrazyAra::init()
     Position::init();
     Tune::init();
     Threads.set(1);
+    Threads.front()->clear();
+    Threads.front()->contempt = SCORE_ZERO;
     Bitbases::init();
     Search::init();
 #endif
