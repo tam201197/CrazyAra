@@ -41,7 +41,8 @@ void AlphaBetaAgent::evaluate_board_state()
     ChildIdx childIdx = 0;
     deque<Action> pLine;
     pLine.resize(searchSettings->minimaxDepth);
-    evalInfo->centipawns[0] = pvs(state, searchSettings->minimaxDepth, INT_MIN, INT_MAX, searchSettings, childIdx, pLine, 0);
+    int depth = max(int(searchSettings->minimaxDepth), searchLimits->depth);
+    evalInfo->centipawns[0] = pvs(state, depth, INT_MIN, INT_MAX, searchSettings, childIdx, pLine, 0);
     evalInfo->movesToMate[0] = 0;
     info_string("childIdx:", childIdx);
     evalInfo->depth = searchSettings->minimaxDepth;
