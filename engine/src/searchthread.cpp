@@ -635,18 +635,18 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
     ChildIdx childIdx = -1;
     ChildIdx idxDummy;
     bool isBoardOk = true;
-    int value = INT_MIN;
+    //int value = INT_MIN;
     for (Action action : state->legal_actions()) {
         childIdx += 1;
         state->do_action(action);
         isBoardOk = state->is_board_ok();
-        int retValue = -pvs(state, depth - 1, -beta, -alpha, searchSettings, idxDummy, &line, pLineIdx + 1);
-        value = max(value, retValue);
+        int value = -pvs(state, depth - 1, -beta, -alpha, searchSettings, idxDummy, &line, pLineIdx + 1);
+        //value = max(value, retValue);
         if (depth == 2) {
-            info_string(StateConstants::action_to_uci(action, false), "returned value:", retValue);
+            info_string(StateConstants::action_to_uci(action, false), "returned value:", value);
         }
         state->undo_action(action);
-        //if (value >= beta) return beta;
+        if (value >= beta) return beta;
         if (alpha < value) {
             //if (saveIndex < pLine.size()) {
             //    pLine.push_front(action);
@@ -663,8 +663,8 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
             //    pLine.pop_back();
             //}
         }
-        if (alpha >= beta)
-            break;
+        //if (alpha >= beta)
+        //    break;
     }
 
     info_string("after for loop:", int(depth), state->fen());
