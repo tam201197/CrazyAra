@@ -232,7 +232,7 @@ inline void random_playout(Node* currentNode, ChildIdx& childIdx);
  */
 size_t get_random_depth();
 
-int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSettings* searchSettings, ChildIdx& idx, deque<Action>& pLine, uint8_t pLineIdx);
+int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSettings* searchSettings, ChildIdx& idx, LINE * pLine, uint8_t pLineIdx);
 
 
 #endif // SEARCHTHREAD_H

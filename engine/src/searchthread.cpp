@@ -323,7 +323,7 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node) {
     for (uint8_t i = 0; i < searchSettings->minimaxDepth; i++) {
         pLine.push_back(NULL);
     }
-    pvs(state, searchSettings->minimaxDepth, INT_MIN, INT_MAX, searchSettings, childIdx, pLine, 0);
+    //pvs(state, searchSettings->minimaxDepth, INT_MIN, INT_MAX, searchSettings, childIdx, pLine, 0);
     info_string("pLine size: ", pLine.size());
     pLine.pop_front();
     return childIdx;
@@ -600,7 +600,7 @@ size_t get_random_depth()
 
 
 
-int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSettings* searchSettings, ChildIdx& idx, LINE * pline, uint8_t pLineIdx)
+int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSettings* searchSettings, ChildIdx& idx, LINE * pLine, uint8_t pLineIdx)
 {
     uint8_t saveIndex = pLineIdx;
     if (state->is_board_terminal()) {
@@ -652,9 +652,9 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
             info_string("depth:", int(depth));
             info_string("update alpha to:", alpha);
             idx = childIdx;
-            pline->argmove[0] = action;
-            memcpy(pline->argmove + 1, line->argmove, line->cmove * sizeof(Action));
-            pline->cmove = line->cmove + 1;
+            pLine->argmove[0] = action;
+            memcpy(pLine->argmove + 1, pLine->argmove, pLine->cmove * sizeof(Action));
+            pLine->cmove = pLine->cmove + 1;
             //if (saveIndex == 1 && pLine.size() == searchSettings->minimaxDepth + 1 && isBoardOk) {
             //    pLine.pop_back();
             //}
