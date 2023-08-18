@@ -329,57 +329,6 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node) {
     return childIdx;
 }
 
-int SearchThread::pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSettings* searchSettings, ChildIdx& idx, deque<Action>& pLine, uint8_t pLineIdx)
-{
-    uint8_t saveIndex = pLineIdx;
-    if (state->is_board_terminal()) {
-        float dummy;
-        switch (state->is_terminal(0, dummy))
-        {
-        case TERMINAL_WIN:
-            return INT_MAX - 1;
-        case TERMINAL_DRAW:
-            return 0;
-        case TERMINAL_LOSS:
-            return INT_MIN + 1;
-        default:
-            break;
-        }
-    }
-    if (depth == 0) {
-        if (!state->is_board_ok()) {
-            pLine.push_back(NULL);
-            info_string("pLine index: ", int(pLineIdx));
-            return -pvs(state, 1, -beta, -alpha, searchSettings, idx, pLine, pLineIdx + 1);
-        }
-        else {
-            return state->get_stockfish_value();
-        }
-    }
-    ChildIdx childIdx = -1;
-    ChildIdx idxDummy; 
-    bool isBoardOk = true;
-    for (const Action& action : state->legal_actions()) {
-        childIdx += 1;
-        state->do_action(action);
-        isBoardOk = state->is_board_ok();
-        int value = -pvs(state, depth - 1, -beta, -alpha, searchSettings, idxDummy, pLine, pLineIdx + 1);
-        state->undo_action(action);
-        if (alpha < value) {
-            pLine[saveIndex] = action;
-            alpha = value;
-            idx = childIdx;
-            if (saveIndex == 1 && pLine.size() == searchSettings->minimaxDepth + 1 && isBoardOk) {
-                pLine.pop_back();
-               
-            }
-        }
-        if (alpha >= beta)
-            break;
-    }
-    return alpha;
-}
-
 float SearchThread::evaluate(StateObj* newState)
 {
     newState->get_state_planes(true, inputPlanes, net->get_version());
@@ -647,4 +596,55 @@ size_t get_random_depth()
 {
     const int randInt = rand() % 100 + 1;
     return std::ceil(-std::log2(1 - randInt / 100.0) - 1);
+}
+
+int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSettings* searchSettings, ChildIdx& idx, deque<Action>& pLine, uint8_t pLineIdx)
+{
+    uint8_t saveIndex = pLineIdx;
+    if (state->is_board_terminal()) {
+        float dummy;
+        switch (state->is_terminal(0, dummy))
+        {
+        case TERMINAL_WIN:
+            return INT_MAX - 1;
+        case TERMINAL_DRAW:
+            return 0;
+        case TERMINAL_LOSS:
+            return INT_MIN + 1;
+        default:
+            break;
+        }
+    }
+    if (depth == 0) {
+        if (!state->is_board_ok()) {
+            pLine.push_back(NULL);
+            info_string("pLine index: ", int(pLineIdx));
+            return -pvs(state, 1, -beta, -alpha, searchSettings, idx, pLine, pLineIdx + 1);
+        }
+        else {
+            return state->get_stockfish_value();
+        }
+    }
+    ChildIdx childIdx = -1;
+    ChildIdx idxDummy;
+    bool isBoardOk = true;
+    for (const Action& action : state->legal_actions()) {
+        childIdx += 1;
+        state->do_action(action);
+        isBoardOk = state->is_board_ok();
+        int value = -pvs(state, depth - 1, -beta, -alpha, searchSettings, idxDummy, pLine, pLineIdx + 1);
+        state->undo_action(action);
+        if (alpha < value) {
+            pLine[saveIndex] = action;
+            alpha = value;
+            idx = childIdx;
+            if (saveIndex == 1 && pLine.size() == searchSettings->minimaxDepth + 1 && isBoardOk) {
+                pLine.pop_back();
+
+            }
+        }
+        if (alpha >= beta)
+            break;
+    }
+    return alpha;
 }

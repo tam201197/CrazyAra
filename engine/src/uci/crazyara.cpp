@@ -61,6 +61,7 @@ CrazyAra::CrazyAra() :
     playSettings(PlaySettings()),
     variant(StateConstants::DEFAULT_VARIANT()),
     useRawNetwork(false),      // will be initialized in init_search_settings()
+    useAlphaBetaAgent(false),
     networkLoaded(false),
     ongoingSearch(false),
 #ifdef SUPPORT960
@@ -223,6 +224,12 @@ void CrazyAra::go(StateObj* state, istringstream &is,  EvalInfo& evalInfo)
         rawAgent->set_must_wait(true);
         mainSearchThread = thread(run_agent_thread, rawAgent.get());
         rawAgent->lock_and_wait();  // wait for the agent to be initalized to allow then stopping it.
+    }
+    else if (useAlphaBetaAgent) {
+        alphaBetaAgent->set_search_settings(state, &searchLimits, &evalInfo);
+        alphaBetaAgent->set_must_wait(true);
+        mainSearchThread = thread(run_agent_thread, alphaBetaAgent.get());
+        alphaBetaAgent->lock_and_wait();  // wait for the agent to be initalized to allow then stopping it.
     }
     else {
         mctsAgent->set_search_settings(state, &searchLimits, &evalInfo);
@@ -589,6 +596,7 @@ bool CrazyAra::is_ready()
         netBatches.front()->validate_neural_network();
         mctsAgent = create_new_mcts_agent(netSingle.get(), netBatches, &searchSettings);
         rawAgent = make_unique<RawNetAgent>(netSingle.get(), &playSettings, false);
+        alphaBetaAgent = make_unique<AlphaBetaAgent>(netSingle.get(), &playSettings, &searchSettings, false);
         StateConstants::init(mctsAgent->is_policy_map());
         timeoutThread.kill();
         if (timeoutMS != 0) {
@@ -739,6 +747,7 @@ void CrazyAra::init_search_settings()
     searchSettings.randomMoveFactor = Options["Centi_Random_Move_Factor"] / 100.0f;
     searchSettings.allowEarlyStopping = Options["Allow_Early_Stopping"];
     useRawNetwork = Options["Use_Raw_Network"];
+    useAlphaBetaAgent = Options["Use_Alpha_Beta_Agent"];
 #ifdef SUPPORT960
     is960 = Options["UCI_Chess960"];
 #endif
