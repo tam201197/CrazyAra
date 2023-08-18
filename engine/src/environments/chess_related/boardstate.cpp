@@ -111,8 +111,9 @@ sgn(T v)
 
 int BoardState::get_stockfish_value()
 {
-    //Value v = board.evaluate();
-    Threads.front()->rootPos = this->board;
+    Value v = board.evaluate();
+    //Threads.front()->rootPos.set(board.fen());
+    Threads.front()->rootPos.set(board.fen(), false, CHESS_VARIANT, &states->back(), Threads.front());
     Threads.front()->search();
     return Threads.front()->rootMoves[0].score;
     //return v;
