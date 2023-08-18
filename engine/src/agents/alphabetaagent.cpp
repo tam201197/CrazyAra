@@ -49,6 +49,7 @@ void AlphaBetaAgent::evaluate_board_state()
     evalInfo->tbHits = 0;
     evalInfo->nodes = 1;
     evalInfo->isChess960 = state->is_chess960();
+    evalInfo->pv[0].clear();
     for (Action action : pLine) {
         evalInfo->pv[0].push_back(action);
     }
