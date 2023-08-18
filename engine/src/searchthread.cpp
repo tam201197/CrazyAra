@@ -616,6 +616,7 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
             break;
         }
     }
+    info_string("depth:", depth, state->fen());
     if (depth == 0) {
         if (!state->is_board_ok()) {
             //pLine.push_back(NULL);
