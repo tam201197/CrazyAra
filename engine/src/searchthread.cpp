@@ -634,6 +634,9 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
         isBoardOk = state->is_board_ok();
         int value = -pvs(state, depth - 1, -beta, -alpha, searchSettings, idxDummy, pLine, pLineIdx + 1);
         state->undo_action(action);
+        if (value >= beta) {
+            return beta;
+        }
         if (alpha < value) {
             if (saveIndex < pLine.size()) {
                 pLine[saveIndex] = action;
@@ -644,8 +647,6 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
             //    pLine.pop_back();
             //}
         }
-        if (alpha >= beta)
-            break;
     }
     return alpha;
 }
