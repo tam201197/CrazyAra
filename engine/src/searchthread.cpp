@@ -617,7 +617,7 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
     }
     if (depth == 0) {
         if (!state->is_board_ok()) {
-            pLine.push_back(NULL);
+            //pLine.push_back(NULL);
             info_string("pLine index: ", int(pLineIdx));
             return -pvs(state, 1, -beta, -alpha, searchSettings, idx, pLine, pLineIdx + 1);
         }
@@ -635,13 +635,14 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
         int value = -pvs(state, depth - 1, -beta, -alpha, searchSettings, idxDummy, pLine, pLineIdx + 1);
         state->undo_action(action);
         if (alpha < value) {
-            pLine[saveIndex] = action;
+            if (saveIndex < pLine.size()) {
+                pLine[saveIndex] = action;
+            }
             alpha = value;
             idx = childIdx;
-            if (saveIndex == 1 && pLine.size() == searchSettings->minimaxDepth + 1 && isBoardOk) {
-                pLine.pop_back();
-
-            }
+            //if (saveIndex == 1 && pLine.size() == searchSettings->minimaxDepth + 1 && isBoardOk) {
+            //    pLine.pop_back();
+            //}
         }
         if (alpha >= beta)
             break;
