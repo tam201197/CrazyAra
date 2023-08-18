@@ -182,7 +182,7 @@ bool Board::is_terminal() const
         return true;
     }
 
-    for (const ExtMove move : MoveList<LEGAL>(*this)) {
+    for (ExtMove move : MoveList<LEGAL>(*this)) {
         return false;
     }
     return true;
