@@ -638,6 +638,7 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
     //int value = INT_MIN;
     for (Action action : state->legal_actions()) {
         childIdx += 1;
+        string fen_after_do_action = state->fen();
         state->do_action(action);
         isBoardOk = state->is_board_ok();
         int value = -pvs(state, depth - 1, -beta, -alpha, searchSettings, idxDummy, &line, pLineIdx + 1);
@@ -646,6 +647,9 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
             info_string(StateConstants::action_to_uci(action, false), "returned value:", value);
         }
         state->undo_action(action);
+        if (fen_after_do_action != state->fen()) {
+            info_string("STATE AFTER UNDO IS NOT MATCHED BEFORE DO ACTION ");
+        }
         //if (value >= beta) return beta;
         if (alpha < value) {
             //if (saveIndex < pLine.size()) {
@@ -668,7 +672,7 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
             break;
     }
 
-    info_string("after for loop:", int(depth), state->fen());
+    //info_string("after for loop:", int(depth), state->fen());
 
     return alpha;
 }

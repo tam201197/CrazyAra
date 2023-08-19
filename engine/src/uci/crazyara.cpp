@@ -171,7 +171,7 @@ void CrazyAra::prepare_search_config_structs()
         changedUCIoption = false;
     }
 }
-void CrazyAra::inference(istringstream &is)
+void CrazyAra::inference(istringstream& is)
 {
     size_t warmupIterations = 100;
     size_t iterations = 3000;
@@ -194,11 +194,11 @@ void CrazyAra::inference(istringstream &is)
     const size_t elapsedMS = chrono::duration_cast<chrono::milliseconds>(end - start).count();
     info_string("Inference results");
     info_string("-----------------");
-    info_string("Elapsed time:", elapsedMS/1000.0, "s");
-    info_string("Evaluations per second:", (iterations/double(elapsedMS))*1000*searchSettings.batchSize, "nps");
+    info_string("Elapsed time:", elapsedMS / 1000.0, "s");
+    info_string("Evaluations per second:", (iterations / double(elapsedMS)) * 1000 * searchSettings.batchSize, "nps");
 }
 
-void CrazyAra::go(StateObj* state, istringstream &is,  EvalInfo& evalInfo)
+void CrazyAra::go(StateObj* state, istringstream& is, EvalInfo& evalInfo)
 {
     wait_to_finish_last_search();
     ongoingSearch = true;
@@ -563,10 +563,10 @@ void CrazyAra::init()
     Position::init();
     Tune::init();
     Threads.set(1);
-    Threads.front()->clear();
-    Threads.front()->contempt = SCORE_ZERO;
-    Threads.front()->materialTable.table.clear();
-    Threads.front()->pawnsTable.table.clear();
+    //Threads.front()->clear();
+    //Threads.front()->contempt = SCORE_ZERO;
+    //Threads.front()->materialTable.table.clear();
+    //Threads.front()->pawnsTable.table.clear();
     Bitbases::init();
     Search::init();
 #endif
@@ -796,8 +796,8 @@ void CrazyAra::init_search_settings()
     searchSettings.priorWeight = Options["Prior_Weight"];
     if (Options["Evaluation_Type"] == "sf") {
         searchSettings.evaluationType = EVAL_SF;
-    } 
-    else{
+    }
+    else {
         searchSettings.evaluationType = EVAL_NN;
     }
 }
@@ -842,8 +842,8 @@ std::vector<std::string> comb(std::vector<int> N, int K)
         std::string c = "";
         for (int i = 0; i < N.size(); ++i) // [0..N-1] integers
         {
-            if (bitmask[i]){
-                c.append(std::to_string(N[i])+ " ");
+            if (bitmask[i]) {
+                c.append(std::to_string(N[i]) + " ");
             }
         }
         p.push_back(c);

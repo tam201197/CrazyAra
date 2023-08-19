@@ -132,10 +132,10 @@ public:
     void stop();
 
     // Getter, setter functions
-    void set_search_limits(SearchLimits *s);
+    void set_search_limits(SearchLimits* s);
     Node* get_root_node() const;
-    SearchLimits *get_search_limits() const;
-    void set_root_node(Node *value);
+    SearchLimits* get_search_limits() const;
+    void set_root_node(Node* value);
     bool is_running() const;
     void set_is_running(bool value);
     void set_reached_tablebases(bool value);
@@ -205,11 +205,11 @@ private:
     ChildIdx select_enhanced_move(Node* currentNode) const;
 };
 
-void run_search_thread(SearchThread *t);
+void run_search_thread(SearchThread* t);
 
-void fill_nn_results(size_t batchIdx, bool isPolicyMap, const float* valueOutputs, const float* probOutputs, const float* auxiliaryOutputs, Node *node, size_t& tbHits, bool mirrorPolicy, const SearchSettings* searchSettings, bool isRootNodeTB);
-void node_post_process_policy(Node *node, float temperature, const SearchSettings* searchSettings);
-void node_assign_value(Node *node, const float* valueOutputs, size_t& tbHits, size_t batchIdx, bool isRootNodeTB);
+void fill_nn_results(size_t batchIdx, bool isPolicyMap, const float* valueOutputs, const float* probOutputs, const float* auxiliaryOutputs, Node* node, size_t& tbHits, bool mirrorPolicy, const SearchSettings* searchSettings, bool isRootNodeTB);
+void node_post_process_policy(Node* node, float temperature, const SearchSettings* searchSettings);
+void node_assign_value(Node* node, const float* valueOutputs, size_t& tbHits, size_t batchIdx, bool isRootNodeTB);
 
 /**
  * @brief random_root_playout Uses random move exploration (epsilon greedy) from the given position. The probability for doing a random move decays by depth.
@@ -232,7 +232,7 @@ inline void random_playout(Node* currentNode, ChildIdx& childIdx);
  */
 size_t get_random_depth();
 
-int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSettings* searchSettings, ChildIdx& idx, LINE * pLine, uint8_t pLineIdx);
+int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSettings* searchSettings, ChildIdx& idx, LINE* pLine, uint8_t pLineIdx);
 
 
 #endif // SEARCHTHREAD_H
