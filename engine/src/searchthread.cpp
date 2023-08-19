@@ -607,7 +607,7 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
     if (state->is_board_terminal()) {
         pLine->cmove = 0;
         float dummy;
-        info_string("terminal state:", state->fen());
+        //info_string("terminal state:", state->fen());
         switch (state->is_terminal(0, dummy))
         {
         case TERMINAL_WIN:
@@ -622,6 +622,7 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
     }
     info_string("depth:", int(depth), state->fen());
     if (depth == 0) {
+        info_string("depth==0 and pLineIdx= ", pLineIdx);
         if (!state->is_board_ok()) {
             //pLine.push_back(NULL);
             //info_string("pLine index: ", int(pLineIdx));
@@ -634,13 +635,13 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
     }
     ChildIdx childIdx = -1;
     ChildIdx idxDummy;
-    bool isBoardOk = true;
+    // bool isBoardOk = true;
     //int value = INT_MIN;
     for (Action action : state->legal_actions()) {
         childIdx += 1;
         string fen_after_do_action = state->fen();
         state->do_action(action);
-        isBoardOk = state->is_board_ok();
+        //isBoardOk = state->is_board_ok();
         int value = -pvs(state, depth - 1, -beta, -alpha, searchSettings, idxDummy, &line, pLineIdx + 1);
         //value = max(value, retValue);
         if (depth == 2) {
