@@ -607,19 +607,7 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
     uint8_t saveIndex = pLineIdx;
     if (state->is_board_terminal()) {
         pLine->cmove = 0;
-        float dummy;
-        //info_string("terminal state:", state->fen());
-        switch (state->is_terminal(0, dummy))
-        {
-        case TERMINAL_WIN:
-            return INT_MAX - 1;
-        case TERMINAL_DRAW:
-            return 0;
-        case TERMINAL_LOSS:
-            return INT_MIN + 1;
-        default:
-            return state->get_stockfish_value();
-        }
+        return state->get_stockfish_value();
     }
     info_string("depth:", int(depth), state->fen());
     if (depth == 0) {
@@ -659,7 +647,6 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
             info_string("update alpha to:", alpha);
             idx = childIdx;
             pLine->argmove[0] = action;
-            info_string("line.cmove:", line.cmove);
             memcpy(pLine->argmove + 1, line.argmove, line.cmove * sizeof(Action));
             pLine->cmove = line.cmove + 1;
             //if (saveIndex == 1 && pLine.size() == searchSettings->minimaxDepth + 1 && isBoardOk) {
