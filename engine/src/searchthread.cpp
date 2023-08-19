@@ -603,6 +603,7 @@ size_t get_random_depth()
 int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSettings* searchSettings, ChildIdx& idx, LINE * pLine, uint8_t pLineIdx)
 {
     LINE line;
+    line.cmove = 0;
     uint8_t saveIndex = pLineIdx;
     if (state->is_board_terminal()) {
         pLine->cmove = 0;
