@@ -612,11 +612,11 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
         switch (state->is_terminal(0, dummy))
         {
         case TERMINAL_WIN:
-            return INT_MAX - 1;
+            return INT_MAX;
         case TERMINAL_DRAW:
             return 0;
         case TERMINAL_LOSS:
-            return INT_MIN + 1;
+            return INT_MIN;
         default:
             return state->get_stockfish_value();
         }
@@ -643,12 +643,10 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
     }
     ChildIdx childIdx = -1;
     ChildIdx idxDummy;
-    //int value = INT_MIN;
     for (Action action : state->legal_actions()) {
         childIdx += 1;
         string fen_after_do_action = state->fen();
         state->do_action(action);
-        //isBoardOk = state->is_board_ok();
         int value = -pvs(state, depth - 1, -beta, -alpha, searchSettings, idxDummy, &line, pLineIdx + 1);
         //value = max(value, retValue);
         if (depth == 2) {
@@ -660,10 +658,6 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
         }
         //if (value >= beta) return beta;
         if (alpha < value) {
-            //if (saveIndex < pLine.size()) {
-            //    pLine.push_front(action);
-                //pLine[saveIndex] = action;
-            //}
             alpha = value;
             info_string("depth:", int(depth));
             info_string("update alpha to:", alpha);
@@ -671,9 +665,6 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
             pLine->argmove[0] = action;
             memcpy(pLine->argmove + 1, line.argmove, line.cmove * sizeof(Action));
             pLine->cmove = line.cmove + 1;
-            //if (saveIndex == 1 && pLine.size() == searchSettings->minimaxDepth + 1 && isBoardOk) {
-            //    pLine.pop_back();
-            //}
         }
         if (alpha >= beta)
             break;
