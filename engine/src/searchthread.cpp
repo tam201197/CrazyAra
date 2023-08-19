@@ -607,18 +607,7 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
     if (state->is_board_terminal()) {
         pLine->cmove = 0;
         float dummy;
-        //info_string("terminal state:", state->fen());
-        switch (state->is_terminal(0, dummy))
-        {
-        case TERMINAL_WIN:
-            return INT_MAX - 1;
-        case TERMINAL_DRAW:
-            return 0;
-        case TERMINAL_LOSS:
-            return INT_MIN + 1;
-        default:
-            break;
-        }
+        return state->get_stockfish_value();
     }
     info_string("depth:", int(depth), state->fen());
     if (depth == 0) {
@@ -630,7 +619,6 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
                 state->undo_action(action);
                 if (alpha < value) {
                     alpha = value;
-                    pLine->argmove[0] = action;
                 }
                 if (alpha >= beta)
                     break;
@@ -638,7 +626,6 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
             return alpha;
         }
         else {
-            pLine->cmove = 0;
             return state->get_stockfish_value();
         }
     }
