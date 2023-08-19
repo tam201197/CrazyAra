@@ -622,7 +622,7 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
     }
     info_string("depth:", int(depth), state->fen());
     if (depth == 0) {
-        info_string("depth==0 and pLineIdx= ", int(pLineIdx));
+        pLine->cmove = 0;
         if (!state->is_board_ok()) {
             for (Action action : state->legal_actions()) {
                 state->do_action(action);
