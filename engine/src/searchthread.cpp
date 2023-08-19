@@ -623,10 +623,19 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
     }
     info_string("depth:", int(depth), state->fen());
     if (depth == 0) {
+        pLine->cmove = 0;
         if (!state->is_board_ok()) {
-            //pLine.push_back(NULL);
-            //info_string("pLine index: ", int(pLineIdx));
-            return -pvs(state, 1, -beta, -alpha, searchSettings, idx, &line, pLineIdx + 1);
+            for (Action action : state->legal_actions()) {
+                state->do_action(action);
+                int value = -state->get_stockfish_value();
+                state->undo_action(action);
+                if (alpha < value) {
+                    alpha = value;
+                }
+                if (alpha >= beta)
+                    break;
+            }
+            return alpha;
         }
         else {
             pLine->cmove = 0;
