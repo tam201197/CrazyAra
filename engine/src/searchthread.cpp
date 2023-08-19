@@ -608,45 +608,41 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
     if (state->is_board_terminal()) {
         pLine->cmove = 0;
         float dummy;
-        return state->get_stockfish_value();
+        //info_string("terminal state:", state->fen());
+        switch (state->is_terminal(0, dummy))
+        {
+        case TERMINAL_WIN:
+            return INT_MAX - 1;
+        case TERMINAL_DRAW:
+            return 0;
+        case TERMINAL_LOSS:
+            return INT_MIN + 1;
+        default:
+            break;
+        }
     }
     info_string("depth:", int(depth), state->fen());
     if (depth == 0) {
-        pLine->cmove = 0;
         if (!state->is_board_ok()) {
-            for (Action action : state->legal_actions()) {
-                state->do_action(action);
-                int value = -state->get_stockfish_value();
-                state->undo_action(action);
-                if (alpha < value) {
-                    alpha = value;
-                }
-                if (alpha >= beta)
-                    break;
-            }
-            return alpha;
+            //pLine.push_back(NULL);
+            //info_string("pLine index: ", int(pLineIdx));
+            return -pvs(state, 1, -beta, -alpha, searchSettings, idx, &line, pLineIdx + 1);
         }
         else {
+            pLine->cmove = 0;
             return state->get_stockfish_value();
         }
     }
     ChildIdx childIdx = -1;
     ChildIdx idxDummy;
-    // bool isBoardOk = true;
     //int value = INT_MIN;
     for (Action action : state->legal_actions()) {
         childIdx += 1;
-        string fen_after_do_action = state->fen();
         state->do_action(action);
-        //isBoardOk = state->is_board_ok();
         int value = -pvs(state, depth - 1, -beta, -alpha, searchSettings, idxDummy, &line, pLineIdx + 1);
         //value = max(value, retValue);
         if (depth == 2) {
             info_string(StateConstants::action_to_uci(action, false), "returned value:", value);
-        }
-        state->undo_action(action);
-        if (fen_after_do_action != state->fen()) {
-            info_string("STATE AFTER UNDO IS NOT MATCHED BEFORE DO ACTION ");
         }
         //if (value >= beta) return beta;
         if (alpha < value) {
