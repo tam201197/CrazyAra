@@ -618,7 +618,7 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
         case TERMINAL_LOSS:
             return INT_MIN + 1;
         default:
-            break;
+            return state->get_stockfish_value();
         }
     }
     info_string("depth:", int(depth), state->fen());
