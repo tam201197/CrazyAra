@@ -60,7 +60,7 @@ void AlphaBetaAgent::evaluate_board_state()
     evalInfo->pv[0].clear();
     info_string("SEE PV-LINE");
     for (int i = 0; i < line.cmove; ++i) {
-        info_string(line.argmove[i]);
+        info_string(StateConstants::action_to_uci(line.argmove[i], false));
         evalInfo->pv[0].push_back(line.argmove[i]);
     }
     unlock_and_notify();
