@@ -49,7 +49,8 @@ void AlphaBetaAgent::evaluate_board_state()
     LINE line;
     line.cmove = 0;
     evalState->set(state->fen(), state->is_chess960(), StateConstants::variant_to_int(Options["UCI_Variant"]));
-    evalInfo->centipawns[0] = pvs(evalState.get(), depth, - INT_MAX, INT_MAX, searchSettings, childIdx, &line, 0);
+    //evalInfo->centipawns[0] = pvs(evalState.get(), depth, - INT_MAX, INT_MAX, searchSettings, childIdx, &line, 0);
+    evalInfo->centipawns[0] = pvs(state, searchSettings->minimaxDepth, - INT_MAX, INT_MAX, searchSettings, childIdx, pLine, 0);
     evalInfo->movesToMate[0] = 0;
     info_string("childIdx:", childIdx);
     evalInfo->depth = depth;
@@ -59,7 +60,7 @@ void AlphaBetaAgent::evaluate_board_state()
     evalInfo->isChess960 = state->is_chess960();
     evalInfo->pv[0].clear();
     info_string("SEE PV-LINE");
-    for (int i = 0; i < line.cmove; ++i) {
+    for (int i = 0; i < pLine.size(); ++i) {
         info_string(StateConstants::action_to_uci(line.argmove[i], false));
         evalInfo->pv[0].push_back(line.argmove[i]);
     }

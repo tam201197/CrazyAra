@@ -599,13 +599,13 @@ size_t get_random_depth()
 
 
 
-int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSettings* searchSettings, ChildIdx& idx, LINE * pLine, uint8_t pLineIdx)
+int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSettings* searchSettings, ChildIdx& idx, deque<Action>& pLine, uint8_t pLineIdx)
 {
-    LINE line;
-    line.cmove = 0;
+    //LINE line;
+    //line.cmove = 0;
     uint8_t saveIndex = pLineIdx;
     if (state->is_board_terminal()) {
-        pLine->cmove = 0;
+        //pLine->cmove = 0;
         float dummy;
         //info_string("terminal state:", state->fen());
         switch (state->is_terminal(0, dummy))
@@ -622,7 +622,7 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
     }
     info_string("depth:", int(depth), state->fen());
     if (depth == 0) {
-        pLine->cmove = 0;
+        //pLine->cmove = 0;
         if (!state->is_board_ok()) {
             for (Action action : state->legal_actions()) {
                 state->do_action(action);
@@ -646,7 +646,7 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
         childIdx += 1;
         string fen_after_do_action = state->fen();
         state->do_action(action);
-        int value = -pvs(state, depth - 1, -beta, -alpha, searchSettings, idxDummy, &line, pLineIdx + 1);
+        int value = -pvs(state, depth - 1, -beta, -alpha, searchSettings, idxDummy, pLine, pLineIdx + 1);
         //value = max(value, retValue);
         if (depth == 2) {
             info_string(StateConstants::action_to_uci(action, false), "returned value:", value);
@@ -661,9 +661,10 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
             info_string("depth:", int(depth));
             info_string("update alpha to:", alpha);
             idx = childIdx;
-            pLine->argmove[0] = action;
-            memcpy(pLine->argmove + 1, line.argmove, line.cmove * sizeof(Action));
-            pLine->cmove = line.cmove + 1;
+            pLine[saveIndex] = action;
+            //pLine->argmove[0] = action;
+            //memcpy(pLine->argmove + 1, line.argmove, line.cmove * sizeof(Action));
+            //pLine->cmove = line.cmove + 1;
         }
         if (alpha >= beta)
             break;
