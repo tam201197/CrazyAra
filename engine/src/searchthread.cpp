@@ -605,7 +605,7 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
     line.cmove = 0;
     uint8_t saveIndex = pLineIdx;
     if (state->is_board_terminal()) {
-        //pLine->cmove = 0;
+        pLine->cmove = 0;
         float dummy;
         //info_string("terminal state:", state->fen());
         switch (state->is_terminal(0, dummy))
