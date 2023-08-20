@@ -324,7 +324,6 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node) {
         pLine.push_back(NULL);
     }
     //pvs(state, searchSettings->minimaxDepth, INT_MIN, INT_MAX, searchSettings, childIdx, pLine, 0);
-    info_string("pLine size: ", pLine.size());
     pLine.pop_front();
     return childIdx;
 }
