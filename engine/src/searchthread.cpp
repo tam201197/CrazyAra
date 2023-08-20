@@ -599,10 +599,10 @@ size_t get_random_depth()
 
 
 
-int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSettings* searchSettings, ChildIdx& idx, deque<Action>& pLine, uint8_t pLineIdx)
+int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSettings* searchSettings, ChildIdx& idx, LINE * pLine, uint8_t pLineIdx)
 {
-    //LINE line;
-    //line.cmove = 0;
+    LINE line;
+    line.cmove = 0;
     uint8_t saveIndex = pLineIdx;
     if (state->is_board_terminal()) {
         //pLine->cmove = 0;
@@ -622,7 +622,7 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
     }
     info_string("depth:", int(depth), state->fen());
     if (depth == 0) {
-        //pLine->cmove = 0;
+        pLine->cmove = 0;
         if (!state->is_board_ok()) {
             for (Action action : state->legal_actions()) {
                 state->do_action(action);
@@ -656,15 +656,14 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
             info_string("STATE AFTER UNDO IS NOT MATCHED BEFORE DO ACTION ");
         }
         //if (value >= beta) return beta;
-        if (alpha < value) {
+        if (alpha <= value) {
             alpha = value;
             info_string("depth:", int(depth));
             info_string("update alpha to:", alpha);
             idx = childIdx;
-            pLine[saveIndex] = action;
-            //pLine->argmove[0] = action;
-            //memcpy(pLine->argmove + 1, line.argmove, line.cmove * sizeof(Action));
-            //pLine->cmove = line.cmove + 1;
+            pLine->argmove[0] = action;
+            memcpy(pLine->argmove + 1, line.argmove, line.cmove * sizeof(Action));
+            pLine->cmove = line.cmove + 1;
         }
         if (alpha >= beta)
             break;
