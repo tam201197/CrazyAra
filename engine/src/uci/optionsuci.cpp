@@ -134,7 +134,7 @@ void OptionsUCI::init(OptionsMap& o)
 #endif
     o["CPuct_Base"] << Option(19652, 1, 99999);
     //    o["Enhance_Captures"]              << Option(false);         currently disabled
-    o["First_Device_ID"] << Option(12, 0, 99999);
+    o["First_Device_ID"] << Option(0, 0, 99999);
     o["Fixed_Movetime"] << Option(0, 0, 99999999);
     o["Last_Device_ID"] << Option(0, 0, 99999);
     o["Log_File"] << Option("", on_logger);
@@ -203,7 +203,7 @@ void OptionsUCI::init(OptionsMap& o)
     o["UCI_Variant"] << Option(StateConstants::DEFAULT_UCI_VARIANT().c_str(), { StateConstants::DEFAULT_UCI_VARIANT().c_str(), StateConstants::DEFAULT_UCI_VARIANT().c_str() });
 #endif
     o["Use_Raw_Network"] << Option(false);
-    o["Use_Alpha_Beta_Agent"] << Option(true);
+    o["Use_Alpha_Beta_Agent"] << Option(false);
     // additional UCI-Options for RL only
 #ifdef USE_RL
     o["Centi_Node_Random_Factor"] << Option(10, 0, 100);
