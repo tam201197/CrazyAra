@@ -320,11 +320,12 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node) {
     assert(sum(node->get_child_number_visits()) == node->get_visits());
     node->fully_expand_node();
     ChildIdx childIdx = 0;
-    for (uint8_t i = 0; i < searchSettings->minimaxDepth; i++) {
-        pLine.push_back(NULL);
+    LINE line;
+    line.cmove = 0;
+    pvs(state, searchSettings->minimaxDepth, -INT_MAX, INT_MAX, searchSettings, childIdx, &line, 0);
+    for (int i = 1; i < searchSettings->minimaxDepth; ++i) {
+        pLine.push_back(line.argmove[i]);
     }
-    //pvs(state, searchSettings->minimaxDepth, INT_MIN, INT_MAX, searchSettings, childIdx, pLine, 0);
-    pLine.pop_front();
     return childIdx;
 }
 
@@ -620,7 +621,6 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
             return state->get_stockfish_value();
         }
     }
-    info_string("depth:", int(depth), state->fen());
     if (depth == 0) {
         pLine->cmove = 0;
         if (!state->is_board_ok()) {
@@ -648,14 +648,7 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
         state->do_action(action);
         int value = -pvs(state, depth - 1, -beta, -alpha, searchSettings, idxDummy, &line, pLineIdx + 1);
         //value = max(value, retValue);
-        if (depth == 2) {
-            info_string(StateConstants::action_to_uci(action, false), "returned value:", value);
-        }
         state->undo_action(action);
-        if (fen_after_do_action != state->fen()) {
-            info_string("STATE AFTER UNDO IS NOT MATCHED BEFORE DO ACTION ");
-        }
-        //if (value >= beta) return beta;
         if (alpha <= value) {
             alpha = value;
             idx = childIdx;
@@ -666,8 +659,5 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
         if (alpha >= beta)
             break;
     }
-
-    //info_string("after for loop:", int(depth), state->fen());
-
     return alpha;
 }

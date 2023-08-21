@@ -59,9 +59,7 @@ void AlphaBetaAgent::evaluate_board_state()
     evalInfo->nodes = 1;
     evalInfo->isChess960 = state->is_chess960();
     evalInfo->pv[0].clear();
-    info_string("SEE PV-LINE");
-    for (int i = 0; i < pLine.size(); ++i) {
-        info_string(StateConstants::action_to_uci(line.argmove[i], false));
+    for (int i = 0; i < depth; ++i) {
         evalInfo->pv[0].push_back(line.argmove[i]);
     }
     unlock_and_notify();
