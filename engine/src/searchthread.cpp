@@ -616,7 +616,7 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
         case TERMINAL_DRAW:
             return 0;
         case TERMINAL_LOSS:
-            return INT_MIN + 1;
+            return INT_MIN +2 ;
         default:
             return state->get_stockfish_value();
         }
@@ -649,7 +649,7 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
         int value = -pvs(state, depth - 1, -beta, -alpha, searchSettings, idxDummy, &line, pLineIdx + 1);
         //value = max(value, retValue);
         state->undo_action(action);
-        if (alpha <= value) {
+        if (alpha < value) {
             alpha = value;
             idx = childIdx;
             pLine->argmove[0] = action;
