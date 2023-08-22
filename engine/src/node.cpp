@@ -1195,7 +1195,7 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings, Action ac
         return d->checkmateIdx;
     }
     assert(sum(d->childNumberVisits) == d->visitSum);
-    if (action != NULL) {
+    if (action != ACTION_NONE) {
         fully_expand_node();
         auto itr = find(legalActions.begin(), legalActions.end(), action);
         if (itr != legalActions.end()) {
