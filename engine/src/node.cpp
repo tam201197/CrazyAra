@@ -1200,7 +1200,7 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings, Action ac
         auto itr = find(legalActions.begin(), legalActions.end(), action);
         if (itr != legalActions.end()) {
             ChildIdx idx = itr - legalActions.begin();
-            assert(action, legalActions[idx]);
+            assert(action == legalActions[idx]);
             return idx;
         }
     }
