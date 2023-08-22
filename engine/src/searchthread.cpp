@@ -629,7 +629,7 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
         }
     }
     if (depth == 0) {
-        pLine->cmove = 0;
+        //pLine->cmove = 0;
         if (!state->is_board_ok()) {
             for (Action action : state->legal_actions()) {
                 state->do_action(action);
@@ -659,9 +659,9 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
         if (alpha < value) {
             alpha = value;
             idx = childIdx;
-            pLine->argmove[0] = action;
-            memcpy(pLine->argmove + 1, line.argmove, line.cmove * sizeof(Action));
-            pLine->cmove = line.cmove + 1;
+            //pLine->argmove[0] = action;
+            //memcpy(pLine->argmove + 1, line.argmove, line.cmove * sizeof(Action));
+            //pLine->cmove = line.cmove + 1;
         }
         if (alpha >= beta)
             break;
