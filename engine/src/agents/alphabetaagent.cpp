@@ -52,7 +52,6 @@ void AlphaBetaAgent::evaluate_board_state()
     evalInfo->centipawns[0] = pvs(evalState.get(), depth, - INT_MAX, INT_MAX, searchSettings, childIdx, &line, 0);
     //evalInfo->centipawns[0] = pvs(state, searchSettings->minimaxDepth, - INT_MAX, INT_MAX, searchSettings, childIdx, pLine, 0);
     evalInfo->movesToMate[0] = 0;
-    info_string("childIdx:", childIdx);
     evalInfo->depth = depth;
     evalInfo->selDepth = line.cmove;
     evalInfo->tbHits = 0;

@@ -1188,7 +1188,7 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings, Action ac
     if (!sorted) {
         prepare_node_for_visits();
     }
-    if (d->noVisitIdx == 1) {
+    if (d->noVisitIdx == 1 && action == ACTION_NONE) {
         return 0;
     }
     if (has_forced_win()) {

@@ -332,6 +332,7 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node) {
     LINE line;
     line.cmove = 0;
     pvs(state, searchSettings->minimaxDepth, -INT_MAX, INT_MAX, searchSettings, childIdx, &line, 0);
+    assert(node->get_action(childIdx) == line.argmove[0]);
     for (int i = 1; i < searchSettings->minimaxDepth; ++i) {
         pLine.push_back(line.argmove[i]);
     }
