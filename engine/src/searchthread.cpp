@@ -180,7 +180,15 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
     Node* nextNode;
 
     ChildIdx childIdx = uint16_t(-1);
-    if (searchSettings->epsilonGreedyCounter && rootNode->is_playout_node() && rand() % searchSettings->epsilonGreedyCounter == 0) {
+    if (searchSettings->mctsIpM && pLine.empty()) {
+        unique_ptr<StateObj> evalState = unique_ptr<StateObj>(rootState->clone());
+        childIdx = minimax_select_child_node(evalState.get(), currentNode);
+        currentNode->setIsMinimaxCalled(true);
+        currentMinimaxSearchNode = currentNode->get_child_node(childIdx);
+        pLine.clear();
+        
+    }
+    else if (searchSettings->epsilonGreedyCounter && rootNode->is_playout_node() && rand() % searchSettings->epsilonGreedyCounter == 0) {
         currentNode = get_starting_node(currentNode, description, childIdx);
         currentNode->lock();
         random_playout(currentNode, childIdx);
