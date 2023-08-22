@@ -50,6 +50,7 @@ SearchThread::SearchThread(NeuralNetAPI *netBatch, const SearchSettings* searchS
     tbHits(0), depthSum(0), depthMax(0), visitsPreSearch(0),
     terminalNodeCache(searchSettings->batchSize*2),
     reachedTablebases(false),
+    currentMinimaxSearchNode(nullptr),
     pLineIndex(0)
 {
     switch (searchSettings->searchPlayerMode) {
@@ -220,11 +221,13 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                     }
                     childIdx = minimax_select_child_node(evalState.get(), currentNode);
                     currentNode->setIsMinimaxCalled(true);
+                    currentMinimaxSearchNode = currentNode->get_child_node(childIdx);
                 }
                 else {
-                    if (!pLine.empty()) {
+                    if (!pLine.empty() && currentNode == currentMinimaxSearchNode) {
                         childIdx = currentNode->select_child_node(searchSettings, pLine[0]);
                         pLine.pop_front();
+                        currentMinimaxSearchNode = currentNode->get_child_node(childIdx);
                     }
                     else {
                         childIdx = currentNode->select_child_node(searchSettings);
@@ -316,6 +319,9 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
 ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node) {
     if (!node->is_sorted()) {
         node->prepare_node_for_visits();
+    }
+    if (node->get_no_visit_idx() == 1) {
+        return 0;
     }
     if (node->has_forced_win()) {
         return node->get_checkmate_idx();
