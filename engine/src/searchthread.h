@@ -187,7 +187,7 @@ private:
      */
     Node* get_new_child_to_evaluate(NodeDescription& description);
 
-    ChildIdx minimax_select_child_node(StateObj* state, Node* currentNode);
+    ChildIdx minimax_select_child_node(StateObj* state, Node* currentNode, uint8_t depth);
 
 
     float evaluate(StateObj* newState);

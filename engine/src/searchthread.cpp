@@ -183,7 +183,7 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
     if (searchSettings->mctsIpM && pLine.empty()) {
         unique_ptr<StateObj> evalState = unique_ptr<StateObj>(rootState->clone());
         currentNode->lock();
-        childIdx = minimax_select_child_node(evalState.get(), currentNode);
+        childIdx = minimax_select_child_node(evalState.get(), currentNode, 4);
         currentNode->setIsMinimaxCalled(true);
         currentNode->unlock();
         pLine.clear();
@@ -219,7 +219,7 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                     for (Action action : actionsBuffer) {
                         evalState->do_action(action);
                     }
-                    childIdx = minimax_select_child_node(evalState.get(), currentNode);
+                    childIdx = minimax_select_child_node(evalState.get(), currentNode, searchSettings->minimaxDepth);
                     currentNode->setIsMinimaxCalled(true);
                     currentMinimaxSearchNode = currentNode->get_child_node(childIdx);
                 }
@@ -316,12 +316,9 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
     }
 }
 
-ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node) {
+ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node, uint8_t depth) {
     if (!node->is_sorted()) {
         node->prepare_node_for_visits();
-    }
-    if (node->get_no_visit_idx() == 1) {
-        return 0;
     }
     if (node->has_forced_win()) {
         return node->get_checkmate_idx();
@@ -331,7 +328,7 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node) {
     ChildIdx childIdx = 0;
     LINE line;
     line.cmove = 0;
-    pvs(state, searchSettings->minimaxDepth, -INT_MAX, INT_MAX, searchSettings, childIdx, &line, 0);
+    pvs(state, depth, -INT_MAX, INT_MAX, searchSettings, childIdx, &line, 0);
     assert(node->get_action(childIdx) == line.argmove[0]);
     for (int i = 1; i < searchSettings->minimaxDepth; ++i) {
         pLine.push_back(line.argmove[i]);
