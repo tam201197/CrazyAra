@@ -320,9 +320,6 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node) {
     if (!node->is_sorted()) {
         node->prepare_node_for_visits();
     }
-    if (node->get_no_visit_idx() == 1) {
-        return 0;
-    }
     if (node->has_forced_win()) {
         return node->get_checkmate_idx();
     }
