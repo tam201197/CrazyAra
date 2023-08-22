@@ -182,9 +182,10 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
     ChildIdx childIdx = uint16_t(-1);
     if (searchSettings->mctsIpM && pLine.empty()) {
         unique_ptr<StateObj> evalState = unique_ptr<StateObj>(rootState->clone());
+        currentNode->lock();
         childIdx = minimax_select_child_node(evalState.get(), currentNode);
         currentNode->setIsMinimaxCalled(true);
-        currentMinimaxSearchNode = currentNode->get_child_node(childIdx);
+        currentNode->unlock();
         pLine.clear();
         
     }
