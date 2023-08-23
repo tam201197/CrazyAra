@@ -310,14 +310,17 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
 }
 
 ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node, uint8_t depth) {
+    node->fully_expand_node();
     if (!node->is_sorted()) {
         node->prepare_node_for_visits();
+    }
+    if (d->noVisitIdx == 1) {
+        return 0;
     }
     if (node->has_forced_win()) {
         return node->get_checkmate_idx();
     }
     assert(sum(node->get_child_number_visits()) == node->get_visits());
-    node->fully_expand_node();
     ChildIdx childIdx = 0;
     LINE line;
     line.cmove = 0;
@@ -623,8 +626,7 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
     }
     if (depth == 0) {
         pLine->cmove = 0;
-        return state->get_stockfish_value();
-        /*if (!state->is_board_ok()) {
+        if (!state->is_board_ok()) {
             for (Action action : state->legal_actions()) {
                 state->do_action(action);
                 int value = -state->get_stockfish_value();
@@ -639,7 +641,7 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
         }
         else {
             return state->get_stockfish_value();
-        }*/
+        }
     }
     ChildIdx childIdx = -1;
     ChildIdx idxDummy;
