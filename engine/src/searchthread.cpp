@@ -314,7 +314,7 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node, ui
     if (!node->is_sorted()) {
         node->prepare_node_for_visits();
     }
-    if (node->d->noVisitIdx == 1) {
+    if (node->get_no_visit_idx() == 1) {
         return 0;
     }
     if (node->has_forced_win()) {
