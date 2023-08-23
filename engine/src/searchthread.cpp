@@ -49,7 +49,7 @@ SearchThread::SearchThread(NeuralNetAPI *netBatch, const SearchSettings* searchS
     isRunning(true), mapWithMutex(mapWithMutex), searchSettings(searchSettings),
     tbHits(0), depthSum(0), depthMax(0), visitsPreSearch(0),
     terminalNodeCache(searchSettings->batchSize*2),
-    reachedTablebases(false),
+    reachedTablebases(false)
 {
     switch (searchSettings->searchPlayerMode) {
     case MODE_SINGLE_PLAYER:
