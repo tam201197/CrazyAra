@@ -240,6 +240,11 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
             if (searchSettings->mctsIpM && !pLine.empty()) {
                 while (!pLine.empty()) {
                     newState->do_action(pLine[0]);
+                    if (newState->is_board_terminal()) {
+                        newState->undo_action(pLine[0]);
+                        pLine.clear();
+                        break;
+                    }
                     pLine.pop_front();
                 }
             }
@@ -310,7 +315,6 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
 }
 
 ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node, uint8_t depth) {
-    node->fully_expand_node();
     if (!node->is_sorted()) {
         node->prepare_node_for_visits();
     }
@@ -321,6 +325,7 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node, ui
         return node->get_checkmate_idx();
     }
     assert(sum(node->get_child_number_visits()) == node->get_visits());
+    node->fully_expand_node();
     ChildIdx childIdx = 0;
     LINE line;
     line.cmove = 0;
