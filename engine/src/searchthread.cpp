@@ -623,7 +623,8 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
     }
     if (depth == 0) {
         pLine->cmove = 0;
-        if (!state->is_board_ok()) {
+        return state->get_stockfish_value();
+        /*if (!state->is_board_ok()) {
             for (Action action : state->legal_actions()) {
                 state->do_action(action);
                 int value = -state->get_stockfish_value();
@@ -638,7 +639,7 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
         }
         else {
             return state->get_stockfish_value();
-        }
+        }*/
     }
     ChildIdx childIdx = -1;
     ChildIdx idxDummy;
