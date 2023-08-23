@@ -50,8 +50,6 @@ SearchThread::SearchThread(NeuralNetAPI *netBatch, const SearchSettings* searchS
     tbHits(0), depthSum(0), depthMax(0), visitsPreSearch(0),
     terminalNodeCache(searchSettings->batchSize*2),
     reachedTablebases(false),
-    currentMinimaxSearchNode(nullptr),
-    pLineIndex(0)
 {
     switch (searchSettings->searchPlayerMode) {
     case MODE_SINGLE_PLAYER:
@@ -212,17 +210,12 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                     }
                     childIdx = minimax_select_child_node(evalState.get(), currentNode, searchSettings->minimaxDepth);
                     currentNode->setIsMinimaxCalled(true);
-                    currentMinimaxSearchNode = currentNode->get_child_node(childIdx);
+                    if (currentNode->get_child_node(childIdx) != nullptr) {
+                        pLine.clear();
+                    }
                 }
                 else {
-                    if (!pLine.empty() && currentNode == currentMinimaxSearchNode) {
-                        childIdx = currentNode->select_child_node(searchSettings, pLine[0]);
-                        pLine.pop_front();
-                        currentMinimaxSearchNode = currentNode->get_child_node(childIdx);
-                    }
-                    else {
-                        childIdx = currentNode->select_child_node(searchSettings);
-                    }
+                    childIdx = currentNode->select_child_node(searchSettings);
                 }
             }
             else {
@@ -243,8 +236,19 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
             for (Action action : actionsBuffer) {
                 newState->do_action(action);
             }
-#endif
-            newState->do_action(currentNode->get_action(childIdx));
+#endif      
+            if (searchSettings->mctsIpM && !pLine.empty()) {
+                while (!pLine.empty()) {
+                    newState->do_action(pLine[0]);
+                    pLine.pop_front();
+                }
+                
+
+            }
+            else {
+                newState->do_action(currentNode->get_action(childIdx));
+            }
+            
             currentNode->increment_no_visit_idx();
 #ifdef MCTS_STORE_STATES
             nextNode = add_new_node_to_tree(newState, currentNode, childIdx, description.type);
@@ -321,9 +325,9 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node, ui
     line.cmove = 0;
     pvs(state, depth, -INT_MAX, INT_MAX, searchSettings, childIdx, &line, 0);
     assert(node->get_action(childIdx) == line.argmove[0]);
-    /*for (int i = 1; i < searchSettings->minimaxDepth; ++i) {
+    for (int i = 0; i < searchSettings->minimaxDepth; ++i) {
         pLine.push_back(line.argmove[i]);
-    }*/
+    }
     return childIdx;
 }
 
@@ -606,7 +610,6 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
     if (state->is_board_terminal()) {
         pLine->cmove = 0;
         float dummy;
-        //info_string("terminal state:", state->fen());
         switch (state->is_terminal(0, dummy))
         {
         case TERMINAL_WIN:
@@ -620,7 +623,7 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
         }
     }
     if (depth == 0) {
-        //pLine->cmove = 0;
+        pLine->cmove = 0;
         if (!state->is_board_ok()) {
             for (Action action : state->legal_actions()) {
                 state->do_action(action);
@@ -645,14 +648,13 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
         string fen_after_do_action = state->fen();
         state->do_action(action);
         int value = -pvs(state, depth - 1, -beta, -alpha, searchSettings, idxDummy, &line, pLineIdx + 1);
-        //value = max(value, retValue);
         state->undo_action(action);
         if (alpha < value) {
             alpha = value;
             idx = childIdx;
-            //pLine->argmove[0] = action;
-            //memcpy(pLine->argmove + 1, line.argmove, line.cmove * sizeof(Action));
-            //pLine->cmove = line.cmove + 1;
+            pLine->argmove[0] = action;
+            memcpy(pLine->argmove + 1, line.argmove, line.cmove * sizeof(Action));
+            pLine->cmove = line.cmove + 1;
         }
         if (alpha >= beta)
             break;
