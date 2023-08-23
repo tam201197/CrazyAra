@@ -95,10 +95,6 @@ Node* SearchThread::add_new_node_to_tree(StateObj* newState, Node* parentNode, C
         nodeBackup = NODE_TERMINAL;
         return newNode;
     }
-    if (searchSettings->mctsIc) {
-        float maxValue = negamax(newState, searchSettings->minimaxDepth, -2.0, 2.0, searchSettings);
-        newNode->store_minimax_value(newState, searchSettings, maxValue);
-    }
     if (transposition) {
         //const float qValue =  parentNode->get_child_node(childIdx)->get_value();
         float qValue; 
@@ -237,21 +233,10 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                 newState->do_action(action);
             }
 #endif      
+            newState->do_action(currentNode->get_action(childIdx));
             if (searchSettings->mctsIpM && !pLine.empty()) {
-                while (!pLine.empty()) {
-                    newState->do_action(pLine[0]);
-                    if (newState->is_board_terminal()) {
-                        newState->undo_action(pLine[0]);
-                        pLine.clear();
-                        break;
-                    }
-                    pLine.pop_front();
-                }
+                pLine.pop_front();                
             }
-            else {
-                newState->do_action(currentNode->get_action(childIdx));
-            }
-            
             currentNode->increment_no_visit_idx();
 #ifdef MCTS_STORE_STATES
             nextNode = add_new_node_to_tree(newState, currentNode, childIdx, description.type);
@@ -273,7 +258,21 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
 #else
                 // fill a new board in the input_planes vector
                 // we shift the index by nbNNInputValues each time
-                newState->get_state_planes(true, inputPlanes + newNodes->size() * net->get_nb_input_values_total(), net->get_version());
+                if (searchSettings->mctsIpM && !pLine.empty()) {
+                    unique_ptr<StateObj> evalState = unique_ptr<StateObj>(newState->clone());
+                    while (!pLine.empty()) {
+                        evalState->do_action(pLine[0]);
+                        if (evalState->is_board_terminal()) {
+                            evalState->undo_action(pLine[0]);
+                            pLine.clear();
+                            break;
+                        }
+                    }
+                    evalState->get_state_planes(true, inputPlanes + newNodes->size() * net->get_nb_input_values_total(), net->get_version());
+                  }
+                else {
+                    newState->get_state_planes(true, inputPlanes + newNodes->size() * net->get_nb_input_values_total(), net->get_version());
+                }
                 // save a reference newly created list in the temporary list for node creation
                 // it will later be updated with the evaluation of the NN
                 newNodeSideToMove->add_element(newState->side_to_move());
