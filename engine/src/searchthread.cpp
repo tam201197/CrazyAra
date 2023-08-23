@@ -314,7 +314,7 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node, ui
     if (!node->is_sorted()) {
         node->prepare_node_for_visits();
     }
-    if (d->noVisitIdx == 1) {
+    if (node->d->noVisitIdx == 1) {
         return 0;
     }
     if (node->has_forced_win()) {
@@ -326,7 +326,6 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node, ui
     line.cmove = 0;
     pvs(state, depth, -INT_MAX, INT_MAX, searchSettings, childIdx, &line, 0);
     assert(node->get_action(childIdx) == line.argmove[0]);
-    info_string("pLine size: ", pLine.size());
     for (int i = 0; i < searchSettings->minimaxDepth; ++i) {
         pLine.push_back(line.argmove[i]);
     }
