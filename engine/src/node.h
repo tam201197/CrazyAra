@@ -1019,6 +1019,7 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
     beginNode->lock();
     Node* childNode = beginNode->get_child_node(trajectory.rbegin()->childIdx);
     float minimaxWeight = 0.9;
+    float maxValue = value;
     beginNode->unlock();
     if (searchSettings->backupOperator == BACKUP_POWER_MEAN || 
         searchSettings->backupOperator == BACKUP_POWER_MEAN_MEAN ||
@@ -1069,16 +1070,7 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
                 it->node->revert_virtual_loss_and_update<false>(it->childIdx, value, searchSettings, solveForTerminal);
             break;
         case BACKUP_MAX:
-            childNode = nullptr;
-            it->node->lock();
             if (it->node->get_real_visits(it->childIdx, searchSettings) >= searchSettings->switchingAtVisits) {
-                childNode = it->node->get_child_node(it->childIdx);
-            }
-            it->node->unlock();
-            if (childNode != nullptr) {
-                childNode->lock();
-                float maxValue = childNode->get_max_qValue();
-                childNode->unlock();
                 freeBackup ? it->node->revert_virtual_loss_and_update_max_operator_optimal<true>(it->childIdx, value, maxValue, searchSettings, solveForTerminal) :
                     it->node->revert_virtual_loss_and_update_max_operator_optimal<false>(it->childIdx, value, maxValue, searchSettings, solveForTerminal);
             }
@@ -1086,6 +1078,9 @@ void backup_value(float value, const SearchSettings* searchSettings, const Traje
                 freeBackup ? it->node->revert_virtual_loss_and_update<true>(it->childIdx, value, searchSettings, solveForTerminal) :
                     it->node->revert_virtual_loss_and_update<false>(it->childIdx, value, searchSettings, solveForTerminal);
             }
+            it->node->lock();
+            maxValue = it->node->get_max_qValue();
+            it->node->unlock();
             break;
         case BACKUP_IMPLICIT_MAX:
             freeBackup ? it->node->revert_virtual_loss_with_implicit_minimax<true>(it->childIdx, value, searchSettings, solveForTerminal, implicit_max_value, searchSettings->minimaxWeight) :
