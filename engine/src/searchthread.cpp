@@ -254,7 +254,7 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                 }
 #else           
                 if (searchSettings->mctsIc) {
-                    unique_ptr<StateObj> evalState = unique_ptr<StateObj>(rootState->clone());
+                    unique_ptr<StateObj> evalState = unique_ptr<StateObj>(newState->clone());
                     minimax_select_child_node(evalState.get(), currentNode, searchSettings->minimaxDepth);
                     while (!pLine.empty()) {
                         evalState->do_action(pLine[0]);
