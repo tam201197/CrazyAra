@@ -255,11 +255,13 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
 #else           
                 if (searchSettings->mctsIc) {
                     unique_ptr<StateObj> evalState = unique_ptr<StateObj>(newState->clone());
-                    minimax_select_child_node(evalState.get(), currentNode, searchSettings->minimaxDepth);
-                    while (!pLine.empty()) {
-                        evalState->do_action(pLine[0]);
-                        pLine.pop_front();
-                        }
+                    LINE line;
+                    line.cmove = 0;
+                    ChildIdx childIdx = 0;
+                    pvs(evalState.get(), searchSettings->minimaxDepth, -INT_MAX, INT_MAX, searchSettings, childIdx, &line, 0);
+                    for (int i = 0; i < line.cmove; ++i) {
+                        evalState->do_action(line.argmove[i]);
+                    }
                     evalState->get_state_planes(true, inputPlanes + newNodes->size() * net->get_nb_input_values_total(), net->get_version());
                     newNodeSideToMove->add_element(evalState->side_to_move());
                 }
@@ -312,9 +314,6 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
 ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node, uint8_t depth) {
     if (!node->is_sorted()) {
         node->prepare_node_for_visits();
-    }
-    if (node->get_no_visit_idx() == 1) {
-        return 0;
     }
     if (node->has_forced_win()) {
         return node->get_checkmate_idx();
