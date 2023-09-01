@@ -238,6 +238,7 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
             }
 #endif      
             newState->do_action(currentNode->get_action(childIdx));
+            
             currentNode->increment_no_visit_idx();
 #ifdef MCTS_STORE_STATES
             nextNode = add_new_node_to_tree(newState, currentNode, childIdx, description.type);
@@ -256,13 +257,26 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                     mapWithMutex->hashTable.insert({ nextNode->hash_key(), nextNode });
                     mapWithMutex->mtx.unlock();
                 }
-#else
-                // fill a new board in the input_planes vector
-                // we shift the index by nbNNInputValues each time
-                newState->get_state_planes(true, inputPlanes + newNodes->size() * net->get_nb_input_values_total(), net->get_version());
-                // save a reference newly created list in the temporary list for node creation
-                // it will later be updated with the evaluation of the NN
-                newNodeSideToMove->add_element(newState->side_to_move());
+#else           
+                if (searchSettings->mctsIc) {
+                    unique_ptr<StateObj> evalState = unique_ptr<StateObj>(rootState->clone());
+                    minimax_select_child_node(evalState.get(), currentNode, searchSettings->minimaxDepth);
+                    while (!pLine.empty()) {
+                        evalState->do_action(pLine[0]);
+                        pLine.pop_front();
+                        }
+                    evalState->get_state_planes(true, inputPlanes + newNodes->size() * net->get_nb_input_values_total(), net->get_version());
+                    newNodeSideToMove->add_element(evalState->side_to_move());
+                }
+                else {
+                    // fill a new board in the input_planes vector
+                    // we shift the index by nbNNInputValues each time
+                    newState->get_state_planes(true, inputPlanes + newNodes->size() * net->get_nb_input_values_total(), net->get_version());
+                    // save a reference newly created list in the temporary list for node creation
+                    // it will later be updated with the evaluation of the NN
+                    newNodeSideToMove->add_element(newState->side_to_move());
+                }
+                
 #endif
             }
             return nextNode;
