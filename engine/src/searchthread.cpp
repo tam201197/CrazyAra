@@ -238,9 +238,6 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
             }
 #endif      
             newState->do_action(currentNode->get_action(childIdx));
-            if (searchSettings->mctsIpM && !pLine.empty()) {
-                pLine.pop_front();                
-            }
             currentNode->increment_no_visit_idx();
 #ifdef MCTS_STORE_STATES
             nextNode = add_new_node_to_tree(newState, currentNode, childIdx, description.type);
