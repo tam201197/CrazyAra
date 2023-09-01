@@ -172,7 +172,7 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
     description.depth = 0;
     Node* currentNode = rootNode;
     Node* nextNode;
-
+    pLine.clear();
     ChildIdx childIdx = uint16_t(-1);
     if (searchSettings->epsilonGreedyCounter && rootNode->is_playout_node() && rand() % searchSettings->epsilonGreedyCounter == 0) {
         currentNode = get_starting_node(currentNode, description, childIdx);
@@ -206,12 +206,16 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                     }
                     childIdx = minimax_select_child_node(evalState.get(), currentNode, searchSettings->minimaxDepth);
                     currentNode->setIsMinimaxCalled(true);
-                    if (currentNode->get_child_node(childIdx) != nullptr) {
-                        pLine.clear();
-                    }
                 }
                 else {
-                    childIdx = currentNode->select_child_node(searchSettings);
+                    if (pLine.empty()) {
+                        childIdx = currentNode->select_child_node(searchSettings);
+                    }
+                    else {
+                        childIdx = currentNode->select_child_node(searchSettings, pLine[0]);
+                        pLine.pop_front();
+                    }
+                    
                 }
             }
             else {
@@ -258,21 +262,7 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
 #else
                 // fill a new board in the input_planes vector
                 // we shift the index by nbNNInputValues each time
-                if (searchSettings->mctsIpM && !pLine.empty()) {
-                    unique_ptr<StateObj> evalState = unique_ptr<StateObj>(newState->clone());
-                    while (!pLine.empty()) {
-                        evalState->do_action(pLine[0]);
-                        if (evalState->is_board_terminal()) {
-                            evalState->undo_action(pLine[0]);
-                            pLine.clear();
-                            break;
-                        }
-                    }
-                    evalState->get_state_planes(true, inputPlanes + newNodes->size() * net->get_nb_input_values_total(), net->get_version());
-                  }
-                else {
-                    newState->get_state_planes(true, inputPlanes + newNodes->size() * net->get_nb_input_values_total(), net->get_version());
-                }
+                newState->get_state_planes(true, inputPlanes + newNodes->size() * net->get_nb_input_values_total(), net->get_version());
                 // save a reference newly created list in the temporary list for node creation
                 // it will later be updated with the evaluation of the NN
                 newNodeSideToMove->add_element(newState->side_to_move());
@@ -330,7 +320,7 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node, ui
     line.cmove = 0;
     pvs(state, depth, -INT_MAX, INT_MAX, searchSettings, childIdx, &line, 0);
     assert(node->get_action(childIdx) == line.argmove[0]);
-    for (int i = 0; i < searchSettings->minimaxDepth; ++i) {
+    for (int i = 0; i < line.cmove; ++i) {
         pLine.push_back(line.argmove[i]);
     }
     return childIdx;
