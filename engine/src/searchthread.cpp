@@ -201,6 +201,7 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                     }
                     childIdx = minimax_select_child_node(evalState.get(), currentNode, searchSettings->minimaxDepth);
                     currentNode->setIsMinimaxCalled(true);
+                    pLine.pop_front();
                 }
                 else {
                     if (pLine.empty()) {
@@ -319,7 +320,6 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node, ui
         return node->get_checkmate_idx();
     }
     assert(sum(node->get_child_number_visits()) == node->get_visits());
-    node->fully_expand_node();
     ChildIdx childIdx = 0;
     LINE line;
     line.cmove = 0;
@@ -327,6 +327,9 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node, ui
     assert(node->get_action(childIdx) == line.argmove[0]);
     for (int i = 0; i < line.cmove; ++i) {
         pLine.push_back(line.argmove[i]);
+    }
+    if (childIdx > node->get_no_visit_idx()) {
+        node->fully_expand_node();
     }
     return childIdx;
 }
