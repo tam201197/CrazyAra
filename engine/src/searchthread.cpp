@@ -98,12 +98,7 @@ Node* SearchThread::add_new_node_to_tree(StateObj* newState, Node* parentNode, C
     if (transposition) {
         //const float qValue =  parentNode->get_child_node(childIdx)->get_value();
         float qValue; 
-        if (searchSettings->mctsIc) {
-            qValue = parentNode->get_child_node(childIdx)->get_combine_value();
-        }
-        else {
-            qValue = parentNode->get_child_node(childIdx)->get_value();
-        }
+        qValue = parentNode->get_child_node(childIdx)->get_value();
         transpositionValues->add_element(qValue);
         nodeBackup = NODE_TRANSPOSITION;
         return newNode;
@@ -531,9 +526,6 @@ void SearchThread::backup_values(FixedVector<Node*>& nodes, vector<Trajectory>& 
     for (size_t idx = 0; idx < nodes.size(); ++idx) {
         Node* node = nodes.get_element(idx);
         float value = node->get_value();
-        if (searchSettings->mctsIc) {
-            value = node->get_combine_value();
-        }
 #ifdef MCTS_TB_SUPPORT
         const bool solveForTerminal = searchSettings->mctsSolver && node->is_tablebase();
         backup_value<false>(value, searchSettings, trajectories[idx], solveForTerminal);
