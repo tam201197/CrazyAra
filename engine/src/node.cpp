@@ -1188,13 +1188,6 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings, Action ac
     if (!sorted) {
         prepare_node_for_visits();
     }
-    if (d->noVisitIdx == 1) {
-        return 0;
-    }
-    if (has_forced_win()) {
-        return d->checkmateIdx;
-    }
-    assert(sum(d->childNumberVisits) == d->visitSum);
     if (action != ACTION_NONE) {
         auto itr = find(legalActions.begin(), legalActions.end(), action);
         if (itr != legalActions.end()) {
@@ -1206,6 +1199,14 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings, Action ac
             return idx;
         }
     }
+    if (d->noVisitIdx == 1) {
+        return 0;
+    }
+    if (has_forced_win()) {
+        return d->checkmateIdx;
+    }
+    assert(sum(d->childNumberVisits) == d->visitSum);
+
     // find the move according to the q- and u-values for each move
     // calculate the current u values
     // it's not worth to save the u values as a node attribute because u is updated every time n_sum changes
