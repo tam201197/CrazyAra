@@ -1193,7 +1193,7 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings, Action ac
         if (itr != legalActions.end()) {
             ChildIdx idx = itr - legalActions.begin();
             assert(action == legalActions[idx]);
-            if (idx > d->noVisitIdx) {
+            if (idx >= d->noVisitIdx) {
                 fully_expand_node();
             }
             return idx;
