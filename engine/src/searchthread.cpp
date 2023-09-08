@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include <climits>
 #include "util/blazeutil.h"
+#include "evalinfo.h"
 
 
 size_t SearchThread::get_max_depth() const
@@ -259,7 +260,7 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                     LINE line;
                     line.cmove = 0;
                     ChildIdx childIdx = 0;
-                    pvs(evalState.get(), searchSettings->minimaxDepth, -INT_MAX, INT_MAX, searchSettings, childIdx, &line, 0);
+                    pvs(evalState.get(), searchSettings->minimaxDepth, -INT_MAX, INT_MAX, searchSettings, childIdx, &line, 0, this);
                     for (int i = 0; i < line.cmove; ++i) {
                         evalState->do_action(line.argmove[i]);
                     }
@@ -324,20 +325,24 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node, ui
     ChildIdx childIdx = 0;
     LINE line;
     line.cmove = 0;
-    pvs(state, depth, -INT_MAX, INT_MAX, searchSettings, childIdx, &line, 0);
+
+    if (searchSettings->evaluationType == EVAL_NN) {
+        // save first input plane values for later
+        vector<float> firstInputPlanes(net->get_nb_input_values_total());
+        std::copy(inputPlanes, inputPlanes+net->get_nb_input_values_total(), firstInputPlanes.begin());
+        pvs(state, depth, -INT_MAX, INT_MAX, searchSettings, childIdx, &line, 0, this);
+        // revert change
+        std::copy(firstInputPlanes.begin(), firstInputPlanes.begin()+net->get_nb_input_values_total(), inputPlanes);
+    }
+    else {
+        pvs(state, depth, -INT_MAX, INT_MAX, searchSettings, childIdx, &line, 0, this);
+    }
+
     assert(node->get_action(childIdx) == line.argmove[0]);
     for (int i = 0; i < line.cmove; ++i) {
         pLine.push_back(line.argmove[i]);
     }
     return childIdx;
-}
-
-float SearchThread::evaluate(StateObj* newState)
-{
-    newState->get_state_planes(true, inputPlanes, net->get_version());
-    net->predict(inputPlanes, valueOutputs, probOutputs, auxiliaryOutputs);
-    float result = valueOutputs[0];
-    return result;
 }
 
 float SearchThread::negamax(StateObj* state, uint8_t depth, float alpha, float beta, const SearchSettings* searchSettings)
@@ -600,7 +605,7 @@ size_t get_random_depth()
 
 
 
-int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSettings* searchSettings, ChildIdx& idx, LINE* pLine, uint8_t pLineIdx)
+int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSettings* searchSettings, ChildIdx& idx, LINE* pLine, uint8_t pLineIdx, NeuralNetAPIUser* netUser)
 {
     LINE line;
     line.cmove = 0;
@@ -622,21 +627,25 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
     }
     if (depth == 0) {
         pLine->cmove = 0;
-        if (!state->is_board_ok()) {
-            for (Action action : state->legal_actions()) {
-                state->do_action(action);
-                int value = -state->get_stockfish_value();
-                state->undo_action(action);
-                if (alpha < value) {
-                    alpha = value;
-                }
-                if (alpha >= beta)
-                    break;
-            }
-            return alpha;
+        if (searchSettings->evaluationType == EVAL_NN) {
+            return value_to_centipawn(netUser->evaluate(state));
         }
         else {
-            return state->get_stockfish_value();
+            if (!state->is_board_ok()) {
+                for (Action action : state->legal_actions()) {
+                    state->do_action(action);
+                    int value = -state->get_stockfish_value();
+                    state->undo_action(action);
+                    if (alpha < value) {
+                        alpha = value;
+                    }
+                    if (alpha >= beta)
+                        break;
+                }
+                return alpha;            }
+            else {
+                return state->get_stockfish_value();
+            }
         }
     }
     ChildIdx childIdx = -1;
@@ -645,7 +654,7 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
         childIdx += 1;
         string fen_after_do_action = state->fen();
         state->do_action(action);
-        int value = -pvs(state, depth - 1, -beta, -alpha, searchSettings, idxDummy, &line, pLineIdx + 1);
+        int value = -pvs(state, depth - 1, -beta, -alpha, searchSettings, idxDummy, &line, pLineIdx + 1, netUser);
         state->undo_action(action);
         if (alpha < value) {
             alpha = value;
