@@ -50,7 +50,8 @@ SearchThread::SearchThread(NeuralNetAPI *netBatch, const SearchSettings* searchS
     isRunning(true), mapWithMutex(mapWithMutex), searchSettings(searchSettings),
     tbHits(0), depthSum(0), depthMax(0), visitsPreSearch(0),
     terminalNodeCache(searchSettings->batchSize*2),
-    reachedTablebases(false)
+    reachedTablebases(false),
+    currentMinimaxSearchNode(nullptr)
 {
     switch (searchSettings->searchPlayerMode) {
     case MODE_SINGLE_PLAYER:
@@ -168,7 +169,7 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
     description.depth = 0;
     Node* currentNode = rootNode;
     Node* nextNode;
-    pLine.clear();
+
     ChildIdx childIdx = uint16_t(-1);
     if (searchSettings->epsilonGreedyCounter && rootNode->is_playout_node() && rand() % searchSettings->epsilonGreedyCounter == 0) {
         currentNode = get_starting_node(currentNode, description, childIdx);
@@ -203,16 +204,17 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                     childIdx = minimax_select_child_node(evalState.get(), currentNode, searchSettings->minimaxDepth);
                     currentNode->setIsMinimaxCalled(true);
                     pLine.pop_front();
+                    currentMinimaxSearchNode = currentNode->get_child_node(childIdx);
                 }
                 else {
-                    if (pLine.empty()) {
-                        childIdx = currentNode->select_child_node(searchSettings);
-                    }
-                    else {
+                    if (!pLine.empty() && currentNode == currentMinimaxSearchNode) {
                         childIdx = currentNode->select_child_node(searchSettings, pLine[0]);
                         pLine.pop_front();
+                        currentMinimaxSearchNode = currentNode->get_child_node(childIdx);
                     }
-                    
+                    else {
+                        childIdx = currentNode->select_child_node(searchSettings);
+                    }
                 }
             }
             else {
