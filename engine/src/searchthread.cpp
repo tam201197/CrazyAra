@@ -260,7 +260,8 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                     LINE line;
                     line.cmove = 0;
                     ChildIdx childIdx = 0;
-                    pvs(evalState.get(), searchSettings->minimaxDepth, -INT_MAX, INT_MAX, searchSettings, childIdx, &line, 0, this);
+                    //pvs(evalState.get(), searchSettings->minimaxDepth, -INT_MAX, INT_MAX, searchSettings, childIdx, &line, 0, this);
+                    pvs_tam(evalState.get(), searchSettings->minimaxDepth, -2.0, 2.0, searchSettings, childIdx, &line, 0, this);
                     for (int i = 0; i < line.cmove; ++i) {
                         evalState->do_action(line.argmove[i]);
                     }
@@ -330,12 +331,14 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node, ui
         // save first input plane values for later
         vector<float> firstInputPlanes(net->get_nb_input_values_total());
         std::copy(inputPlanes, inputPlanes+net->get_nb_input_values_total(), firstInputPlanes.begin());
-        pvs(state, depth, -INT_MAX, INT_MAX, searchSettings, childIdx, &line, 0, this);
+        //pvs(state, depth, -INT_MAX, INT_MAX, searchSettings, childIdx, &line, 0, this);
+        pvs(state, depth, -2.0, 2.0, searchSettings, childIdx, &line, 0, this);
         // revert change
         std::copy(firstInputPlanes.begin(), firstInputPlanes.begin()+net->get_nb_input_values_total(), inputPlanes);
     }
     else {
-        pvs(state, depth, -INT_MAX, INT_MAX, searchSettings, childIdx, &line, 0, this);
+        //pvs(state, depth, -INT_MAX, INT_MAX, searchSettings, childIdx, &line, 0, this);
+        pvs(state, depth, -2.0, 2.0, searchSettings, childIdx, &line, 0, this);
     }
 
     assert(node->get_action(childIdx) == line.argmove[0]);
@@ -655,6 +658,65 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
         string fen_after_do_action = state->fen();
         state->do_action(action);
         int value = -pvs(state, depth - 1, -beta, -alpha, searchSettings, idxDummy, &line, pLineIdx + 1, netUser);
+        state->undo_action(action);
+        if (alpha < value) {
+            alpha = value;
+            idx = childIdx;
+            pLine->argmove[0] = action;
+            memcpy(pLine->argmove + 1, line.argmove, line.cmove * sizeof(Action));
+            pLine->cmove = line.cmove + 1;
+        }
+        if (alpha >= beta)
+            break;
+    }
+    return alpha;
+}
+
+float pvs_tam(StateObj* state, uint8_t depth, float alpha, float beta, const SearchSettings* searchSettings, ChildIdx& idx, LINE* pLine, uint8_t pLineIdx, NeuralNetAPIUser* netUser)
+{
+    LINE line;
+    line.cmove = 0;
+    uint8_t saveIndex = pLineIdx;
+    if (state->is_board_terminal()) {
+        float dummy;
+        switch (state->is_terminal(0, dummy))
+        {
+        case TERMINAL_WIN:
+            return WIN_VALUE;
+        case TERMINAL_DRAW:
+            return DRAW_VALUE;
+        case TERMINAL_LOSS:
+            return LOSS_VALUE;
+        default:
+            break;
+        }
+    }
+    if (depth == 0) {
+        pLine->cmove = 0;
+        if (!state->is_board_ok()) {
+            for (Action action : state->legal_actions()) {
+                state->do_action(action);
+                float value = -netUser->evaluate(state);
+                state->undo_action(action);
+                if (alpha < value) {
+                    alpha = value;
+                }
+                if (alpha >= beta)
+                    break;
+            }
+            return alpha;
+        } 
+        else {
+            return netUser->evaluate(state);
+        }    
+    }
+    ChildIdx childIdx = -1;
+    ChildIdx idxDummy;
+    for (Action action : state->legal_actions()) {
+        childIdx += 1;
+        string fen_after_do_action = state->fen();
+        state->do_action(action);
+        int value = -pvs_tam(state, depth - 1, -beta, -alpha, searchSettings, idxDummy, &line, pLineIdx + 1, netUser);
         state->undo_action(action);
         if (alpha < value) {
             alpha = value;
