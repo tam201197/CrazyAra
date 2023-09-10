@@ -695,22 +695,7 @@ float pvs_tam(StateObj* state, uint8_t depth, float alpha, float beta, const Sea
     }
     if (depth == 0) {
         pLine->cmove = 0;
-        if (!state->is_board_ok()) {
-            for (Action action : state->legal_actions()) {
-                state->do_action(action);
-                float value = -netUser->evaluate(state);
-                state->undo_action(action);
-                if (alpha < value) {
-                    alpha = value;
-                }
-                if (alpha >= beta)
-                    break;
-            }
-            return alpha;
-        } 
-        else {
-            return netUser->evaluate(state);
-        }    
+        return netUser->evaluate(state);    
     }
     ChildIdx childIdx = -1;
     ChildIdx idxDummy;
