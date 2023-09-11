@@ -203,7 +203,7 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                     }
                     childIdx = minimax_select_child_node(evalState.get(), currentNode, searchSettings->minimaxDepth, pTempLine);
                     currentNode->setIsMinimaxCalled(true);
-                    //pLine.pop_front();
+                    pLine.pop_front();
                     //currentMinimaxSearchNode = currentNode->get_child_node(childIdx);
                 }
                 else {
@@ -344,8 +344,8 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node, ui
     }
 
     assert(node->get_action(childIdx) == line.argmove[0]);
-    for (int i = 1; i < line.cmove; ++i) {
-        pTempLine.emplace_back(line.argmove[i]);
+    for (int i = 0; i < line.cmove; ++i) {
+        pTempLine.push_back(line.argmove[i]);
     }
     return childIdx;
 }
