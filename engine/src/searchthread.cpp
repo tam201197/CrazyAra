@@ -195,7 +195,7 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                 numberVisits = currentNode->get_visits();
             }
             if (searchSettings->mctsIpM) {
-                if (numberVisits >= searchSettings->switchingAtVisits && pLine.empty() && !currentNode->isMinimaxCalled()) {
+                if (numberVisits >= searchSettings->switchingAtVisits && pTempLine.empty() && !currentNode->isMinimaxCalled()) {
                     unique_ptr<StateObj> evalState = unique_ptr<StateObj>(rootState->clone());
                     assert(actionsBuffer.size() == description.depth - 1);
                     for (Action action : actionsBuffer) {
@@ -207,10 +207,10 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                     //currentMinimaxSearchNode = currentNode->get_child_node(childIdx);
                 }
                 else {
-                    if (!pLine.empty()) {
-                        childIdx = currentNode->select_child_node(searchSettings, pLine[0]);
-                        pLine.pop_front();
-                        currentMinimaxSearchNode = currentNode->get_child_node(childIdx);
+                    if (!pTempLine.empty()) {
+                        childIdx = currentNode->select_child_node(searchSettings, pTempLine[0]);
+                        pTempLine.pop_front();
+                        //currentMinimaxSearchNode = currentNode->get_child_node(childIdx);
                     }
                     else {
                         childIdx = currentNode->select_child_node(searchSettings);
