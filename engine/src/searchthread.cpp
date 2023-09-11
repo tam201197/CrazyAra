@@ -263,7 +263,7 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                     line.cmove = 0;
                     ChildIdx childIdx = 0;
                     //pvs(evalState.get(), searchSettings->minimaxDepth, -INT_MAX, INT_MAX, searchSettings, childIdx, &line, 0, this);
-                    pvs_tam(evalState.get(), searchSettings->minimaxDepth, -2.0, 2.0, searchSettings, childIdx, &line, 0, this);
+                    pvs_nn(evalState.get(), searchSettings->minimaxDepth, -2.0, 2.0, searchSettings, childIdx, &line, 0, this);
                     for (int i = 0; i < line.cmove; ++i) {
                         evalState->do_action(line.argmove[i]);
                     }
