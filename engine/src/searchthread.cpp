@@ -186,7 +186,7 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
         }
         currentNode->unlock();
     }
-
+    deque<Action> pTempLine;
     while (true) {
         currentNode->lock();
         if (childIdx == uint16_t(-1)) {
@@ -201,13 +201,13 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                     for (Action action : actionsBuffer) {
                         evalState->do_action(action);
                     }
-                    childIdx = minimax_select_child_node(evalState.get(), currentNode, searchSettings->minimaxDepth);
+                    childIdx = minimax_select_child_node(evalState.get(), currentNode, searchSettings->minimaxDepth, pTempLine);
                     currentNode->setIsMinimaxCalled(true);
                     pLine.pop_front();
-                    currentMinimaxSearchNode = currentNode->get_child_node(childIdx);
+                    //currentMinimaxSearchNode = currentNode->get_child_node(childIdx);
                 }
                 else {
-                    if (!pLine.empty() && currentNode == currentMinimaxSearchNode) {
+                    if (!pLine.empty()) {
                         childIdx = currentNode->select_child_node(searchSettings, pLine[0]);
                         pLine.pop_front();
                         currentMinimaxSearchNode = currentNode->get_child_node(childIdx);
@@ -316,7 +316,7 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
     }
 }
 
-ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node, uint8_t depth) {
+ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node, uint8_t depth, deque<Action> pTempLine) {
     if (!node->is_sorted()) {
         node->prepare_node_for_visits();
     }
@@ -345,7 +345,7 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node, ui
 
     assert(node->get_action(childIdx) == line.argmove[0]);
     for (int i = 0; i < line.cmove; ++i) {
-        pLine.push_back(line.argmove[i]);
+        pTempLine.push_back(line.argmove[i]);
     }
     return childIdx;
 }
