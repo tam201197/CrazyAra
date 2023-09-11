@@ -702,7 +702,7 @@ float pvs_nn(StateObj* state, uint8_t depth, float alpha, float beta, const Sear
         childIdx += 1;
         string fen_after_do_action = state->fen();
         state->do_action(action);
-        int value = -pvs_tam(state, depth - 1, -beta, -alpha, searchSettings, idxDummy, &line, pLineIdx + 1, netUser);
+        int value = -pvs_nn(state, depth - 1, -beta, -alpha, searchSettings, idxDummy, &line, pLineIdx + 1, netUser);
         state->undo_action(action);
         if (alpha < value) {
             alpha = value;
@@ -763,7 +763,7 @@ int pvs_sf(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSett
         childIdx += 1;
         string fen_after_do_action = state->fen();
         state->do_action(action);
-        int value = -pvs(state, depth - 1, -beta, -alpha, searchSettings, idxDummy, &line, pLineIdx + 1, netUser);
+        int value = -pvs_sf(state, depth - 1, -beta, -alpha, searchSettings, idxDummy, &line, pLineIdx + 1, netUser);
         state->undo_action(action);
         if (alpha < value) {
             alpha = value;
