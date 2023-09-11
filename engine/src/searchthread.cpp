@@ -334,13 +334,13 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node, ui
         vector<float> firstInputPlanes(net->get_nb_input_values_total());
         std::copy(inputPlanes, inputPlanes+net->get_nb_input_values_total(), firstInputPlanes.begin());
         //pvs(state, depth, -INT_MAX, INT_MAX, searchSettings, childIdx, &line, 0, this);
-        pvs(state, depth, -2.0, 2.0, searchSettings, childIdx, &line, 0, this);
+        pvs_tam(state, depth, -2.0, 2.0, searchSettings, childIdx, &line, 0, this);
         // revert change
         std::copy(firstInputPlanes.begin(), firstInputPlanes.begin()+net->get_nb_input_values_total(), inputPlanes);
     }
     else {
         //pvs(state, depth, -INT_MAX, INT_MAX, searchSettings, childIdx, &line, 0, this);
-        pvs(state, depth, -2.0, 2.0, searchSettings, childIdx, &line, 0, this);
+        pvs_tam(state, depth, -2.0, 2.0, searchSettings, childIdx, &line, 0, this);
     }
 
     assert(node->get_action(childIdx) == line.argmove[0]);
