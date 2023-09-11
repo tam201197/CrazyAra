@@ -231,7 +231,8 @@ inline void random_playout(Node* currentNode, ChildIdx& childIdx);
 size_t get_random_depth();
 
 int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSettings* searchSettings, ChildIdx& idx, LINE* pLine, uint8_t pLineIdx, NeuralNetAPIUser* netUser);
-float pvs_tam(StateObj* state, uint8_t depth, float alpha, float beta, const SearchSettings* searchSettings, ChildIdx& idx, LINE* pLine, uint8_t pLineIdx, NeuralNetAPIUser* netUser);
+int pvs_sf(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSettings* searchSettings, ChildIdx& idx, LINE* pLine, uint8_t pLineIdx, NeuralNetAPIUser* netUser);
+float pvs_nn(StateObj* state, uint8_t depth, float alpha, float beta, const SearchSettings* searchSettings, ChildIdx& idx, LINE* pLine, uint8_t pLineIdx, NeuralNetAPIUser* netUser);
 
 
 #endif // SEARCHTHREAD_H
