@@ -353,6 +353,7 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node, ui
     for (int i = 1; i < line.cmove ; ++i) {
         currNode->lock();
         ChildIdx idx = currNode->select_child_node(searchSettings, line.argmove[i]);
+        currNode->fully_expand_node();
         Node* newCurrNode = currNode->get_child_node(idx);
         currNode->unlock();
         currNode = newCurrNode;
