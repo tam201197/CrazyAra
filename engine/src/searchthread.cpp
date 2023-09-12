@@ -201,11 +201,11 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                     for (Action action : actionsBuffer) {
                         evalState->do_action(action);
                     }
-                    float minimaxValue = 0;
+                    float minimaxValue = -2.0;
                     childIdx = minimax_select_child_node(evalState.get(), currentNode, searchSettings->minimaxDepth, pTempLine, minimaxValue);
                     currentNode->setIsMinimaxCalled(true);
                     nextNode = currentNode->get_child_node(childIdx);
-                    if (minimaxValue != 0) {
+                    if (minimaxValue > -2.0) {
                         nextNode->update_qValue_after_minimax_search(currentNode, childIdx, minimaxValue, searchSettings);
                     }
                     //pLine.pop_front();
