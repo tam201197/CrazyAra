@@ -346,11 +346,17 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node, ui
     else {
         pvs_sf(state, depth, -INT_MAX, INT_MAX, searchSettings, childIdx, &line, 0, this);
     }
-    Node* currNode = node;
-
+    Node* currNode = node->get_child_node(line.argmove[line.cmove-1]);
+    if (currNode == nullptr) {
+        return childIdx;
+    }
+    currNode->lock();
     assert(node->get_action(childIdx) == line.argmove[0]);
-    for (int i = line.cmove-1; i >= 0; --i) {
-        currNode = currNode->get_child_node(line.argmove[i]);
+    for (int i = line.cmove-2; i >= 0; --i) {
+        currNode->lock();
+        Node* newCurrNode = currNode->get_child_node(line.argmove[i]);
+        currNode->unlock();
+        currNode = newCurrNode;
         if (currNode == nullptr) {
             return childIdx;
         }
