@@ -734,7 +734,7 @@ bool Node::is_playout_node() const
     return d != nullptr;
 }
 
-float Node::get_init_value() const
+float Node::get_init_value()
 {   
     lock();
     float value = initValue;
