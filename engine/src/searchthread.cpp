@@ -368,7 +368,7 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node, ui
         }
     }
     if (currNode != node) {
-        minimaxValue = pow(-1, line.cmove) * currNode->get_init_value();
+        minimaxValue = pow(-1, line.cmove) * currNode->get_value();
     }
     return childIdx;
 }
