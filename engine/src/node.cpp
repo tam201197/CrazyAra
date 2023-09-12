@@ -95,7 +95,7 @@ Node::Node(StateObj* state, const SearchSettings* searchSettings) :
     hasNNResults(false),
     sorted(false),
     vValue(0),
-    initValue(0),
+    initValue(-2.0),
     minimaxValue(-2.0),
     isMinimaxSearchCalled(false)
 {
@@ -736,9 +736,7 @@ bool Node::is_playout_node() const
 
 float Node::get_init_value()
 {   
-    lock();
     float value = initValue;
-    unlock();
     return value;
 }
 
@@ -776,7 +774,7 @@ void Node::set_value(float value)
 {
     ++this->realVisitsSum;
     this->valueSum = value * this->realVisitsSum;
-    this->initValue = this->valueSum;
+    this->initValue = value;
 }
 
 void Node::init_vValue(const SearchSettings* searchSettings)

@@ -99,7 +99,7 @@ private:
     // valueSum stores the sum of all incoming value evaluations
     double valueSum;
     double vValue;
-    double initValue;
+    float initValue;
     float minimaxValue;
     bool isMinimaxSearchCalled;
 
