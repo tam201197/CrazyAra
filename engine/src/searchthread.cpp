@@ -205,7 +205,7 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                     childIdx = minimax_select_child_node(evalState.get(), currentNode, searchSettings->minimaxDepth, pTempLine, minimaxValue);
                     currentNode->setIsMinimaxCalled(true);
                     nextNode = currentNode->get_child_node(childIdx);
-                    if (minimaxValue > -2.0) {
+                    if (minimaxValue > -2.0 && nextNode != nullptr) {
                         nextNode->update_qValue_after_minimax_search(currentNode, childIdx, minimaxValue, searchSettings);
                     }
                     //pLine.pop_front();
@@ -350,7 +350,7 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node, ui
 
     assert(node->get_action(childIdx) == line.argmove[0]);
     for (int i = line.cmove-1; i >= 0; --i) {
-        currNode = node->get_child_node(line.argmove[i]);
+        currNode = currNode->get_child_node(line.argmove[i]);
         if (currNode == nullptr) {
             return childIdx;
         }
