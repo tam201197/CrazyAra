@@ -1218,6 +1218,22 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings, Action ac
     return argmax(d->qValues + get_current_u_values(searchSettings));
 }
 
+ChildIdx Node::get_action_index(Action action) {
+    if (!sorted) {
+        prepare_node_for_visits();
+    }
+    auto itr = find(legalActions.begin(), legalActions.end(), action);
+    if (itr != legalActions.end()) {
+        ChildIdx idx = itr - legalActions.begin();
+        assert(action == legalActions[idx]);
+        if (idx >= d->noVisitIdx) {
+            fully_expand_node();
+        }
+        return idx;
+    }
+    return -1;
+}
+
 void Node::setIsMinimaxCalled(bool value)
 {
     isMinimaxSearchCalled = true;

@@ -453,6 +453,8 @@ public:
 
     float get_init_value();
 
+    ChildIdx get_action_index(Action action);
+
     /**
      * @brief is_blank_root_node Returns true if the node is a blank root node with no visits
      * @return True if initialized but no visits else false
