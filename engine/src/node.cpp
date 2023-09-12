@@ -735,8 +735,11 @@ bool Node::is_playout_node() const
 }
 
 float Node::get_init_value() const
-{
-    return initValue;
+{   
+    lock();
+    float value = initValue;
+    unlock();
+    return value;
 }
 
 bool Node::is_blank_root_node() const
