@@ -734,6 +734,11 @@ bool Node::is_playout_node() const
     return d != nullptr;
 }
 
+float Node::get_init_value() const
+{
+    return initValue;
+}
+
 bool Node::is_blank_root_node() const
 {
     return get_visits() == 0;

@@ -201,14 +201,12 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                     for (Action action : actionsBuffer) {
                         evalState->do_action(action);
                     }
-                    float minimaxValue;
+                    float minimaxValue = 0;
                     childIdx = minimax_select_child_node(evalState.get(), currentNode, searchSettings->minimaxDepth, pTempLine, minimaxValue);
                     currentNode->setIsMinimaxCalled(true);
-                    if (searchSettings->evaluationType == EVAL_NN) {
-                        nextNode = currentNode->get_child_node(childIdx);
-                        if (nextNode != nullptr) {
-                            nextNode->update_qValue_after_minimax_search(currentNode, childIdx, minimaxValue, searchSettings);
-                        }
+                    nextNode = currentNode->get_child_node(childIdx);
+                    if (minimaxValue != 0) {
+                        nextNode->update_qValue_after_minimax_search(currentNode, childIdx, minimaxValue, searchSettings);
                     }
                     //pLine.pop_front();
                     //currentMinimaxSearchNode = currentNode->get_child_node(childIdx);
@@ -341,18 +339,23 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node, ui
         vector<float> firstInputPlanes(net->get_nb_input_values_total());
         std::copy(inputPlanes, inputPlanes+net->get_nb_input_values_total(), firstInputPlanes.begin());
         //pvs(state, depth, -INT_MAX, INT_MAX, searchSettings, childIdx, &line, 0, this);
-        minimaxValue = pvs_nn(state, depth, -2.0, 2.0, searchSettings, childIdx, &line, 0, this);
+        pvs_nn(state, depth, -2.0, 2.0, searchSettings, childIdx, &line, 0, this);
         // revert change
         std::copy(firstInputPlanes.begin(), firstInputPlanes.begin()+net->get_nb_input_values_total(), inputPlanes);
     }
     else {
         pvs_sf(state, depth, -INT_MAX, INT_MAX, searchSettings, childIdx, &line, 0, this);
     }
+    Node* currNode = node;
 
     assert(node->get_action(childIdx) == line.argmove[0]);
-    for (int i = 1; i < line.cmove; ++i) {
-        pTempLine.emplace_back(line.argmove[i]);
+    for (int i = line.cmove-1; i >= 0; --i) {
+        currNode = node->get_child_node(line.argmove[i]);
+        if (currNode == nullptr) {
+            return childIdx;
+        }
     }
+    minimaxValue = currNode->get_init_value();
     return childIdx;
 }
 
