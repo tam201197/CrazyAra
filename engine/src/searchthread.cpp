@@ -201,8 +201,15 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                     for (Action action : actionsBuffer) {
                         evalState->do_action(action);
                     }
-                    childIdx = minimax_select_child_node(evalState.get(), currentNode, searchSettings->minimaxDepth, pTempLine);
+                    float minimaxValue;
+                    childIdx = minimax_select_child_node(evalState.get(), currentNode, searchSettings->minimaxDepth, pTempLine, minimaxValue);
                     currentNode->setIsMinimaxCalled(true);
+                    if (searchSettings->evaluationType == EVAL_NN) {
+                        nextNode = currentNode->get_child_node(childIdx);
+                        if (nextNode != nullptr) {
+                            nextNode->update_qValue_after_minimax_search(currentNode, childIdx, minimaxValue, searchSettings);
+                        }
+                    }
                     //pLine.pop_front();
                     //currentMinimaxSearchNode = currentNode->get_child_node(childIdx);
                 }
@@ -316,7 +323,7 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
     }
 }
 
-ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node, uint8_t depth, deque<Action> pTempLine) {
+ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node, uint8_t depth, deque<Action> pTempLine, float& minimaxValue) {
     if (!node->is_sorted()) {
         node->prepare_node_for_visits();
     }
@@ -334,7 +341,7 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node, ui
         vector<float> firstInputPlanes(net->get_nb_input_values_total());
         std::copy(inputPlanes, inputPlanes+net->get_nb_input_values_total(), firstInputPlanes.begin());
         //pvs(state, depth, -INT_MAX, INT_MAX, searchSettings, childIdx, &line, 0, this);
-        pvs_nn(state, depth, -2.0, 2.0, searchSettings, childIdx, &line, 0, this);
+        minimaxValue = pvs_nn(state, depth, -2.0, 2.0, searchSettings, childIdx, &line, 0, this);
         // revert change
         std::copy(firstInputPlanes.begin(), firstInputPlanes.begin()+net->get_nb_input_values_total(), inputPlanes);
     }

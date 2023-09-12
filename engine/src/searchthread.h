@@ -187,7 +187,7 @@ private:
      */
     Node* get_new_child_to_evaluate(NodeDescription& description);
 
-    ChildIdx minimax_select_child_node(StateObj* state, Node* currentNode, uint8_t depth, deque<Action> pTempLine);
+    ChildIdx minimax_select_child_node(StateObj* state, Node* currentNode, uint8_t depth, deque<Action> pTempLine, float& minimaxValue);
 
 
     float negamax(StateObj* state, uint8_t depth, float alpha, float beta, const SearchSettings* searchSettings);
