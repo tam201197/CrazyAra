@@ -353,7 +353,7 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node, ui
     for (int i = 1; i < line.cmove; i++) {
         pTempLine.emplace_back(line.argmove[i]);
     }
-    for (int i = 1; i < line.cmove ; ++i) {
+    for (int i = 1; i < line.cmove ; i++) {
         currNode->lock();
         ChildIdx idx = currNode->get_action_index(line.argmove[i]);
         if (idx == -1) {
@@ -770,6 +770,9 @@ int pvs_sf(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSett
     if (depth == 0) {
         pLine->cmove = 0;
         if (!state->is_board_ok()) {
+            float tempValue = -alpha;
+            alpha = -beta;
+            beta = tempValue;
             for (Action action : state->legal_actions()) {
                 state->do_action(action);
                 int value = -state->get_stockfish_value();
