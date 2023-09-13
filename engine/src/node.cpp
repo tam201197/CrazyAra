@@ -1220,7 +1220,7 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings, Action ac
 
 ChildIdx Node::get_action_index(Action action) {
     if (!sorted) {
-        prepare_node_for_visits();
+        return -1;
     }
     auto itr = find(legalActions.begin(), legalActions.end(), action);
     if (itr != legalActions.end()) {
