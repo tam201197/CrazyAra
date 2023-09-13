@@ -609,11 +609,11 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
         switch (state->is_terminal(0, dummy))
         {
         case TERMINAL_WIN:
-            return VALUE_KNOWN_WIN;
+            return INT_MAX -1;
         case TERMINAL_DRAW:
             return 0;
         case TERMINAL_LOSS:
-            return -VALUE_KNOWN_WIN;
+            return -INT_MIN + 2;
         default:
             return state->get_stockfish_value();
         }
@@ -632,9 +632,6 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
                     state->do_action(action);
                     int value = -state->get_stockfish_value();
                     state->undo_action(action);
-                    if (value == -VALUE_INFINITE || value == -VALUE_NONE) {
-                        continue;
-                    }
                     if (alpha < value) {
                         alpha = value;
                     }
