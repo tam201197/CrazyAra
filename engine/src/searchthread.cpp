@@ -205,9 +205,9 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                     childIdx = minimax_select_child_node(evalState.get(), currentNode, searchSettings->minimaxDepth, pTempLine, minimaxValue);
                     currentNode->setIsMinimaxCalled(true);
                     nextNode = currentNode->get_child_node(childIdx);
-                    if (minimaxValue > -2.0 && nextNode != nullptr) {
+                    /*if (minimaxValue > -2.0 && nextNode != nullptr) {
                         nextNode->update_qValue_after_minimax_search(currentNode, childIdx, minimaxValue, searchSettings);
-                    }
+                    }*/
                     //pLine.pop_front();
                     //currentMinimaxSearchNode = currentNode->get_child_node(childIdx);
                 }
@@ -353,7 +353,7 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node, ui
     for (int i = 1; i < line.cmove; i++) {
         pTempLine.emplace_back(line.argmove[i]);
     }
-    for (int i = 1; i < line.cmove ; i++) {
+    /*for (int i = 1; i < line.cmove; i++) {
         currNode->lock();
         ChildIdx idx = currNode->get_action_index(line.argmove[i]);
         if (idx == -1) {
@@ -375,7 +375,7 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node, ui
             minimaxValue = -currNode->get_value();
         }
         
-    }
+    }*/
     return childIdx;
 }
 
@@ -703,7 +703,7 @@ int pvs_sf(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSett
 {
     LINE line;
     line.cmove = 0;
-    uint8_t saveIndex = pLineIdx;
+    ChildIdx idxDummy;
     if (state->is_board_terminal()) {
         pLine->cmove = 0;
         float dummy;
@@ -722,23 +722,7 @@ int pvs_sf(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSett
     if (depth == 0) {
         pLine->cmove = 0;
         if (!state->is_board_ok()) {
-            int tempValue = -alpha;
-            alpha = -beta;
-            beta = tempValue;
-            for (Action action : state->legal_actions()) {
-                state->do_action(action);
-                int value = -state->get_stockfish_value();
-                state->undo_action(action);
-                if (value == -VALUE_INFINITE || value == -VALUE_NONE) {
-                    continue;
-                }
-                if (alpha < value) {
-                    alpha = value;
-                }
-                if (alpha >= beta)
-                    break;
-            }
-            return alpha;
+            return -pvs(state, 1, -beta, -alpha, searchSettings, idxDummy, &line, pLineIdx + 1, netUser);
         }
         else {
             return state->get_stockfish_value();
@@ -746,14 +730,13 @@ int pvs_sf(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSett
 
     }
     ChildIdx childIdx = -1;
-    ChildIdx idxDummy;
     for (Action action : state->legal_actions()) {
         childIdx += 1;
         string fen_after_do_action = state->fen();
         state->do_action(action);
         int value = -pvs_sf(state, depth - 1, -beta, -alpha, searchSettings, idxDummy, &line, pLineIdx + 1, netUser);
         state->undo_action(action);
-        if (value == -VALUE_INFINITE || value == -VALUE_NONE) {
+        if (abs(value) == VALUE_INFINITE || abs(value) == VALUE_NONE) {
             continue;
         }
         if (alpha < value) {
