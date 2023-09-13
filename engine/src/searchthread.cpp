@@ -369,10 +369,10 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node, ui
     }
     if (currNode != node) {
         if (line.cmove % 2 == 0) {
-            minimaxValue = currNode->get_value();
+            minimaxValue = currNode->get_init_value();
         }
         else {
-            minimaxValue = -currNode->get_value();
+            minimaxValue = -currNode->get_init_value();
         }
         
     }
