@@ -350,9 +350,9 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node, ui
     if (currNode == nullptr) {
         return childIdx;
     }
-    /*for (int i = 1; i < line.cmove; i++) {
+    for (int i = 1; i < line.cmove; i++) {
         pTempLine.emplace_back(line.argmove[i]);
-    }*/
+    }
     for (int i = 1; i < line.cmove ; i++) {
         currNode->lock();
         ChildIdx idx = currNode->get_action_index(line.argmove[i]);
@@ -377,47 +377,6 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node, ui
         
     }
     return childIdx;
-}
-
-float SearchThread::negamax(StateObj* state, uint8_t depth, float alpha, float beta, const SearchSettings* searchSettings)
-{
-    if (state->is_board_terminal()) {
-        float dummy;
-        switch (state->is_terminal(0, dummy))
-        {
-        case TERMINAL_WIN:
-            return WIN_VALUE;
-        case TERMINAL_DRAW:
-            return DRAW_VALUE;
-        case TERMINAL_LOSS:
-            return LOSS_VALUE;
-        default:
-            break;
-        }
-    }
-    if (depth == 0) {
-        if (searchSettings->evaluationType == EVAL_NN) {
-            return evaluate(state);
-        }
-        else {
-            if (!state->is_board_ok()) {
-                return -negamax(state, 1, -beta, -alpha, searchSettings);
-            }
-            else {
-                return state->get_stockfish_value();
-            }
-        }
-
-    }
-    for (const Action& action : state->legal_actions()) {
-        state->do_action(action);
-        float value = -negamax(state, depth - 1, -beta, -alpha, searchSettings);
-        state->undo_action(action);
-        alpha = max(alpha, value);
-        if (alpha >= beta)
-            break;
-    }
-    return alpha;
 }
 
 void SearchThread::set_root_state(StateObj* value)
@@ -650,11 +609,11 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
         switch (state->is_terminal(0, dummy))
         {
         case TERMINAL_WIN:
-            return INT_MAX - 1;
+            return VALUE_KNOWN_WIN;
         case TERMINAL_DRAW:
             return 0;
         case TERMINAL_LOSS:
-            return INT_MIN +2 ;
+            return -VALUE_KNOWN_WIN;
         default:
             return state->get_stockfish_value();
         }
@@ -666,17 +625,24 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
         }
         else {
             if (!state->is_board_ok()) {
+                int tempValue = -alpha;
+                alpha = -beta;
+                beta = tempValue;
                 for (Action action : state->legal_actions()) {
                     state->do_action(action);
                     int value = -state->get_stockfish_value();
                     state->undo_action(action);
+                    if (value == -VALUE_INFINITE || value == -VALUE_NONE) {
+                        continue;
+                    }
                     if (alpha < value) {
                         alpha = value;
                     }
                     if (alpha >= beta)
                         break;
                 }
-                return alpha;            }
+                return alpha;
+            }
             else {
                 return state->get_stockfish_value();
             }
@@ -777,7 +743,7 @@ int pvs_sf(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSett
                 state->do_action(action);
                 int value = -state->get_stockfish_value();
                 state->undo_action(action);
-                if (value == VALUE_INFINITE || value == VALUE_NONE) {
+                if (value == -VALUE_INFINITE || value == -VALUE_NONE) {
                     continue;
                 }
                 if (alpha < value) {
@@ -801,7 +767,7 @@ int pvs_sf(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSett
         state->do_action(action);
         int value = -pvs_sf(state, depth - 1, -beta, -alpha, searchSettings, idxDummy, &line, pLineIdx + 1, netUser);
         state->undo_action(action);
-        if (value == VALUE_INFINITE || value == VALUE_NONE) {
+        if (value == -VALUE_INFINITE || value == -VALUE_NONE) {
             continue;
         }
         if (alpha < value) {
