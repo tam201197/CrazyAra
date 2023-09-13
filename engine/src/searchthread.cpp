@@ -770,7 +770,7 @@ int pvs_sf(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSett
     if (depth == 0) {
         pLine->cmove = 0;
         if (!state->is_board_ok()) {
-            float tempValue = -alpha;
+            int tempValue = -alpha;
             alpha = -beta;
             beta = tempValue;
             for (Action action : state->legal_actions()) {
