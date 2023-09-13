@@ -101,7 +101,7 @@ private:
     double vValue;
     float initValue;
     float minimaxValue;
-    bool isMinimaxSearchCalled;
+    uint_fast8_t minimaxCount;
 
     unique_ptr<NodeData> d;
 #ifdef MCTS_STORE_STATES
@@ -161,8 +161,8 @@ public:
      */
     NodeSplit select_child_nodes(const SearchSettings* searchSettings, uint_fast16_t budget);
 
-    void setIsMinimaxCalled(bool value);
-    bool isMinimaxCalled();
+    void increase_minimax_count();
+    uint_fast8_t get_minimax_count();
 
     /**
      * @brief revert_virtual_loss_and_update Reverts the virtual loss and updates the Q-value and visits

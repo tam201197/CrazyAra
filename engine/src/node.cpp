@@ -97,7 +97,7 @@ Node::Node(StateObj* state, const SearchSettings* searchSettings) :
     vValue(0),
     initValue(-2.0),
     minimaxValue(-2.0),
-    isMinimaxSearchCalled(false)
+    minimaxCount(0)
 {
     // specify the number of direct child nodes of this node
     check_for_terminal(state);
@@ -1234,12 +1234,12 @@ ChildIdx Node::get_action_index(Action action) {
     return -1;
 }
 
-void Node::setIsMinimaxCalled(bool value)
+void Node::increase_minimax_count()
 {
-    isMinimaxSearchCalled = true;
+    minimaxCount += 1;
 }
-bool Node::isMinimaxCalled() {
-    return isMinimaxSearchCalled;
+uint_fast8_t Node::get_minimax_count() {
+    return minimaxCount;
 }
 
 void Node::store_minimax_value(StateObj* state, const SearchSettings* searchSettings, float maxValue)
