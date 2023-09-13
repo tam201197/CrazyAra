@@ -602,7 +602,7 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
 {
     LINE line;
     line.cmove = 0;
-    uint8_t saveIndex = pLineIdx;
+    ChildIdx idxDummy;
     if (state->is_board_terminal()) {
         pLine->cmove = 0;
         float dummy;
@@ -625,20 +625,7 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
         }
         else {
             if (!state->is_board_ok()) {
-                int tempValue = -alpha;
-                alpha = -beta;
-                beta = tempValue;
-                for (Action action : state->legal_actions()) {
-                    state->do_action(action);
-                    int value = -state->get_stockfish_value();
-                    state->undo_action(action);
-                    if (alpha < value) {
-                        alpha = value;
-                    }
-                    if (alpha >= beta)
-                        break;
-                }
-                return alpha;
+                return -pvs(state, 1, -beta, -alpha, searchSettings, idxDummy, &line, pLineIdx + 1, netUser);
             }
             else {
                 return state->get_stockfish_value();
@@ -646,7 +633,6 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
         }
     }
     ChildIdx childIdx = -1;
-    ChildIdx idxDummy;
     for (Action action : state->legal_actions()) {
         childIdx += 1;
         string fen_after_do_action = state->fen();
