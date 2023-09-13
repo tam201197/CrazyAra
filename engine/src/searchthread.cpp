@@ -613,7 +613,7 @@ int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSetting
         case TERMINAL_DRAW:
             return 0;
         case TERMINAL_LOSS:
-            return -INT_MIN + 2;
+            return INT_MIN + 2;
         default:
             return state->get_stockfish_value();
         }
