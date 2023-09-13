@@ -732,7 +732,7 @@ float pvs_nn(StateObj* state, uint8_t depth, float alpha, float beta, const Sear
         childIdx += 1;
         string fen_after_do_action = state->fen();
         state->do_action(action);
-        int value = -pvs_nn(state, depth - 1, -beta, -alpha, searchSettings, idxDummy, &line, pLineIdx + 1, netUser);
+        float value = -pvs_nn(state, depth - 1, -beta, -alpha, searchSettings, idxDummy, &line, pLineIdx + 1, netUser);
         state->undo_action(action);
         if (alpha < value) {
             alpha = value;
@@ -758,11 +758,11 @@ int pvs_sf(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSett
         switch (state->is_terminal(0, dummy))
         {
         case TERMINAL_WIN:
-            return INT_MAX - 1;
+            return VALUE_KNOWN_WIN;
         case TERMINAL_DRAW:
             return 0;
         case TERMINAL_LOSS:
-            return INT_MIN + 2;
+            return -VALUE_KNOWN_WIN;
         default:
             return state->get_stockfish_value();
         }
@@ -777,6 +777,9 @@ int pvs_sf(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSett
                 state->do_action(action);
                 int value = -state->get_stockfish_value();
                 state->undo_action(action);
+                if (value == VALUE_INFINITE || value == VALUE_NONE) {
+                    continue;
+                }
                 if (alpha < value) {
                     alpha = value;
                 }
@@ -798,6 +801,9 @@ int pvs_sf(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSett
         state->do_action(action);
         int value = -pvs_sf(state, depth - 1, -beta, -alpha, searchSettings, idxDummy, &line, pLineIdx + 1, netUser);
         state->undo_action(action);
+        if (value == VALUE_INFINITE || value == VALUE_NONE) {
+            continue;
+        }
         if (alpha < value) {
             alpha = value;
             idx = childIdx;
