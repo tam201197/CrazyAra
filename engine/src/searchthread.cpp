@@ -221,9 +221,10 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                     childIdx = minimax_select_child_node(evalState.get(), currentNode, 3, pTempLine, minimaxValue);
                     currentNode->increase_minimax_count();
                     nextNode = currentNode->get_child_node(childIdx);
-                    if (minimaxValue > -2.0 && nextNode != nullptr) {
+                    nextNode->update_qValue_after_minimax_search(currentNode, childIdx, minimaxValue, searchSettings);
+                    /*if (minimaxValue > -2.0 && nextNode != nullptr) {
                         nextNode->update_qValue_after_minimax_search(currentNode, childIdx, minimaxValue, searchSettings);
-                    }
+                    }*/
                 }
                 else {
                     if (!pTempLine.empty()) {
@@ -367,7 +368,7 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node, ui
     for (int i = 1; i < line.cmove; i++) {
         pTempLine.emplace_back(line.argmove[i]);
     }
-    for (int i = 1; i < line.cmove; i++) {
+    /*for (int i = 1; i < line.cmove; i++) {
         currNode->lock();
         ChildIdx idx = currNode->get_action_index(line.argmove[i]);
         if (idx == -1) {
@@ -389,7 +390,7 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node, ui
             minimaxValue = -currNode->get_init_value();
         }
         
-    }
+    }*/
     return childIdx;
 }
 

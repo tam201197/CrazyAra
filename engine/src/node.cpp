@@ -1251,10 +1251,10 @@ void Node::store_minimax_value(StateObj* state, const SearchSettings* searchSett
 
 void Node::update_qValue_after_minimax_search(Node* parentNode, ChildIdx childIdx, float value, const SearchSettings* searchSettings)
 {
-    uint32_t oldChildNumberVisits = parentNode->d->childNumberVisits[childIdx] - parentNode->d->virtualLossCounter[childIdx] * searchSettings->virtualLoss;
+    //uint32_t oldChildNumberVisits = parentNode->d->childNumberVisits[childIdx] - parentNode->d->virtualLossCounter[childIdx] * searchSettings->virtualLoss;
     parentNode->d->childNumberVisits[childIdx] += searchSettings->priorWeight;
     parentNode->d->visitSum += searchSettings->priorWeight;
-    parentNode->d->qValues[childIdx] = (double(parentNode->d->qValues[childIdx]) * oldChildNumberVisits + value * searchSettings->priorWeight) / (oldChildNumberVisits + searchSettings->priorWeight);
+    //parentNode->d->qValues[childIdx] = (double(parentNode->d->qValues[childIdx]) * oldChildNumberVisits + value * searchSettings->priorWeight) / (oldChildNumberVisits + searchSettings->priorWeight);
     parentNode->unlock();
     lock();
     valueSum += value * searchSettings->priorWeight;
