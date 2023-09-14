@@ -62,11 +62,7 @@ CrazyAra::CrazyAra() :
     useRawNetwork(false),      // will be initialized in init_search_settings()
     networkLoaded(false),
     ongoingSearch(false),
-#ifdef SUPPORT960
-    is960(true),
-#else
     is960(false),
-#endif
     changedUCIoption(false)
 {
 }
@@ -95,9 +91,6 @@ void CrazyAra::uci_loop(int argc, char* argv[])
 
     // this is debug vector which can contain uci commands which will be automatically processed when the executable is launched
     vector<string> commands = {
-        /*"setoption name Backup_Operator value max_op",
-        "isready",
-        "go nodes 1000"*/
     };
 
     do {
@@ -162,7 +155,8 @@ void CrazyAra::prepare_search_config_structs()
         changedUCIoption = false;
     }
 }
-void CrazyAra::inference(istringstream &is)
+
+void CrazyAra::inference(istringstream& is)
 {
     size_t warmupIterations = 100;
     size_t iterations = 3000;
@@ -185,11 +179,11 @@ void CrazyAra::inference(istringstream &is)
     const size_t elapsedMS = chrono::duration_cast<chrono::milliseconds>(end - start).count();
     info_string("Inference results");
     info_string("-----------------");
-    info_string("Elapsed time:", elapsedMS/1000.0, "s");
-    info_string("Evaluations per second:", (iterations/double(elapsedMS))*1000*searchSettings.batchSize, "nps");
+    info_string("Elapsed time:", elapsedMS / 1000.0, "s");
+    info_string("Evaluations per second:", (iterations / double(elapsedMS)) * 1000 * searchSettings.batchSize, "nps");
 }
 
-void CrazyAra::go(StateObj* state, istringstream &is,  EvalInfo& evalInfo)
+void CrazyAra::go(StateObj* state, istringstream& is, EvalInfo& evalInfo)
 {
     wait_to_finish_last_search();
     ongoingSearch = true;
@@ -579,7 +573,7 @@ bool CrazyAra::is_ready()
         netBatches.front()->validate_neural_network();
         mctsAgent = create_new_mcts_agent(netSingle.get(), netBatches, &searchSettings);
         rawAgent = make_unique<RawNetAgent>(netSingle.get(), &playSettings, false);
-        StateConstants::init(mctsAgent->is_policy_map());
+        StateConstants::init(mctsAgent->is_policy_map(), is960);
         timeoutThread.kill();
         if (timeoutMS != 0) {
             tTimeoutThread.join();
@@ -655,12 +649,22 @@ void CrazyAra::set_uci_option(istringstream& is, StateObj& state)
     const string prevUciVariant = Options["UCI_Variant"];
     const int prevFirstDeviceID = Options["First_Device_ID"];
     const int prevLastDeviceID = Options["Last_Device_ID"];
+#ifdef SUPPORT960
+    const bool prevIs960 = Options["UCI_Chess960"];
+#else
+    const bool prevIs960 = is960;
+#endif
 
     OptionsUCI::setoption(is, variant, state);
+#ifdef SUPPORT960
+    const bool curIs960 = Options["UCI_Chess960"];
+#else
+    const bool curIs960 = is960;
+#endif
     changedUCIoption = true;
     if (networkLoaded) {
         if (string(Options["Model_Directory"]) != prevModelDir || int(Options["Threads"]) != prevThreads || string(Options["UCI_Variant"]) != prevUciVariant ||
-            int(Options["First_Device_ID"]) != prevFirstDeviceID || int(Options["Last_Device_ID"] != prevLastDeviceID)) {
+            int(Options["First_Device_ID"]) != prevFirstDeviceID || int(Options["Last_Device_ID"] != prevLastDeviceID) || prevIs960 != curIs960) {
             networkLoaded = false;
             is_ready<false>();
         }
@@ -725,7 +729,6 @@ void CrazyAra::init_search_settings()
     searchSettings.dirichletEpsilon = Options["Centi_Dirichlet_Epsilon"] / 100.0f;
     searchSettings.dirichletAlpha = Options["Centi_Dirichlet_Alpha"] / 100.0f;
     searchSettings.nodePolicyTemperature = Options["Centi_Node_Temperature"] / 100.0f;
-    searchSettings.virtualLoss = Options["Centi_Virtual_Loss"] / 100.0f;
     searchSettings.randomMoveFactor = Options["Centi_Random_Move_Factor"] / 100.0f;
     searchSettings.allowEarlyStopping = Options["Allow_Early_Stopping"];
     useRawNetwork = Options["Use_Raw_Network"];
@@ -741,15 +744,22 @@ void CrazyAra::init_search_settings()
     }
     searchSettings.reuseTree = Options["Reuse_Tree"];
     searchSettings.mctsSolver = Options["MCTS_Solver"];
-    if (Options["Backup_Operator"] == "mean_op") {
-        searchSettings.backupOperator = BACKUP_MEAN;
+    if (Options["Virtual_Style"] == "virtual_loss") {
+        searchSettings.virtualStyle = VIRTUAL_LOSS;
+    }
+    else if (Options["Virtual_Style"] == "virtual_visit") {
+        searchSettings.virtualStyle = VIRTUAL_VISIT;
+    }
+    else if (Options["Virtual_Style"] == "virtual_offset") {
+        searchSettings.virtualStyle = VIRTUAL_OFFSET;
+    }
+    else if (Options["Virtual_Style"] == "virtual_mix") {
+        searchSettings.virtualStyle = VIRTUAL_MIX;
     }
     else {
-        searchSettings.backupOperator = BACKUP_MAX;
+        info_string_important("Unknown option", Options["Virtual_Style"], "for Virtual_Style");
     }
-    searchSettings.maxAtVisit = Options["Max_At_Visits"];
-    searchSettings.switchingMaxOperatorAtNode = Options["Switching_Max_Operator_At_Node"];
-    
+    searchSettings.virtualMixThreshold = Options["Virtual_Mix_Threshold"];
 }
 
 void CrazyAra::init_play_settings()
@@ -777,7 +787,6 @@ void validate_device_indices(OptionsMap& option)
         info_string("Last_Device_ID is smaller than First_Device_ID.");
         info_string("Last_Device_ID will be set to ", option["First_Device_ID"]);
         option["Last_Device_ID"] = option["First_Device_ID"];
-
     }
 }
 
@@ -792,8 +801,8 @@ std::vector<std::string> comb(std::vector<int> N, int K)
         std::string c = "";
         for (int i = 0; i < N.size(); ++i) // [0..N-1] integers
         {
-            if (bitmask[i]){
-                c.append(std::to_string(N[i])+ " ");
+            if (bitmask[i]) {
+                c.append(std::to_string(N[i]) + " ");
             }
         }
         p.push_back(c);

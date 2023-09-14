@@ -36,9 +36,9 @@ bool Node::is_sorted() const
     return sorted;
 }
 
-double Node::get_q_sum(ChildIdx childIdx, float virtualLoss) const
+double Node::get_q_sum_virtual_loss(ChildIdx childIdx) const
 {
-    return get_child_number_visits(childIdx) * double(get_q_value(childIdx)) + get_virtual_loss_counter(childIdx) * virtualLoss;
+    return get_child_number_visits(childIdx) * double(get_q_value(childIdx)) + get_virtual_loss_counter(childIdx);
 }
 
 bool Node::is_transposition() const
@@ -79,14 +79,14 @@ void Node::set_auxiliary_outputs(const float* auxiliaryOutputs)
 }
 #endif
 
-Node::Node(StateObj* state, const SearchSettings* searchSettings):
+Node::Node(StateObj* state, const SearchSettings* searchSettings) :
     legalActions(state->legal_actions()),
     key(state->hash_key()),
     valueSum(0),
     d(nullptr),
-    #ifdef MCTS_STORE_STATES
+#ifdef MCTS_STORE_STATES
     state(state),
-    #endif
+#endif
     realVisitsSum(0),
     pliesFromNull(state->steps_from_null()),
     numberParentNodes(1),
@@ -268,8 +268,8 @@ void Node::define_end_ply_for_solved_terminal(const Node* childNode)
         // choose the longest pv line
         for (auto it = d->childNodes.begin(); it != d->childNodes.end(); ++it) {
             const Node* curChildNode = it->get();
-            if (curChildNode->d->endInPly+1 > d->endInPly) {
-                d->endInPly = curChildNode->d->endInPly+1;
+            if (curChildNode->d->endInPly + 1 > d->endInPly) {
+                d->endInPly = curChildNode->d->endInPly + 1;
             }
         }
         return;
@@ -278,8 +278,8 @@ void Node::define_end_ply_for_solved_terminal(const Node* childNode)
         // choose the shortest pv line for draws
         for (auto it = d->childNodes.begin(); it != d->childNodes.end(); ++it) {
             const Node* curChildNode = it->get();
-            if (curChildNode->d->nodeType == DRAW && curChildNode->d->endInPly+1 < d->endInPly) {
-                d->endInPly = curChildNode->d->endInPly+1;
+            if (curChildNode->d->nodeType == DRAW && curChildNode->d->endInPly + 1 < d->endInPly) {
+                d->endInPly = curChildNode->d->endInPly + 1;
             }
         }
         return;
@@ -296,7 +296,7 @@ void Node::update_solved_terminal(const Node* childNode, ChildIdx childIdx)
     d->qValues[childIdx] = targetValue;
 }
 
-void Node::mcts_policy_based_on_wins(DynamicVector<double> &mctsPolicy, const SearchSettings* searchSettings) const
+void Node::mcts_policy_based_on_wins(DynamicVector<double>& mctsPolicy, const SearchSettings* searchSettings) const
 {
     mctsPolicy = 0;
     ChildIdx childIdx = 0;
@@ -319,7 +319,7 @@ void Node::mcts_policy_based_on_wins(DynamicVector<double> &mctsPolicy, const Se
     }
 }
 
-void Node::mcts_policy_based_on_losses(DynamicVector<double> &mctsPolicy) const
+void Node::mcts_policy_based_on_losses(DynamicVector<double>& mctsPolicy) const
 {
     mctsPolicy = 0;
     ChildIdx childIdx = 0;
@@ -338,7 +338,7 @@ void Node::mcts_policy_based_on_losses(DynamicVector<double> &mctsPolicy) const
     mctsPolicy[longestChildIdx] = 1.0f;
 }
 
-void Node::prune_losses_in_mcts_policy(DynamicVector<double> &mctsPolicy, const SearchSettings* searchSettings) const
+void Node::prune_losses_in_mcts_policy(DynamicVector<double>& mctsPolicy, const SearchSettings* searchSettings) const
 {
     // check if PV line leads to a loss
     if (d->numberUnsolvedChildNodes != get_number_child_nodes() && !is_loss_node_type(d->nodeType)) {
@@ -400,17 +400,17 @@ bool Node::solve_for_terminal(ChildIdx childIdx, const SearchSettings* searchSet
         d->nodeTypes[childIdx] = childNode->d->nodeType;
         switch (searchSettings->searchPlayerMode) {
         case MODE_TWO_PLAYER:
-            switch(childNode->d->nodeType) {
+            switch (childNode->d->nodeType) {
             case WIN:
                 disable_action(childIdx);
-            default: ; // pass
+            default:; // pass
             }
             break;
         case MODE_SINGLE_PLAYER:
-            switch(childNode->d->nodeType) {
+            switch (childNode->d->nodeType) {
             case LOSS:
                 disable_action(childIdx);
-            default: ; // pass
+            default:; // pass
             }
 
         }
@@ -474,7 +474,7 @@ Action Node::get_action(ChildIdx childIdx) const
     return legalActions[childIdx];
 }
 
-Node *Node::get_child_node(ChildIdx childIdx) const
+Node* Node::get_child_node(ChildIdx childIdx) const
 {
     return d->childNodes[childIdx].get();
 }
@@ -504,22 +504,28 @@ bool Node::has_nn_results() const
     return hasNNResults;
 }
 
-void Node::apply_virtual_loss_to_child(ChildIdx childIdx, uint_fast32_t virtualLoss)
-{   
-    if (d->virtualLossCounter[childIdx] < 1) {
-        d->childNumberVirtualVisits[childIdx] = d->childNumberVisits[childIdx];
-    }
+void Node::apply_virtual_loss_to_child(ChildIdx childIdx, const SearchSettings* searchSettings)
+{
     // update the stats of the parent node
     // make it look like if one has lost X games from this node forward where X is the virtual loss value
     // temporarily reduce the attraction of this node by applying a virtual loss /
     // the effect of virtual loss will be undone if the playout is over
-    d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] - virtualLoss) / double(d->childNumberVisits[childIdx] + virtualLoss);
+    switch (get_virtual_style(searchSettings, d->childNumberVisits[childIdx])) {
+    case VIRTUAL_LOSS:
+        d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] - 1) / double(d->childNumberVisits[childIdx] + 1);
+        break;
+    case VIRTUAL_OFFSET:
+        d->qValues[childIdx] -= searchSettings->virtualOffsetStrenght;
+    case VIRTUAL_VISIT:;  // ignore
+    case VIRTUAL_MIX:;  // unreachable
+    }
+
     // virtual increase the number of visits
-    d->childNumberVisits[childIdx] += virtualLoss;
-    d->childNumberVirtualVisits[childIdx] += virtualLoss;
-    d->visitSum += virtualLoss;
+    ++d->childNumberVisits[childIdx];
+    ++d->visitSum;
+
     // increment virtual loss counter
-    update_virtual_loss_counter<true>(childIdx, virtualLoss);
+    update_virtual_loss_counter<true>(childIdx);
 }
 
 float Node::get_q_value(ChildIdx childIdx) const
@@ -530,11 +536,6 @@ float Node::get_q_value(ChildIdx childIdx) const
 DynamicVector<float> Node::get_q_values() const
 {
     return d->qValues;
-}
-
-float Node::get_max_qValue() const
-{
-    return d->qValue_max;
 }
 
 void Node::set_q_value(ChildIdx childIdx, float value)
@@ -552,7 +553,8 @@ vector<ChildIdx> Node::get_q_idx_over_thresh(float qThresh)
     vector<ChildIdx> indices;
     for (ChildIdx idx = 0; idx < size(d->qValues); ++idx) {
         if (d->qValues[idx] > qThresh) {
-            indices.emplace_back(idx);        }
+            indices.emplace_back(idx);
+        }
     }
     return indices;
 }
@@ -561,7 +563,6 @@ void Node::reserve_full_memory()
 {
     const size_t numberChildNodes = get_number_child_nodes();
     d->childNumberVisits.reserve(numberChildNodes);
-    d->childNumberVirtualVisits.reserve(numberChildNodes);
     d->qValues.reserve(numberChildNodes);
     d->childNodes.reserve(numberChildNodes);
     d->virtualLossCounter.reserve(numberChildNodes);
@@ -652,52 +653,30 @@ uint32_t Node::get_real_visits(ChildIdx childIdx) const
     return d->childNumberVisits[childIdx] - d->virtualLossCounter[childIdx];
 }
 
-void backup_collision(float virtualLoss, const Trajectory& trajectory) {
+void backup_collision(const SearchSettings* searchSettings, const Trajectory& trajectory) {
     for (auto it = trajectory.rbegin(); it != trajectory.rend(); ++it) {
-        it->node->revert_virtual_loss(it->childIdx, virtualLoss);
+        it->node->revert_virtual_loss(it->childIdx, searchSettings);
     }
 }
 
-void Node::revert_virtual_loss(ChildIdx childIdx, float virtualLoss)
+void Node::revert_virtual_loss(ChildIdx childIdx, const SearchSettings* searchSettings)
 {
     lock();
-    d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] + virtualLoss) / (d->childNumberVisits[childIdx] - virtualLoss);
-    d->childNumberVisits[childIdx] -= virtualLoss;
-    d->childNumberVirtualVisits[childIdx] -= virtualLoss;
-    d->visitSum -= virtualLoss;
+    switch (get_virtual_style(searchSettings, d->childNumberVisits[childIdx])) {
+    case VIRTUAL_LOSS:
+        d->qValues[childIdx] = (double(d->qValues[childIdx]) * d->childNumberVisits[childIdx] + 1) / (d->childNumberVisits[childIdx] - 1);
+        break;
+    case VIRTUAL_OFFSET:
+        d->qValues[childIdx] += searchSettings->virtualOffsetStrenght;
+    case VIRTUAL_MIX:; // ignore
+    case VIRTUAL_VISIT:; // ignore
+    }
+    --d->childNumberVisits[childIdx];
+    --d->visitSum;
+
     // decrement virtual loss counter
-    update_virtual_loss_counter<false>(childIdx, virtualLoss);
-    if (d->virtualLossCounter[childIdx] < 1) {
-        d->childNumberVirtualVisits[childIdx] = d->childNumberVisits[childIdx];
-    }
+    update_virtual_loss_counter<false>(childIdx);
     unlock();
-}
-
-float Node::score_child_qValue_max(Node* node, const SearchSettings* searchSettings) {
-    node->lock();
-    float maxQValue = -2.0;
-    for (uint_fast16_t i = 0; i < node->d->qValues.size(); ++i) {
-        if (node->d != nullptr && node->d->childNumberVisits[i] >= searchSettings->maxAtVisit) {
-            float value = compute_original_q_value(node->d->qValues[i], node->d->childNumberVirtualVisits[i], node->d->virtualLossCounter[i], searchSettings->virtualLoss);
-            maxQValue = max(maxQValue, value); 
-        }
-    }
-    node->unlock();
-    return maxQValue;
-}
-
-float Node::compute_original_q_value(float qValue, uint32_t numberVisits, uint8_t virtualLossCounter, uint_fast32_t virtualLoss) {
-    float result = qValue;
-    if (virtualLossCounter > 0)
-      float result = (double(qValue) * (numberVisits + 1) + (virtualLossCounter * virtualLoss + virtualLoss)) / (numberVisits - virtualLoss * virtualLossCounter);
-    return result;
-}
-
-float Node::re_apply_virtual_loss(float value, ChildIdx childIdx, uint_fast32_t virtualLoss) {
-    float result = value;
-    if (d->virtualLossCounter[childIdx] > 0)
-        result = (double(value) * (d->childNumberVirtualVisits[childIdx] - d->virtualLossCounter[childIdx] * virtualLoss) - d->virtualLossCounter[childIdx] * virtualLoss) / d->childNumberVirtualVisits[childIdx];
-    return result;
 }
 
 bool Node::is_playout_node() const
@@ -743,14 +722,14 @@ void Node::set_value(float value)
 
 Node* Node::add_new_node_to_tree(MapWithMutex* mapWithMutex, StateObj* newState, ChildIdx childIdx, const SearchSettings* searchSettings, bool& transposition)
 {
-    if(searchSettings->useMCGS) {
+    if (searchSettings->useMCGS) {
         mapWithMutex->mtx.lock();
         HashMap::const_iterator it = mapWithMutex->hashTable.find(newState->hash_key());
         if (it != mapWithMutex->hashTable.end()) {
             shared_ptr<Node> transpositionNode = it->second.lock();
             Node* tranpositionNode = get_child_node(childIdx);
             if (tranpositionNode != nullptr) {
-                if(is_transposition_verified(tranpositionNode, newState)) {
+                if (is_transposition_verified(tranpositionNode, newState)) {
                     d->childNodes[childIdx] = atomic_load(&transpositionNode);
                     mapWithMutex->mtx.unlock();
                     tranpositionNode->lock();
@@ -761,7 +740,7 @@ Node* Node::add_new_node_to_tree(MapWithMutex* mapWithMutex, StateObj* newState,
                         if (tranpositionNode->is_playout_node() && tranpositionNode->get_node_type() == LOSS) {
                             set_checkmate_idx(childIdx);
                         }
-                    case MODE_SINGLE_PLAYER: ;
+                    case MODE_SINGLE_PLAYER:;
                     }
                     transposition = true;
                     return tranpositionNode;
@@ -776,7 +755,7 @@ Node* Node::add_new_node_to_tree(MapWithMutex* mapWithMutex, StateObj* newState,
     atomic_store(&d->childNodes[childIdx], newNode);
     if (searchSettings->useMCGS) {
         mapWithMutex->mtx.lock();
-        mapWithMutex->hashTable.insert({d->childNodes[childIdx]->hash_key(), d->childNodes[childIdx]});
+        mapWithMutex->hashTable.insert({ d->childNodes[childIdx]->hash_key(), d->childNodes[childIdx] });
         mapWithMutex->mtx.unlock();
     }
     transposition = false;
@@ -811,7 +790,7 @@ float Node::updated_value_eval() const
     if (d == nullptr || get_visits() == 1) {
         return get_value();
     }
-    switch(d->nodeType) {
+    switch (d->nodeType) {
     case WIN:
         return WIN_VALUE;
     case DRAW:
@@ -826,7 +805,7 @@ float Node::updated_value_eval() const
     case TB_LOSS:
         return LOSS_VALUE;
 #endif
-    default: ;  // UNSOLVED
+    default:;  // UNSOLVED
     }
     return d->qValues[argmax(d->childNumberVisits)];
 }
@@ -906,7 +885,7 @@ void Node::check_for_terminal(StateObj* pos)
 
     if (terminalType != TERMINAL_NONE) {
         mark_as_terminal();
-        switch(terminalType) {
+        switch (terminalType) {
         case TERMINAL_WIN:
             mark_as_win();
             break;
@@ -933,7 +912,7 @@ void Node::check_for_tablebase_wdl(StateObj* state)
 
     if (result != Tablebase::FAIL) {
         mark_as_tablebase();
-        switch(wdlScore) {
+        switch (wdlScore) {
         case Tablebase::WDLLoss:
             mark_as_tb_loss();
             break;
@@ -972,7 +951,7 @@ void Node::unlock()
 void Node::apply_dirichlet_noise_to_prior_policy(const SearchSettings* searchSettings)
 {
     DynamicVector<float> dirichlet_noise = get_dirichlet_noise(get_number_child_nodes(), searchSettings->dirichletAlpha);
-    policyProbSmall = (1 - searchSettings->dirichletEpsilon ) * policyProbSmall + searchSettings->dirichletEpsilon * dirichlet_noise;
+    policyProbSmall = (1 - searchSettings->dirichletEpsilon) * policyProbSmall + searchSettings->dirichletEpsilon * dirichlet_noise;
 }
 
 void Node::apply_temperature_to_prior_policy(float temperature)
@@ -980,7 +959,7 @@ void Node::apply_temperature_to_prior_policy(float temperature)
     apply_temperature(policyProbSmall, temperature);
 }
 
-void Node::set_probabilities_for_moves(const float *data, bool mirrorPolicy)
+void Node::set_probabilities_for_moves(const float* data, bool mirrorPolicy)
 {
     // allocate sufficient memory -> is assumed that it has already been done
     assert(legalActions.size() == policyProbSmall.size());
@@ -991,11 +970,11 @@ void Node::set_probabilities_for_moves(const float *data, bool mirrorPolicy)
         // than calling policyProb.At(batchIdx, vectorIdx)
         if (mirrorPolicy) {
             // use mirrored action_to_index
-            policyProbSmall[mvIdx] = data[StateConstants::action_to_index<normal,mirrored>(legalActions[mvIdx])];
+            policyProbSmall[mvIdx] = data[StateConstants::action_to_index<normal, mirrored>(legalActions[mvIdx])];
         }
         else {
             // use non-mirrored action_to_index
-            policyProbSmall[mvIdx] = data[StateConstants::action_to_index<normal,notMirrored>(legalActions[mvIdx])];
+            policyProbSmall[mvIdx] = data[StateConstants::action_to_index<normal, notMirrored>(legalActions[mvIdx])];
         }
     }
 }
@@ -1029,6 +1008,27 @@ void Node::disable_action(size_t childIdxForParent)
 {
     policyProbSmall[childIdxForParent] = 0;
     d->qValues[childIdxForParent] = -INT_MAX;
+}
+
+double Node::get_transposition_q_value(const SearchSettings* searchSettings, ChildIdx childIdx, uint_fast32_t transposVisits)
+{
+    double transposQValue;
+    switch (get_virtual_style(searchSettings, d->childNumberVisits[childIdx])) {
+    case VIRTUAL_LOSS:
+        transposQValue = get_q_sum_virtual_loss(childIdx) / transposVisits;
+        break;
+    case VIRTUAL_VISIT:
+        transposQValue = get_q_value(childIdx);
+        break;
+    case VIRTUAL_OFFSET:
+        transposQValue = double(get_q_value(childIdx)) + get_virtual_loss_counter(childIdx) * searchSettings->virtualOffsetStrenght;
+    case VIRTUAL_MIX:;
+        // unreachable
+    }
+    if (searchSettings->searchPlayerMode == MODE_TWO_PLAYER) {
+        return -transposQValue;
+    }
+    return transposQValue;
 }
 
 void Node::enhance_moves(const SearchSettings* searchSettings)
@@ -1121,7 +1121,7 @@ void Node::get_principal_variation(vector<Action>& pv, const SearchSettings* sea
     }
 }
 
-size_t get_best_action_index(const Node *curNode, bool fast, const SearchSettings* searchSettings)
+size_t get_best_action_index(const Node* curNode, bool fast, const SearchSettings* searchSettings)
 {
     if (curNode->get_checkmate_idx() != NO_CHECKMATE) {
         // chose mating line
@@ -1161,11 +1161,9 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings)
     }
 
     assert(sum(d->childNumberVisits) == d->visitSum);
-    //DynamicVector<float> qValuesWithVirtualLoss = (d->qValues * (d->childNumberVisits - searchSettings->virtualLoss * d->virtualLossCounter) - searchSettings->virtualLoss * d->virtualLossCounter) / d->childNumberVisits;
     // find the move according to the q- and u-values for each move
     // calculate the current u values
     // it's not worth to save the u values as a node attribute because u is updated every time n_sum changes
-    //return argmax(d->qValues + get_current_u_values(searchSettings));
     return argmax(d->qValues + get_current_u_values(searchSettings));
 }
 
@@ -1201,7 +1199,7 @@ NodeSplit Node::select_child_nodes(const SearchSettings* searchSettings, uint_fa
 
 const char* node_type_to_string(enum NodeType nodeType)
 {
-    switch(nodeType) {
+    switch (nodeType) {
     case WIN:
         return "WIN";
     case DRAW:
@@ -1222,7 +1220,7 @@ const char* node_type_to_string(enum NodeType nodeType)
 }
 
 NodeType flip_node_type(const enum NodeType nodeType) {
-    switch(nodeType) {
+    switch (nodeType) {
     case WIN:
         return LOSS;
     case LOSS:
@@ -1253,8 +1251,8 @@ void Node::print_node_statistics(const StateObj* state, const vector<size_t>& cu
     const string header = "  #  | Move  |    Visits    |  Policy   |  Q-values  |  CP   |    Type    ";
     const string filler = "-----+-------+--------------+-----------+------------+-------+------------";
     cout << header << endl
-         << std::showpoint << std::fixed << std::setprecision(7)
-         << filler << endl;
+        << std::showpoint << std::fixed << std::setprecision(7)
+        << filler << endl;
     for (size_t idx = 0; idx < get_number_child_nodes(); ++idx) {
         const size_t childIdx = customOrdering.size() == get_number_child_nodes() ? customOrdering[idx] : idx;
         size_t n = 0;
@@ -1273,20 +1271,20 @@ void Node::print_node_statistics(const StateObj* state, const vector<size_t>& cu
             cout << setw(5) << state->action_to_san(move, get_legal_actions(), false, false) << " | ";
         }
         cout << setw(12) << n << " | "
-             << setw(9) << policyProbSmall[childIdx] << " | "
-             << setw(10) << max(q, -9.9999999) << " | "
-             << setw(5) << value_to_centipawn(q) << " | ";
+            << setw(9) << policyProbSmall[childIdx] << " | "
+            << setw(10) << max(q, -9.9999999) << " | "
+            << setw(5) << value_to_centipawn(q) << " | ";
         if (childIdx < get_no_visit_idx() && d->childNodes[childIdx] != nullptr && d->childNodes[childIdx]->d != nullptr && d->childNodes[childIdx]->get_node_type() != UNSOLVED) {
             string nodeTypeToPrint;
             switch (searchSettings->searchPlayerMode) {
-                case MODE_TWO_PLAYER:
+            case MODE_TWO_PLAYER:
                 nodeTypeToPrint = node_type_to_string(flip_node_type(NodeType(d->childNodes[childIdx]->d->nodeType)));
                 break;
             case MODE_SINGLE_PLAYER:
                 nodeTypeToPrint = node_type_to_string(NodeType(d->childNodes[childIdx]->d->nodeType));
 
             }
-            cout << setfill(' ') << setw(4) << nodeTypeToPrint << " in " << setfill('0') << setw(2) << d->childNodes[childIdx]->d->endInPly+1;
+            cout << setfill(' ') << setw(4) << nodeTypeToPrint << " in " << setfill('0') << setw(2) << d->childNodes[childIdx]->d->endInPly + 1;
         }
         else {
             cout << setfill(' ') << setw(9) << node_type_to_string(UNSOLVED);
@@ -1294,13 +1292,13 @@ void Node::print_node_statistics(const StateObj* state, const vector<size_t>& cu
         cout << endl;
     }
     cout << filler << endl
-         << "initial value:\t" << get_value() << endl
-         << "nodeType:\t" << node_type_to_string(NodeType(d->nodeType)) << endl
-         << "isTerminal:\t" << is_terminal() << endl
-         << "isTablebase:\t" << is_tablebase() << endl
-         << "unsolvedNodes:\t" << d->numberUnsolvedChildNodes << endl
-         << "Visits:\t\t" << get_visits() << endl
-         << "freeVisits:\t" << get_free_visits() << "/" << get_visits() << endl;
+        << "initial value:\t" << get_value() << endl
+        << "nodeType:\t" << node_type_to_string(NodeType(d->nodeType)) << endl
+        << "isTerminal:\t" << is_terminal() << endl
+        << "isTablebase:\t" << is_tablebase() << endl
+        << "unsolvedNodes:\t" << d->numberUnsolvedChildNodes << endl
+        << "Visits:\t\t" << get_visits() << endl
+        << "freeVisits:\t" << get_free_visits() << "/" << get_visits() << endl;
 }
 
 uint32_t Node::get_node_count() const
@@ -1338,13 +1336,13 @@ bool is_terminal_value(float value)
     return (value == WIN_VALUE || value == DRAW_VALUE || value == LOSS_VALUE);
 }
 
-float get_transposition_q_value(uint_fast32_t transposVisits, double transposQValue, double targetQValue)
+float get_transposition_backup_value(uint_fast32_t transposVisits, double transposQValue, double targetQValue)
 {
     return std::clamp(transposVisits * (targetQValue - transposQValue) + targetQValue, double(LOSS_VALUE), double(WIN_VALUE));
 }
 
 bool is_transposition_verified(const Node* node, const StateObj* state) {
     return  node->has_nn_results() &&
-            node->plies_from_null() == state->steps_from_null() &&
-            state->number_repetitions() == 0;
+        node->plies_from_null() == state->steps_from_null() &&
+        state->number_repetitions() == 0;
 }

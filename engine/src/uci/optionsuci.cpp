@@ -66,9 +66,6 @@ void on_tb_path(const Option& o) {
 void OptionsUCI::init(OptionsMap& o)
 {
     o["Allow_Early_Stopping"] << Option(true);
-    o["Backup_Operator"] << Option("mean_op", { "mean_op", "max_op" });
-    o["Max_At_Visits"]  << Option(20 , 0, 500);
-    o["Switching_Max_Operator_At_Node"] << Option(800, 0, 99999999);
 #ifdef USE_RL
     o["Batch_Size"] << Option(8, 1, 8192);
 #else
@@ -114,7 +111,6 @@ void OptionsUCI::init(OptionsMap& o)
 #endif
     o["Centi_Temperature_Decay"] << Option(92, 0, 100);
     o["Centi_U_Init_Divisor"] << Option(100, 1, 99999);
-    o["Centi_Virtual_Loss"] << Option(100, 0, 99999);
 #if defined(MXNET) && defined(TENSORRT)
     o["Context"] << Option("gpu", { "cpu", "gpu" });
 #elif defined (TORCH)
@@ -166,7 +162,7 @@ void OptionsUCI::init(OptionsMap& o)
 #ifdef SUPPORT960
     o["UCI_Chess960"] << Option(false);
 #endif
-    o["Search_Type"] << Option("mcts", { "mcgs", "mcts" });
+    o["Search_Type"] << Option("mcgs", { "mcgs", "mcts" });
     o["Search_Player_Mode"] << Option("two_player", { "two_player", "single_player" });
 #ifdef USE_RL
     o["Simulations"] << Option(3200, 0, 99999999);
@@ -195,6 +191,8 @@ void OptionsUCI::init(OptionsMap& o)
     o["UCI_Variant"] << Option(StateConstants::DEFAULT_UCI_VARIANT().c_str(), { StateConstants::DEFAULT_UCI_VARIANT().c_str(), StateConstants::DEFAULT_UCI_VARIANT().c_str() });
 #endif
     o["Use_Raw_Network"] << Option(false);
+    o["Virtual_Style"] << Option("virtual_mix", { "virtual_loss", "virtual_visit", "virtual_offset", "virtual_mix" });
+    o["Virtual_Mix_Threshold"] << Option(1000, 1, 99999999);
     // additional UCI-Options for RL only
 #ifdef USE_RL
     o["Centi_Node_Random_Factor"] << Option(10, 0, 100);

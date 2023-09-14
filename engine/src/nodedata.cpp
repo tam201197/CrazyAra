@@ -30,7 +30,6 @@
 void NodeData::add_empty_node()
 {
     append(childNumberVisits, 0U);
-    append(childNumberVirtualVisits, 0U);
     append(qValues, Q_INIT);
     append(virtualLossCounter, uint8_t(0));
     append(nodeTypes, UNSOLVED);
@@ -43,35 +42,31 @@ void NodeData::reserve_initial_space()
 
     // # visit count of all its child nodes
     childNumberVisits.reserve(initSize);
-    childNumberVirtualVisits.reserve(initSize);
+
     // q: combined action value which is calculated by the averaging over all action values
     // u: exploration metric for each child node
     // (the q and u values are stacked into 1 list in order to speed-up the argmax() operation
     qValues.reserve(initSize);
+
     childNodes.reserve(initSize);
     virtualLossCounter.reserve(initSize);
     nodeTypes.reserve(initSize);
     add_empty_node();
-    if (initSize > 1) {
-        add_empty_node();
-        ++noVisitIdx;
-    }
 }
 
-NodeData::NodeData():
+NodeData::NodeData() :
     freeVisits(0),
     visitSum(0),
     checkmateIdx(NO_CHECKMATE),
     endInPly(0),
     noVisitIdx(1),
     nodeType(UNSOLVED),
-    inspected(false),
-    qValue_max(-2.0)
+    inspected(false)
 {
 
 }
 
-NodeData::NodeData(size_t numberChildNodes):
+NodeData::NodeData(size_t numberChildNodes) :
     NodeData()
 {
     numberUnsolvedChildNodes = numberChildNodes;

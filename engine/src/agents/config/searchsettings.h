@@ -36,9 +36,11 @@ enum SearchPlayerMode {
     MODE_TWO_PLAYER
 };
 
-enum BackupOperatorType {
-    BACKUP_MEAN,
-    BACKUP_MAX
+enum VirtualStyle {
+    VIRTUAL_LOSS,
+    VIRTUAL_VISIT,
+    VIRTUAL_OFFSET,
+    VIRTUAL_MIX
 };
 
 struct SearchSettings
@@ -53,13 +55,11 @@ struct SearchSettings
     float qValueWeight;
     // describes how much better the highest Q-Value has to be to replace the candidate move with the highest visit count
     float qVetoDelta;
-    uint_fast32_t virtualLoss;
     bool verbose;
     uint_fast8_t epsilonChecksCounter;
     //    bool enhanceCaptures;   currently not support
     //    bool useFutureQValues;  currently not supported
     bool useMCGS;
-    bool useMaxOperatpr;
     float cpuctInit;
     float cpuctBase;
     float uInit;
@@ -79,12 +79,14 @@ struct SearchSettings
     bool reuseTree;
     // If true, then the MCTS solver for terminals and tablebases will be active
     bool mctsSolver;
-    // Defines the nubmer of players within the MCTS. Available are MODE_SINGLE_PLAYER and MODE_TWO_PLAYER
+    // Defines the nubmer of players within the MCTS search. Available are MODE_SINGLE_PLAYER and MODE_TWO_PLAYER
     SearchPlayerMode searchPlayerMode;
-    // Defines backup operator use for MCTS.
-    BackupOperatorType backupOperator;
-    uint32_t maxAtVisit;
-    uint32_t switchingMaxOperatorAtNode;
+    // Define the virtual style to avoid conflict between different threads in within the same mini-batch
+    VirtualStyle virtualStyle;
+    // Defines the number of visits to switch from virtual-visit to virtual-loss
+    uint_fast32_t virtualMixThreshold;
+    // Defines the strength of the virtual offset
+    double virtualOffsetStrenght;
     SearchSettings();
 
 };

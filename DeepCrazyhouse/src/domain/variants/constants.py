@@ -76,6 +76,8 @@ P_MAP = {"P": 0, "N": 1, "B": 2, "R": 3, "Q": 4, "K": 5, "p": 6, "n": 7, "b": 8,
 # each index indicates where each section start
 if MODE == MODE_CRAZYHOUSE or MODE == MODE_LICHESS:
     CHANNEL_MAPPING_POS = {"pieces": 0, "repetitions": 12, "prisoners": 14, "promo": 24, "ep_square": 26}
+elif MODE == MODE_CRAZYHOUSE and VERSION == 3:
+    CHANNEL_MAPPING_POS = {"pieces": 0, "repetitions": 12, "ep_square": 14, "prisoners": 52, "promo": 62}
 elif MODE == MODE_XIANGQI:
     CHANNEL_MAPPING_POS = {"pieces": 0, "prisoners": 14}
 else:  # MODE = MODE_CHESS
@@ -104,15 +106,31 @@ else:
     BOARD_WIDTH = 8
     BOARD_HEIGHT = 8
 
+NB_CHANNELS_FX = None
 # Define constants indicating the number of channels for the input plane presentation
 # and the number of channels used for the policy map representation
 if MODE == MODE_CRAZYHOUSE:
-    NB_CHANNELS_POS = 27
-    NB_CHANNELS_CONST = 7
-    NB_CHANNELS_VARIANTS = 0
     NB_POLICY_MAP_CHANNELS = 81
-    NB_LAST_MOVES = 0
-    NB_CHANNELS_PER_HISTORY_ITEM = 0
+    if VERSION == 1:
+        NB_CHANNELS_POS = 27
+        NB_CHANNELS_CONST = 7
+        NB_CHANNELS_VARIANTS = 0
+        NB_LAST_MOVES = 0
+        NB_CHANNELS_PER_HISTORY_ITEM = 0
+    elif VERSION == 2:  # same as chess version 1.0 but with crazyhouse info
+        NB_CRAZYHOUSE_INFO = 12
+        NB_CHANNELS_POS = 15 + NB_CRAZYHOUSE_INFO
+        NB_CHANNELS_CONST = 7
+        NB_CHANNELS_VARIANTS = 1  # is960
+        NB_LAST_MOVES = 8
+        NB_CHANNELS_PER_HISTORY_ITEM = 2
+    elif VERSION == 3:  # same as chess version 3.0 but with crazyhouse info
+        NB_CRAZYHOUSE_INFO = 12
+        NB_CHANNELS_POS = 15 + 15 + NB_CRAZYHOUSE_INFO
+        NB_CHANNELS_CONST = 5
+        NB_CHANNELS_VARIANTS = 1  # is960
+        NB_LAST_MOVES = 8
+        NB_CHANNELS_PER_HISTORY_ITEM = 2
 elif MODE == MODE_LICHESS:
     NB_CHANNELS_POS = 27
     NB_CHANNELS_CONST = 11
@@ -121,12 +139,16 @@ elif MODE == MODE_LICHESS:
     NB_POLICY_MAP_CHANNELS = 84
     if VERSION == 1:
         NB_LAST_MOVES = 0
-    else:
+    else:  # VERSION == 2 or VERSION == 3
         NB_LAST_MOVES = 8
     if VERSION == 1:
         NB_CHANNELS_PER_HISTORY_ITEM = 0
-    else:
+    else:  # VERSION == 2 or VERSION == 3
         NB_CHANNELS_PER_HISTORY_ITEM = 2
+    if VERSION == 3:
+        NB_CHANNELS_FX = 17
+    else:
+        NB_CHANNELS_FX = 0
 elif MODE == MODE_XIANGQI:
     NB_CHANNELS_POS = 26
     NB_CHANNELS_CONST = 2
@@ -166,6 +188,8 @@ else:
     NB_LABELS_POLICY_MAP = NB_POLICY_MAP_CHANNELS * BOARD_HEIGHT * BOARD_WIDTH
 NB_CHANNELS_HISTORY = NB_LAST_MOVES * NB_CHANNELS_PER_HISTORY_ITEM
 NB_CHANNELS_TOTAL = NB_CHANNELS_POS + NB_CHANNELS_CONST + NB_CHANNELS_VARIANTS + NB_CHANNELS_HISTORY
+if MODE == MODE_LICHESS:
+    NB_CHANNELS_TOTAL += NB_CHANNELS_FX
 
 # define the number of different pieces one can have in his pocket (the king/general is excluded)
 if MODE == MODE_XIANGQI:
@@ -176,8 +200,8 @@ else:
 #  (this used for normalization the input planes and setting an appropriate integer representation (e.g. int16)
 # use a constant matrix for normalization to allow broad cast operations
 if MODE == MODE_CRAZYHOUSE:
-    MAX_NB_PRISONERS = 32  # define the maximum number of pieces of each type in a pocket
     MAX_NB_MOVES = 500  # 500 was set as the max number of total moves
+    MAX_NB_PRISONERS = 32  # define the maximum number of pieces of each type in a pocket
     MAX_NB_NO_PROGRESS = 40  # originally this was set to 40, but actually it is meant to be 50 move rule
 elif MODE == MODE_XIANGQI:
     MAX_NB_PRISONERS = 5
