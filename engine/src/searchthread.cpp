@@ -211,7 +211,7 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                     //pLine.pop_front();
                     //currentMinimaxSearchNode = currentNode->get_child_node(childIdx);
                 }
-                else if (numberVisits >= 5000 && pTempLine.empty() && currentNode->get_minimax_count() < 2) {
+                else if (numberVisits >= 3000 && pTempLine.empty() && currentNode->get_minimax_count() < 2) {
                     unique_ptr<StateObj> evalState = unique_ptr<StateObj>(rootState->clone());
                     assert(actionsBuffer.size() == description.depth - 1);
                     for (Action action : actionsBuffer) {
