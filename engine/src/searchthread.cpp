@@ -221,7 +221,7 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                     childIdx = minimax_select_child_node(evalState.get(), currentNode, 3, pTempLine, minimaxValue);
                     currentNode->increase_minimax_count();
                     nextNode = currentNode->get_child_node(childIdx);
-                    if (minimaxValue > -2.0 && nextNode != nullptr) {
+                    if (nextNode != nullptr) {
                         nextNode->update_qValue_after_minimax_search(currentNode, childIdx, minimaxValue, searchSettings);
                     }
                 }
