@@ -195,7 +195,7 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                 numberVisits = currentNode->get_visits();
             }
             if (searchSettings->mctsIpM) {
-                if (numberVisits >= 100 && pTempLine.empty() && currentNode->get_minimax_count() < 1) {
+                if (numberVisits >= 0 && pTempLine.empty() && currentNode->get_minimax_count() < 1) {
                     unique_ptr<StateObj> evalState = unique_ptr<StateObj>(rootState->clone());
                     assert(actionsBuffer.size() == description.depth - 1);
                     for (Action action : actionsBuffer) {
@@ -205,13 +205,13 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                     childIdx = minimax_select_child_node(evalState.get(), currentNode, searchSettings->minimaxDepth, pTempLine, minimaxValue);
                     currentNode->increase_minimax_count();
                     nextNode = currentNode->get_child_node(childIdx);
-                    if (minimaxValue > -2.0 && nextNode != nullptr) {
+                    /*if (minimaxValue > -2.0 && nextNode != nullptr) {
                         nextNode->update_qValue_after_minimax_search(currentNode, childIdx, minimaxValue, searchSettings);
-                    }
+                    }*/
                     //pLine.pop_front();
                     //currentMinimaxSearchNode = currentNode->get_child_node(childIdx);
                 }
-                else if (numberVisits >= 3000 && pTempLine.empty() && currentNode->get_minimax_count() < 2) {
+                else if (numberVisits >= 5000 && pTempLine.empty() && currentNode->get_minimax_count() < 2) {
                     unique_ptr<StateObj> evalState = unique_ptr<StateObj>(rootState->clone());
                     assert(actionsBuffer.size() == description.depth - 1);
                     for (Action action : actionsBuffer) {
@@ -367,7 +367,7 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node, ui
     for (int i = 1; i < line.cmove; i++) {
         pTempLine.emplace_back(line.argmove[i]);
     }
-    for (int i = 1; i < line.cmove; i++) {
+    /*for (int i = 1; i < line.cmove; i++) {
         currNode->lock();
         ChildIdx idx = currNode->get_action_index(line.argmove[i]);
         if (idx == -1) {
@@ -389,7 +389,7 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node, ui
             minimaxValue = -currNode->get_init_value();
         }
         
-    }
+    }*/
     return childIdx;
 }
 
