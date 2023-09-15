@@ -71,8 +71,7 @@ vector<Action> BoardState::legal_actions() const
 void BoardState::set(const string &fenStr, bool isChess960, int variant)
 {
     states = StateListPtr(new std::deque<StateInfo>(1));
-    board.set(fenStr, isChess960, Variant(variant), &states->back(), nullptr);
-}
+    board.set(fenStr, isChess960, Variant(variant), &states->back(), Threads.front());
 
 void BoardState::get_state_planes(bool normalize, float *inputPlanes, Version version) const
 {
