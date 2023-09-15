@@ -29,6 +29,7 @@
 #include "syzygy/tbprobe.h"
 #include "chess960position.h"
 #include "../util/communication.h"
+#include "thread.h"
 
 action_idx_map OutputRepresentation::MV_LOOKUP = {};
 action_idx_map OutputRepresentation::MV_LOOKUP_MIRRORED = {};
