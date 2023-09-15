@@ -93,7 +93,9 @@ Node::Node(StateObj* state, const SearchSettings* searchSettings) :
     isTerminal(false),
     isTablebase(false),
     hasNNResults(false),
-    sorted(false)
+    sorted(false),
+    initValue(-2.0),
+    minimaxCount(0)
 {
     // specify the number of direct child nodes of this node
     check_for_terminal(state);
@@ -718,6 +720,7 @@ void Node::set_value(float value)
 {
     ++this->realVisitsSum;
     this->valueSum = value * this->realVisitsSum;
+    this->initValue = value;
 }
 
 Node* Node::add_new_node_to_tree(MapWithMutex* mapWithMutex, StateObj* newState, ChildIdx childIdx, const SearchSettings* searchSettings, bool& transposition)
@@ -1148,10 +1151,21 @@ size_t get_best_action_index(const Node* curNode, bool fast, const SearchSetting
     return bestMoveIdx;
 }
 
-ChildIdx Node::select_child_node(const SearchSettings* searchSettings)
+ChildIdx Node::select_child_node(const SearchSettings* searchSettings, Action action)
 {
     if (!sorted) {
         prepare_node_for_visits();
+    }
+    if (action != ACTION_NONE) {
+        auto itr = find(legalActions.begin(), legalActions.end(), action);
+        if (itr != legalActions.end()) {
+            ChildIdx idx = itr - legalActions.begin();
+            assert(action == legalActions[idx]);
+            if (idx >= d->noVisitIdx) {
+                fully_expand_node();
+            }
+            return idx;
+        }
     }
     if (d->noVisitIdx == 1) {
         return 0;
@@ -1159,12 +1173,26 @@ ChildIdx Node::select_child_node(const SearchSettings* searchSettings)
     if (has_forced_win()) {
         return d->checkmateIdx;
     }
-
     assert(sum(d->childNumberVisits) == d->visitSum);
+
     // find the move according to the q- and u-values for each move
     // calculate the current u values
     // it's not worth to save the u values as a node attribute because u is updated every time n_sum changes
     return argmax(d->qValues + get_current_u_values(searchSettings));
+}
+
+void Node::increase_minimax_count()
+{
+    minimaxCount += 1;
+}
+
+uint_fast8_t Node::get_minimax_count() {
+    return minimaxCount += 1;
+}
+
+float Node::get_init_value()
+{
+    return initValue;
 }
 
 NodeSplit Node::select_child_nodes(const SearchSettings* searchSettings, uint_fast16_t budget)

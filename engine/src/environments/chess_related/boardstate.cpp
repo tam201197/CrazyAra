@@ -110,6 +110,28 @@ void BoardState::prepare_action()
     // pass
 }
 
+int BoardState::get_stockfish_value()
+{
+    Value v = board.evaluate();
+    return v;
+    //float result = (sgn(v) * abs(1 - pow(exp(1.0), -abs(v) * log(VALUE_TO_CENTI_PARAM) / 100.0f)));
+    //float result = sgn(v) * -(pow(2.71, -abs(v) * log(VALUE_TO_CENTI_PARAM) / 100.0f) - 1);
+    //if (abs(result) >= 1.0f)
+    //    return sgn(result) * 1.0f;
+    //return result;
+
+}
+
+bool BoardState::is_board_ok()
+{
+    return board.is_ok();
+}
+
+bool BoardState::is_board_terminal()
+{
+    return board.is_terminal();
+}
+
 unsigned int BoardState::number_repetitions() const
 {
     return board.number_repetitions();

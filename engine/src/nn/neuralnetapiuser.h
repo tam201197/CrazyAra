@@ -29,11 +29,13 @@
 #define NEURALNETAPIUSER_H
 
 #include "neuralnetapi.h"
+#include "stateobj.h"
 
-/**
- * @brief The NeuralNetAPIUser class is a utility class which handles memory allocation and de-allocation.
- * The results of NN-inference are stored in valueOutputs and probOutputs.
- */
+
+ /**
+  * @brief The NeuralNetAPIUser class is a utility class which handles memory allocation and de-allocation.
+  * The results of NN-inference are stored in valueOutputs and probOutputs.
+  */
 class NeuralNetAPIUser
 {
 protected:
@@ -58,6 +60,13 @@ public:
      * @param iterations Number of iterations to run
      */
     void run_inference(uint_fast16_t iterations);
+
+    /**
+     * @brief evaluate Evaluates a single given state object and returns it value. The probabilities can be read from the probOutputs buffer.
+     * @param evalState State that should be evaluated
+     * @return NN-evaluation for the given state
+     */
+    float evaluate(const StateObj* evalState);
 };
 
 #endif // NEURALNETAPIUSER_H

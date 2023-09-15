@@ -46,6 +46,17 @@ Board::~Board()
 {
 }
 
+bool Board::is_ok()
+{
+    return !checkers();
+}
+
+Value Board::evaluate()
+{
+    Value v = Eval::evaluate(*this);
+    return v;
+}
+
 #ifdef CRAZYHOUSE
 Bitboard Board::promoted_pieces() const
 {

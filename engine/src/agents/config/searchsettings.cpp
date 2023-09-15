@@ -51,7 +51,12 @@ SearchSettings::SearchSettings() :
     searchPlayerMode(MODE_TWO_PLAYER),
     virtualStyle(VIRTUAL_VISIT),
     virtualMixThreshold(1000),
-    virtualOffsetStrenght(0.001)
+    virtualOffsetStrenght(0.001),
+    mctsIpM(false),
+    switchingAtVisits(800),
+    minimaxDepth(2),
+    priorWeight(100),
+    evaluationType(EVAL_SF)
 {
 
 }

@@ -106,6 +106,8 @@ private:
     // singular values
     // valueSum stores the sum of all incoming value evaluations
     double valueSum;
+    float initValue;
+    uint_fast8_t minimaxCount;
 
     unique_ptr<NodeData> d;
 #ifdef MCTS_STORE_STATES
@@ -151,7 +153,11 @@ public:
      */
     Node* get_child_node(ChildIdx childIdx);
 
-    ChildIdx select_child_node(const SearchSettings* searchSettings);
+    ChildIdx select_child_node(const SearchSettings* searchSettings, Action action = ACTION_NONE);
+
+    void increase_minimax_count();
+    uint_fast8_t get_minimax_count();
+    float get_init_value();
 
     /**
      * @brief select_child_nodes Selects multiple nodes at once

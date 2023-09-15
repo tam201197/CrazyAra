@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include <climits>
 #include "util/blazeutil.h"
+#include "evalinfo.h"
 
 
 size_t SearchThread::get_max_depth() const
@@ -182,11 +183,59 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
         }
         currentNode->unlock();
     }
-
+    deque<Action> pTempLine;
     while (true) {
         currentNode->lock();
         if (childIdx == uint16_t(-1)) {
-            childIdx = currentNode->select_child_node(searchSettings);
+            uint32_t numberVisits = 0;
+            if (currentNode->is_playout_node()) {
+                numberVisits = currentNode->get_visits();
+            }
+            if (searchSettings->mctsIpM) {
+                if (numberVisits >= 0 && pTempLine.empty() && currentNode->get_minimax_count() < 1) {
+                    unique_ptr<StateObj> evalState = unique_ptr<StateObj>(rootState->clone());
+                    assert(actionsBuffer.size() == description.depth - 1);
+                    for (Action action : actionsBuffer) {
+                        evalState->do_action(action);
+                    }
+                    float minimaxValue = -2.0;
+                    childIdx = minimax_select_child_node(evalState.get(), currentNode, searchSettings->minimaxDepth, pTempLine, minimaxValue);
+                    currentNode->increase_minimax_count();
+                    nextNode = currentNode->get_child_node(childIdx);
+                    /*if (minimaxValue > -2.0 && nextNode != nullptr) {
+                        nextNode->update_qValue_after_minimax_search(currentNode, childIdx, minimaxValue, searchSettings);
+                    }*/
+                    //pLine.pop_front();
+                    //currentMinimaxSearchNode = currentNode->get_child_node(childIdx);
+                }
+                else if (numberVisits >= 5000 && pTempLine.empty() && currentNode->get_minimax_count() < 2) {
+                    unique_ptr<StateObj> evalState = unique_ptr<StateObj>(rootState->clone());
+                    assert(actionsBuffer.size() == description.depth - 1);
+                    for (Action action : actionsBuffer) {
+                        evalState->do_action(action);
+                    }
+                    float minimaxValue = -2.0;
+                    childIdx = minimax_select_child_node(evalState.get(), currentNode, 3, pTempLine, minimaxValue);
+                    currentNode->increase_minimax_count();
+                    nextNode = currentNode->get_child_node(childIdx);
+                    /*if (nextNode != nullptr) {
+                        nextNode->update_qValue_after_minimax_search(currentNode, childIdx, minimaxValue, searchSettings);
+                    }*/
+                }
+                else {
+                    if (!pTempLine.empty()) {
+                        childIdx = currentNode->select_child_node(searchSettings, pTempLine[0]);
+                        pTempLine.pop_front();
+                        //currentMinimaxSearchNode = currentNode->get_child_node(childIdx);
+                    }
+                    else {
+                        childIdx = currentNode->select_child_node(searchSettings);
+                    }
+                }
+            }
+            else {
+                childIdx = currentNode->select_child_node(searchSettings);
+            }
         }
         currentNode->apply_virtual_loss_to_child(childIdx, searchSettings);
         trajectoryBuffer.emplace_back(NodeAndIdx(currentNode, childIdx));
@@ -265,6 +314,64 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
         currentNode = nextNode;
         childIdx = uint16_t(-1);
     }
+}
+
+ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node, uint8_t depth, deque<Action> pTempLine, float& minimaxValue) {
+    if (!node->is_sorted()) {
+        node->prepare_node_for_visits();
+    }
+    if (node->has_forced_win()) {
+        return node->get_checkmate_idx();
+    }
+    assert(sum(node->get_child_number_visits()) == node->get_visits());
+    node->fully_expand_node();
+    ChildIdx childIdx = 0;
+    LINE line;
+    line.cmove = 0;
+
+    if (searchSettings->evaluationType == EVAL_NN) {
+        // save first input plane values for later
+        vector<float> firstInputPlanes(net->get_nb_input_values_total());
+        std::copy(inputPlanes, inputPlanes + net->get_nb_input_values_total(), firstInputPlanes.begin());
+        //pvs(state, depth, -INT_MAX, INT_MAX, searchSettings, childIdx, &line, 0, this);
+        pvs_nn(state, depth, -2.0, 2.0, searchSettings, childIdx, &line, 0, this);
+        // revert change
+        std::copy(firstInputPlanes.begin(), firstInputPlanes.begin() + net->get_nb_input_values_total(), inputPlanes);
+    }
+    else {
+        pvs_sf(state, depth, -INT_MAX, INT_MAX, searchSettings, childIdx, &line, 0, this);
+    }
+    Node* currNode = node->get_child_node(childIdx);
+    if (currNode == nullptr) {
+        return childIdx;
+    }
+    for (int i = 1; i < line.cmove; i++) {
+        pTempLine.emplace_back(line.argmove[i]);
+    }
+    /*for (int i = 1; i < line.cmove; i++) {
+        currNode->lock();
+        ChildIdx idx = currNode->get_action_index(line.argmove[i]);
+        if (idx == -1) {
+            currNode->unlock();
+            return childIdx;
+        }
+        Node* newCurrNode = currNode->get_child_node(idx);
+        currNode->unlock();
+        currNode = newCurrNode;
+        if (currNode == nullptr) {
+            return childIdx;
+        }
+    }
+    if (currNode != node) {
+        if (line.cmove % 2 == 0) {
+            minimaxValue = currNode->get_init_value();
+        }
+        else {
+            minimaxValue = -currNode->get_init_value();
+        }
+
+    }*/
+    return childIdx;
 }
 
 void SearchThread::set_root_state(StateObj* value)
@@ -472,4 +579,158 @@ size_t get_random_depth()
 {
     const int randInt = rand() % 100 + 1;
     return std::ceil(-std::log2(1 - randInt / 100.0) - 1);
+}
+
+int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSettings* searchSettings, ChildIdx& idx, LINE* pLine, uint8_t pLineIdx, NeuralNetAPIUser* netUser)
+{
+    LINE line;
+    line.cmove = 0;
+    ChildIdx idxDummy;
+    if (state->is_board_terminal()) {
+        pLine->cmove = 0;
+        float dummy;
+        switch (state->is_terminal(0, dummy))
+        {
+        case TERMINAL_WIN:
+            return VALUE_KNOWN_WIN;
+        case TERMINAL_DRAW:
+            return 0;
+        case TERMINAL_LOSS:
+            return -VALUE_KNOWN_WIN;
+        default:
+            return state->get_stockfish_value();
+        }
+    }
+    if (depth == 0) {
+        pLine->cmove = 0;
+        if (searchSettings->evaluationType == EVAL_NN) {
+            return value_to_centipawn(netUser->evaluate(state));
+        }
+        else {
+            if (!state->is_board_ok()) {
+                return -pvs(state, 1, -beta, -alpha, searchSettings, idxDummy, &line, pLineIdx + 1, netUser);
+            }
+            else {
+                return state->get_stockfish_value();
+            }
+        }
+    }
+    ChildIdx childIdx = -1;
+    for (Action action : state->legal_actions()) {
+        childIdx += 1;
+        string fen_after_do_action = state->fen();
+        state->do_action(action);
+        int value = -pvs(state, depth - 1, -beta, -alpha, searchSettings, idxDummy, &line, pLineIdx + 1, netUser);
+        state->undo_action(action);
+        if (abs(value) == VALUE_INFINITE || abs(value) == VALUE_NONE) {
+            continue;
+        }
+        if (alpha < value) {
+            alpha = value;
+            idx = childIdx;
+            pLine->argmove[0] = action;
+            memcpy(pLine->argmove + 1, line.argmove, line.cmove * sizeof(Action));
+            pLine->cmove = line.cmove + 1;
+        }
+        if (alpha >= beta)
+            break;
+    }
+    return alpha;
+}
+
+float pvs_nn(StateObj* state, uint8_t depth, float alpha, float beta, const SearchSettings* searchSettings, ChildIdx& idx, LINE* pLine, uint8_t pLineIdx, NeuralNetAPIUser* netUser)
+{
+    LINE line;
+    line.cmove = 0;
+    uint8_t saveIndex = pLineIdx;
+    if (state->is_board_terminal()) {
+        float dummy;
+        switch (state->is_terminal(0, dummy))
+        {
+        case TERMINAL_WIN:
+            return WIN_VALUE;
+        case TERMINAL_DRAW:
+            return DRAW_VALUE;
+        case TERMINAL_LOSS:
+            return LOSS_VALUE;
+        default:
+            break;
+        }
+    }
+    if (depth == 0) {
+        pLine->cmove = 0;
+        return netUser->evaluate(state);
+    }
+    ChildIdx childIdx = -1;
+    ChildIdx idxDummy;
+    for (Action action : state->legal_actions()) {
+        childIdx += 1;
+        string fen_after_do_action = state->fen();
+        state->do_action(action);
+        float value = -pvs_nn(state, depth - 1, -beta, -alpha, searchSettings, idxDummy, &line, pLineIdx + 1, netUser);
+        state->undo_action(action);
+        if (alpha < value) {
+            alpha = value;
+            idx = childIdx;
+            pLine->argmove[0] = action;
+            memcpy(pLine->argmove + 1, line.argmove, line.cmove * sizeof(Action));
+            pLine->cmove = line.cmove + 1;
+        }
+        if (alpha >= beta)
+            break;
+    }
+    return alpha;
+}
+
+int pvs_sf(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSettings* searchSettings, ChildIdx& idx, LINE* pLine, uint8_t pLineIdx, NeuralNetAPIUser* netUser)
+{
+    LINE line;
+    line.cmove = 0;
+    ChildIdx idxDummy;
+    if (state->is_board_terminal()) {
+        pLine->cmove = 0;
+        float dummy;
+        switch (state->is_terminal(0, dummy))
+        {
+        case TERMINAL_WIN:
+            return VALUE_KNOWN_WIN;
+        case TERMINAL_DRAW:
+            return 0;
+        case TERMINAL_LOSS:
+            return -VALUE_KNOWN_WIN;
+        default:
+            return state->get_stockfish_value();
+        }
+    }
+    if (depth == 0) {
+        pLine->cmove = 0;
+        if (!state->is_board_ok()) {
+            return -pvs(state, 1, -beta, -alpha, searchSettings, idxDummy, &line, pLineIdx + 1, netUser);
+        }
+        else {
+            return state->get_stockfish_value();
+        }
+
+    }
+    ChildIdx childIdx = -1;
+    for (Action action : state->legal_actions()) {
+        childIdx += 1;
+        string fen_after_do_action = state->fen();
+        state->do_action(action);
+        int value = -pvs_sf(state, depth - 1, -beta, -alpha, searchSettings, idxDummy, &line, pLineIdx + 1, netUser);
+        state->undo_action(action);
+        if (abs(value) == VALUE_INFINITE || abs(value) == VALUE_NONE) {
+            continue;
+        }
+        if (alpha < value) {
+            alpha = value;
+            idx = childIdx;
+            pLine->argmove[0] = action;
+            memcpy(pLine->argmove + 1, line.argmove, line.cmove * sizeof(Action));
+            pLine->cmove = line.cmove + 1;
+        }
+        if (alpha >= beta)
+            break;
+    }
+    return alpha;
 }

@@ -43,6 +43,11 @@ enum VirtualStyle {
     VIRTUAL_MIX
 };
 
+enum EvaluationType {
+    EVAL_SF,
+    EVAL_NN
+};
+
 struct SearchSettings
 {
     uint16_t multiPV;
@@ -66,6 +71,7 @@ struct SearchSettings
     float uMin;
     float uBase;
     float randomMoveFactor;
+    
 
     // If true, the exact given node count doesn't need to reached, but search can be stopped earlier
     bool allowEarlyStopping;
@@ -87,6 +93,11 @@ struct SearchSettings
     uint_fast32_t virtualMixThreshold;
     // Defines the strength of the virtual offset
     double virtualOffsetStrenght;
+    uint32_t switchingAtVisits;
+    bool mctsIpM;
+    uint32_t priorWeight;
+    uint8_t minimaxDepth;
+    EvaluationType evaluationType;
     SearchSettings();
 
 };

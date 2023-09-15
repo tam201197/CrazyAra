@@ -51,6 +51,11 @@ struct NodeDescription
     size_t depth;
 };
 
+typedef struct LINE {
+    int cmove;              // Number of moves in the line.
+    Action argmove[512];  // The line.
+}   LINE;
+
 class SearchThread : public NeuralNetAPIUser
 {
 private:
@@ -187,6 +192,8 @@ private:
      */
     ChildIdx select_enhanced_move(Node* currentNode) const;
 
+    ChildIdx minimax_select_child_node(StateObj* state, Node* currentNode, uint8_t depth, deque<Action> pTempLine, float& minimaxValue);
+
     /**
      * @brief get_current_transposition_q_value Returns the Q-value which connects to the transposition node
      * @param currentNode Current node
@@ -223,5 +230,9 @@ inline void random_playout(Node* currentNode, ChildIdx& childIdx);
  * @return random depth while the probability of choosing higher depths decreases exponetially
  */
 size_t get_random_depth();
+
+int pvs(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSettings* searchSettings, ChildIdx& idx, LINE* pLine, uint8_t pLineIdx, NeuralNetAPIUser* netUser);
+int pvs_sf(StateObj* state, uint8_t depth, int alpha, int beta, const SearchSettings* searchSettings, ChildIdx& idx, LINE* pLine, uint8_t pLineIdx, NeuralNetAPIUser* netUser);
+float pvs_nn(StateObj* state, uint8_t depth, float alpha, float beta, const SearchSettings* searchSettings, ChildIdx& idx, LINE* pLine, uint8_t pLineIdx, NeuralNetAPIUser* netUser);
 
 #endif // SEARCHTHREAD_H

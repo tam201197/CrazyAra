@@ -540,6 +540,8 @@ void CrazyAra::init()
 #ifdef SF_DEPENDENCY
     Bitboards::init();
     Position::init();
+    Tune::init();
+    Threads.set(1);
     Bitbases::init();
     Search::init();
 #endif
@@ -760,6 +762,16 @@ void CrazyAra::init_search_settings()
         info_string_important("Unknown option", Options["Virtual_Style"], "for Virtual_Style");
     }
     searchSettings.virtualMixThreshold = Options["Virtual_Mix_Threshold"];
+    searchSettings.switchingAtVisits = Options["Switching_At_Visits"];
+    searchSettings.minimaxDepth = Options["Minimax_Depth"];
+    searchSettings.priorWeight = Options["Prior_Weight"];
+    searchSettings.mctsIpM = Options["MCTS_IP_M"];
+    if (Options["Evaluation_Type"] == "sf") {
+        searchSettings.evaluationType = EVAL_SF;
+    }
+    else {
+        searchSettings.evaluationType = EVAL_NN;
+    }
 }
 
 void CrazyAra::init_play_settings()

@@ -41,6 +41,7 @@
 #include "agents/config/playsettings.h"
 #include "node.h"
 #include "timeoutreadythread.h"
+#include "thread.h"
 #ifdef USE_RL
 #include "rl/selfplay.h"
 #include "agents/config/rlsettings.h"

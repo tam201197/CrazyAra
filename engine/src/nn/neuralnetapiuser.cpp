@@ -97,3 +97,11 @@ void NeuralNetAPIUser::run_inference(uint_fast16_t iterations)
     }
 }
 
+float NeuralNetAPIUser::evaluate(const StateObj* evalState)
+{
+    evalState->get_state_planes(true, inputPlanes, net->get_version());
+    net->predict(inputPlanes, valueOutputs, probOutputs, auxiliaryOutputs);
+    float result = valueOutputs[0];
+    return result;
+}
+
