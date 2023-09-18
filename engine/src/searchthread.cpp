@@ -222,13 +222,14 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                     }*/
                 }
                 else {
-                    if (!pTempLine.empty()) {
+                    childIdx = currentNode->select_child_node(searchSettings);
+                    /*if (!pTempLine.empty()) {
                         childIdx = currentNode->select_child_node(searchSettings, pTempLine[0]);
                         pTempLine.pop_front();
                     }
                     else {
                         childIdx = currentNode->select_child_node(searchSettings);
-                    }
+                    }*/
                 }
             }
             else {
@@ -343,9 +344,9 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node, ui
     if (currNode == nullptr) {
         return childIdx;
     }
-    for (int i = 1; i < line.cmove; i++) {
+    /*for (int i = 1; i < line.cmove; i++) {
         pTempLine.emplace_back(line.argmove[i]);
-    }
+    }*/
     /*for (int i = 1; i < line.cmove; i++) {
         currNode->lock();
         ChildIdx idx = currNode->get_action_index(line.argmove[i]);
