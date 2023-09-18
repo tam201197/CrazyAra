@@ -196,6 +196,7 @@ void OptionsUCI::init(OptionsMap& o)
     o["UCI_Variant"] << Option(StateConstants::DEFAULT_UCI_VARIANT().c_str(), { StateConstants::DEFAULT_UCI_VARIANT().c_str(), StateConstants::DEFAULT_UCI_VARIANT().c_str() });
 #endif
     o["Use_Raw_Network"] << Option(false);
+    o["Use_Alpha_Beta_Agent"] << Option(false);
     o["Virtual_Style"] << Option("virtual_mix", { "virtual_loss", "virtual_visit", "virtual_offset", "virtual_mix" });
     o["Virtual_Mix_Threshold"] << Option(1000, 1, 99999999);
     // additional UCI-Options for RL only
