@@ -582,6 +582,7 @@ bool CrazyAra::is_ready()
         netBatches.front()->validate_neural_network();
         mctsAgent = create_new_mcts_agent(netSingle.get(), netBatches, &searchSettings);
         rawAgent = make_unique<RawNetAgent>(netSingle.get(), &playSettings, false);
+        alphaBetaAgent = make_unique<AlphaBetaAgent>(netSingle.get(), &playSettings, &searchSettings, false);
         StateConstants::init(mctsAgent->is_policy_map(), is960);
         timeoutThread.kill();
         if (timeoutMS != 0) {
