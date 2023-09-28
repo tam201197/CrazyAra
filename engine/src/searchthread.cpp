@@ -200,8 +200,7 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                     for (Action action : actionsBuffer) {
                         evalState->do_action(action);
                     }
-                    float minimaxValue = -2.0;
-                    childIdx = minimax_select_child_node(evalState.get(), currentNode, searchSettings->minimaxDepth, pTempLine, minimaxValue);
+                    childIdx = minimax_select_child_node(evalState.get(), currentNode, searchSettings->minimaxDepth, pTempLine);
                     currentNode->increase_minimax_count();
                     nextNode = currentNode->get_child_node(childIdx);
                     continueMinimaxSearch = true;
