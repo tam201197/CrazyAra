@@ -216,7 +216,7 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                         evalState->do_action(action);
                     }
                     float minimaxValue = -2.0;
-                    childIdx = minimax_select_child_node(evalState.get(), currentNode, 3, pTempLine, minimaxValue);
+                    childIdx = minimax_select_child_node(evalState.get(), currentNode, searchSettings->minimaxDepth + 1, pTempLine, minimaxValue);
                     currentNode->increase_minimax_count();
                     nextNode = currentNode->get_child_node(childIdx);
                     /*if (nextNode != nullptr) {
@@ -224,14 +224,14 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                     }*/
                 }
                 else {
-                    childIdx = currentNode->select_child_node(searchSettings);
-                    /*if (!pTempLine.empty()) {
+                    //childIdx = currentNode->select_child_node(searchSettings);
+                    if (!pTempLine.empty()) {
                         childIdx = currentNode->select_child_node(searchSettings, pTempLine[0]);
                         pTempLine.pop_front();
                     }
                     else {
                         childIdx = currentNode->select_child_node(searchSettings);
-                    }*/
+                    }
                 }
             }
             else {
