@@ -345,7 +345,7 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node, ui
         return childIdx;
     }
     else {
-        minimaxValue = currNode->get_init_value();
+        minimaxValue = - currNode->get_init_value();
     }
     /*for (int i = 1; i < line.cmove; i++) {
         pTempLine.emplace_back(line.argmove[i]);
