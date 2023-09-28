@@ -50,7 +50,9 @@ SearchThread::SearchThread(NeuralNetAPI *netBatch, const SearchSettings* searchS
     isRunning(true), mapWithMutex(mapWithMutex), searchSettings(searchSettings),
     tbHits(0), depthSum(0), depthMax(0), visitsPreSearch(0),
     terminalNodeCache(searchSettings->batchSize*2),
-    reachedTablebases(false)
+    reachedTablebases(false),
+    currentMinimaxSearchNode(nullptr),
+    currentMinimaxState(nullptr)
 {
     switch (searchSettings->searchPlayerMode) {
     case MODE_SINGLE_PLAYER:
@@ -166,7 +168,6 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
     description.depth = 0;
     Node* currentNode = rootNode;
     Node* nextNode;
-
     ChildIdx childIdx = uint16_t(-1);
     if (searchSettings->epsilonGreedyCounter && rootNode->is_playout_node() && rand() % searchSettings->epsilonGreedyCounter == 0) {
         currentNode = get_starting_node(currentNode, description, childIdx);
@@ -203,7 +204,7 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                     childIdx = minimax_select_child_node(evalState.get(), currentNode, searchSettings->minimaxDepth, pTempLine, minimaxValue);
                     currentNode->increase_minimax_count();
                     nextNode = currentNode->get_child_node(childIdx);
-                    continueMinimaxSearch = false;
+                    continueMinimaxSearch = true;
                     /*
                     if (minimaxValue > -2.0 && nextNode != nullptr) {
                         nextNode->update_qValue_after_minimax_search(currentNode, childIdx, minimaxValue, searchSettings);
@@ -230,9 +231,7 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                     if (!pTempLine.empty()) {
                         childIdx = currentNode->select_child_node(searchSettings, pTempLine[0]);
                         pTempLine.pop_front();
-                        if (pTempLine.empty() && currentNode->get_child_node(childIdx) != nullptr) {
-                            continueMinimaxSearch = true;
-                        }
+                        continueMinimaxSearch = true;
                     }
                     else {
                         childIdx = currentNode->select_child_node(searchSettings);
@@ -259,6 +258,10 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
             }
 #endif
             newState->do_action(currentNode->get_action(childIdx));
+            if (continueMinimaxSearch) {
+                currentMinimaxSearchNode = nextNode;
+                currentMinimaxState = newState->clone();
+            }
             currentNode->increment_no_visit_idx();
 #ifdef MCTS_STORE_STATES
             nextNode = add_new_node_to_tree(newState, currentNode, childIdx, description.type);
@@ -288,6 +291,8 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
             }
             return nextNode;
         }
+        currentMinimaxSearchNode = nullptr;
+        currentMinimaxState = nullptr;
         if (nextNode->is_terminal()) {
             description.type = NODE_TERMINAL;
             currentNode->unlock();
@@ -322,7 +327,22 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
     }
 }
 
-ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node, uint8_t depth, deque<Action> pTempLine, float& minimaxValue) {
+Node* SearchThread::continue_minimax_select_node(StateObj* state) {
+    Node* currentNode = currentMinimaxSearchNode;
+    Node* nextNode;
+    ChildIdx childIdx = uint16_t(-1);
+    unique_ptr<StateObj> evalState = unique_ptr<StateObj>(state->clone());
+    deque<Action> pTempLine;
+    currentNode->lock();
+    childIdx = minimax_select_child_node(evalState.get(), currentNode, searchSettings->minimaxDepth, pTempLine);
+    nextNode = currentNode->get_child_node(childIdx);
+    currentNode->unlock();
+    currentMinimaxSearchNode = nullptr;
+    currentMinimaxState = nullptr;
+    return nextNode;
+}
+
+ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node, uint8_t depth, deque<Action> pTempLine) {
     if (!node->is_sorted()) {
         node->prepare_node_for_visits();
     }
@@ -353,33 +373,7 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node, ui
     }
     for (int i = 1; i < line.cmove; i++) {
         pTempLine.emplace_back(line.argmove[i]);
-    }
-    /*
-    for (int i = 1; i < line.cmove; i++) {
-        currNode->lock();
-        ChildIdx idx = currNode->get_action_index(line.argmove[i]);
-        if (idx == -1) {
-            currNode->unlock();
-            return childIdx;
-        }
-        Node* newCurrNode = currNode->get_child_node(idx);
-        currNode->unlock();
-        currNode = newCurrNode;
-        if (currNode == nullptr) {
-            return childIdx;
-        }
-    }
-    if (currNode != node) {
-        if (line.cmove % 2 == 0) {
-            minimaxValue = currNode->get_init_value();
-        }
-        else {
-            minimaxValue = -currNode->get_init_value();
-        }
-
-    }
-    */
-    
+    }    
     return childIdx;
 }
 
@@ -470,7 +464,14 @@ void SearchThread::create_mini_batch()
 
         trajectoryBuffer.clear();
         actionsBuffer.clear();
-        Node* newNode = get_new_child_to_evaluate(description);
+        Node* newNode;
+        if (currentMinimaxSearchNode != nullptr) {
+            newNode = continue_minimax_select_node(currentMinimaxState);
+        }
+        else {
+            newNode = get_new_child_to_evaluate(description);
+        }
+        
         depthSum += description.depth;
         depthMax = max(depthMax, description.depth);
 

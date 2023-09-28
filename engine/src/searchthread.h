@@ -62,6 +62,8 @@ private:
     Node* rootNode;
     StateObj* rootState;
     unique_ptr<StateObj> newState;
+    Node* currentMinimaxSearchNode;
+    StateObj* currentMinimaxState;
 
     // list of all node objects which have been selected for expansion
     unique_ptr<FixedVector<Node*>> newNodes;
@@ -181,6 +183,7 @@ private:
      * @return Pointer to next child to evaluate (can also be terminal or tranposition node in which case no NN eval is required)
      */
     Node* get_new_child_to_evaluate(NodeDescription& description);
+    Node* continue_minimax_select_node(StateObj* state);
 
     void backup_values(FixedVector<Node*>& nodes, vector<Trajectory>& trajectories);
     void backup_values(FixedVector<float>* values, vector<Trajectory>& trajectories);
@@ -192,7 +195,7 @@ private:
      */
     ChildIdx select_enhanced_move(Node* currentNode) const;
 
-    ChildIdx minimax_select_child_node(StateObj* state, Node* currentNode, uint8_t depth, deque<Action> pTempLine, float& minimaxValue);
+    ChildIdx minimax_select_child_node(StateObj* state, Node* currentNode, uint8_t depth, deque<Action> pTempLine);
 
     /**
      * @brief get_current_transposition_q_value Returns the Q-value which connects to the transposition node
