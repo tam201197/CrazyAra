@@ -1186,6 +1186,20 @@ void Node::increase_minimax_count()
     minimaxCount += 1;
 }
 
+void Node::update_qValue_after_minimax_search(Node* parentNode, ChildIdx childIdx, float value, const SearchSettings* searchSettings)
+{
+    uint32_t oldChildNumberVisits = parentNode->d->childNumberVisits[childIdx] - parentNode->d->virtualLossCounter[childIdx];
+    parentNode->d->childNumberVisits[childIdx] += searchSettings->priorWeight;
+    parentNode->d->visitSum += searchSettings->priorWeight;
+    parentNode->d->qValues[childIdx] = (double(parentNode->d->qValues[childIdx]) * oldChildNumberVisits + value * searchSettings->priorWeight) / (oldChildNumberVisits + searchSettings->priorWeight);
+    parentNode->unlock();
+    lock();
+    valueSum += value * searchSettings->priorWeight;
+    realVisitsSum += searchSettings->priorWeight;
+    unlock();
+    parentNode->lock();
+}
+
 uint_fast8_t Node::get_minimax_count() {
     return minimaxCount += 1;
 }
