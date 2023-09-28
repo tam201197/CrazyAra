@@ -328,6 +328,8 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
 
 Node* SearchThread::continue_minimax_select_node(StateObj* state) {
     Node* currentNode = currentMinimaxSearchNode;
+    currentMinimaxSearchNode = nullptr;
+    currentMinimaxState = nullptr;
     Node* nextNode;
     ChildIdx childIdx = uint16_t(-1);
     unique_ptr<StateObj> evalState = unique_ptr<StateObj>(state->clone());
@@ -335,9 +337,9 @@ Node* SearchThread::continue_minimax_select_node(StateObj* state) {
     currentNode->lock();
     childIdx = minimax_select_child_node(evalState.get(), currentNode, searchSettings->minimaxDepth, pTempLine);
     nextNode = currentNode->get_child_node(childIdx);
+    currentNode->increase_minimax_count();
     currentNode->unlock();
-    currentMinimaxSearchNode = nullptr;
-    currentMinimaxState = nullptr;
+    
     return nextNode;
 }
 
