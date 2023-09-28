@@ -184,6 +184,7 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
         currentNode->unlock();
     }
     deque<Action> pTempLine;
+    bool continueMinimaxSearch = false;
     while (true) {
         currentNode->lock();
         if (childIdx == uint16_t(-1)) {
@@ -192,7 +193,7 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                 numberVisits = currentNode->get_visits();
             }
             if (searchSettings->mctsIpM) {
-                if (numberVisits >= searchSettings->switchingAtVisits && pTempLine.empty() && currentNode->get_minimax_count() < 1) {
+                if ((numberVisits >= searchSettings->switchingAtVisits && pTempLine.empty() && currentNode->get_minimax_count() < 1) || continueMinimaxSearch) {
                     unique_ptr<StateObj> evalState = unique_ptr<StateObj>(rootState->clone());
                     assert(actionsBuffer.size() == description.depth - 1);
                     for (Action action : actionsBuffer) {
@@ -202,6 +203,7 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                     childIdx = minimax_select_child_node(evalState.get(), currentNode, searchSettings->minimaxDepth, pTempLine, minimaxValue);
                     currentNode->increase_minimax_count();
                     nextNode = currentNode->get_child_node(childIdx);
+                    continueMinimaxSearch = false;
                     /*
                     if (minimaxValue > -2.0 && nextNode != nullptr) {
                         nextNode->update_qValue_after_minimax_search(currentNode, childIdx, minimaxValue, searchSettings);
@@ -209,7 +211,8 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                     */
                     //pLine.pop_front();
                 }
-                else if (numberVisits >= 5000 && pTempLine.empty() && currentNode->get_minimax_count() < 2) {
+                /*
+                else if (numberVisits >= 5000 && pTempLine.empty() && currentNode->get_minimax_count() == 1) {
                     unique_ptr<StateObj> evalState = unique_ptr<StateObj>(rootState->clone());
                     assert(actionsBuffer.size() == description.depth - 1);
                     for (Action action : actionsBuffer) {
@@ -219,15 +222,17 @@ Node* SearchThread::get_new_child_to_evaluate(NodeDescription& description)
                     childIdx = minimax_select_child_node(evalState.get(), currentNode, searchSettings->minimaxDepth + 1, pTempLine, minimaxValue);
                     currentNode->increase_minimax_count();
                     nextNode = currentNode->get_child_node(childIdx);
-                    /*if (nextNode != nullptr) {
-                        nextNode->update_qValue_after_minimax_search(currentNode, childIdx, minimaxValue, searchSettings);
-                    }*/
                 }
+                */
+                
                 else {
                     //childIdx = currentNode->select_child_node(searchSettings);
                     if (!pTempLine.empty()) {
                         childIdx = currentNode->select_child_node(searchSettings, pTempLine[0]);
                         pTempLine.pop_front();
+                        if (pTempLine.empty() && currentNode->get_child_node(childIdx) != nullptr) {
+                            continueMinimaxSearch = true;
+                        }
                     }
                     else {
                         childIdx = currentNode->select_child_node(searchSettings);
