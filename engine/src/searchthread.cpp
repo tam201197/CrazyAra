@@ -347,7 +347,7 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node, ui
     /*for (int i = 1; i < line.cmove; i++) {
         pTempLine.emplace_back(line.argmove[i]);
     }*/
-    /*for (int i = 1; i < line.cmove; i++) {
+    for (int i = 1; i < line.cmove; i++) {
         currNode->lock();
         ChildIdx idx = currNode->get_action_index(line.argmove[i]);
         if (idx == -1) {
@@ -369,7 +369,7 @@ ChildIdx SearchThread::minimax_select_child_node(StateObj* state, Node* node, ui
             minimaxValue = -currNode->get_init_value();
         }
 
-    }*/
+    }
     return childIdx;
 }
 

@@ -159,6 +159,7 @@ public:
     uint_fast8_t get_minimax_count();
     void update_qValue_after_minimax_search(Node* parentNode, ChildIdx childIdx, float value, const SearchSettings* searchSettings);
     float get_init_value();
+    ChildIdx get_action_index(Action action);
 
     /**
      * @brief select_child_nodes Selects multiple nodes at once

@@ -1200,6 +1200,22 @@ void Node::update_qValue_after_minimax_search(Node* parentNode, ChildIdx childId
     parentNode->lock();
 }
 
+ChildIdx Node::get_action_index(Action action) {
+    if (!sorted) {
+        return -1;
+    }
+    auto itr = find(legalActions.begin(), legalActions.end(), action);
+    if (itr != legalActions.end()) {
+        ChildIdx idx = itr - legalActions.begin();
+        assert(action == legalActions[idx]);
+        if (idx >= d->noVisitIdx) {
+            fully_expand_node();
+        }
+        return idx;
+    }
+    return -1;
+}
+
 uint_fast8_t Node::get_minimax_count() {
     return minimaxCount += 1;
 }
